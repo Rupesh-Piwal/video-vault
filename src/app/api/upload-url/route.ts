@@ -12,35 +12,69 @@ const s3 = new S3Client({
 });
 
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
 
-  if (error || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    if (error || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const { fileName, fileType } = await req.json();
+    const { fileName, fileType, fileSize } = await req.json();
 
-  if (!fileType.startsWith("video/")) {
+    if (!fileType.startsWith("video/")) {
+      return NextResponse.json(
+        { error: "Only video uploads allowed" },
+        { status: 400 }
+      );
+    }
+
+    // ----- UNIQUE KEY PER USER -----
+    const key = `uploads/${user.id}/${Date.now()}-${fileName}`;
+
+    // Insert into Supabase videos table
+    const { data: video, error: insertError } = await supabase
+      .from("videos")
+      .insert([
+        {
+          owner_id: user.id,
+          storage_key: key,
+          original_filename: fileName,
+          mime_type: fileType,
+          size_bytes: fileSize,
+          status: "UPLOADING",
+        },
+      ])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Supabase insert error:", insertError);
+      return NextResponse.json(
+        { error: "Failed to create video record" },
+        { status: 500 }
+      );
+    }
+
+    // Generate S3 presigned URL
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: key,
+      ContentType: fileType,
+    });
+
+    const url = await getSignedUrl(s3, command, { expiresIn: 60 });
+
+    // Return upload URL + video DB ID
+    return NextResponse.json({ url, key, videoId: video.id });
+  } catch (err) {
+    console.error("Upload URL error:", err);
     return NextResponse.json(
-      { error: "Only video uploads allowed" },
-      { status: 400 }
+      { error: "Internal Server Error" },
+      { status: 500 }
     );
   }
-
-  //   -----UNIQUE-KEY-PER-USER-----
-  const key = `uploads/${user.id}/${Date.now()}-${fileName}`;
-
-  const command = new PutObjectCommand({
-    Bucket: process.env.AWS_BUCKET_NAME!,
-    Key: key,
-    ContentType: fileType,
-  });
-
-  const url = await getSignedUrl(s3, command, { expiresIn: 60 });
-
-  return NextResponse.json({ url, key });
 }

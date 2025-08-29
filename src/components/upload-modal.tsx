@@ -74,6 +74,7 @@ export function UploadModal({
         body: JSON.stringify({
           fileName: uploadFile.file.name,
           fileType: uploadFile.file.type,
+          fileSize: uploadFile.file.size
         }),
       });
 
