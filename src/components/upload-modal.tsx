@@ -1,7 +1,5 @@
 "use client";
 
-import type React from "react";
-
 import { useState, useCallback, useRef } from "react";
 import {
   Dialog,
@@ -69,42 +67,78 @@ export function UploadModal({
     return null;
   };
 
-  const simulateUpload = (fileId: string) => {
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 15;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
+  const uploadToS3 = async (uploadFile: UploadFile) => {
+    try {
+      const res = await fetch("/api/upload-url", {
+        method: "POST",
+        body: JSON.stringify({
+          fileName: uploadFile.file.name,
+          fileType: uploadFile.file.type,
+        }),
+      });
 
+      if (!res.ok) throw new Error("Failed to get upload URL");
+
+      const { url } = await res.json();
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", url, true);
+      xhr.setRequestHeader("Content-Type", uploadFile.file.type);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const progress = (e.loaded / e.total) * 100;
+          setFiles((prev) =>
+            prev.map((f) => (f.id === uploadFile.id ? { ...f, progress } : f))
+          );
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === uploadFile.id
+                ? { ...f, status: "ready", progress: 100 }
+                : f
+            )
+          );
+        } else {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === uploadFile.id
+                ? { ...f, status: "failed", error: "Upload failed" }
+                : f
+            )
+          );
+        }
+      };
+
+      xhr.onerror = () => {
         setFiles((prev) =>
           prev.map((f) =>
-            f.id === fileId
-              ? { ...f, progress: 100, status: "processing" as const }
+            f.id === uploadFile.id
+              ? { ...f, status: "failed", error: "Upload error" }
               : f
           )
         );
+      };
 
-        // Simulate processing
-        setTimeout(() => {
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === fileId ? { ...f, status: "ready" as const } : f
-            )
-          );
-        }, 2000);
-      } else {
-        setFiles((prev) =>
-          prev.map((f) => (f.id === fileId ? { ...f, progress } : f))
-        );
-      }
-    }, 200);
+      xhr.send(uploadFile.file);
+    } catch (err: any) {
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === uploadFile.id
+            ? { ...f, status: "failed", error: err.message }
+            : f
+        )
+      );
+    }
   };
 
   const handleFiles = useCallback((newFiles: FileList | File[]) => {
     const fileArray = Array.from(newFiles);
     fileArray.forEach((file) => {
-      console.log("Uploaded file:", file); // 👈 log uploaded file here
       const error = validateFile(file);
       const uploadFile: UploadFile = {
         id: Math.random().toString(36).substr(2, 9),
@@ -117,7 +151,7 @@ export function UploadModal({
       setFiles((prev) => [...prev, uploadFile]);
 
       if (!error) {
-        simulateUpload(uploadFile.id);
+        uploadToS3(uploadFile);
       }
     });
   }, []);
@@ -175,6 +209,7 @@ export function UploadModal({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6">
+          {/* Drag Drop Zone */}
           <div
             className={cn(
               "border-2 border-dashed rounded-xl p-8 text-center transition-colors",
@@ -214,6 +249,7 @@ export function UploadModal({
             </p>
           </div>
 
+          {/* Uploaded Files List */}
           {files.length > 0 && (
             <div className="space-y-3">
               <h4 className="font-medium">Uploading Files</h4>

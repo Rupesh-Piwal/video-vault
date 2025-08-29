@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/supabase/sever";
+import { createClient } from "@/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import config from "../../../config";
@@ -25,7 +25,6 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const supabase = await createClient();
-
 
   const data = {
     email: formData.get("email") as string,
