@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { Upload } from "lucide-react";
 
-export default function Header() {
+export default function Header({ onOpenUpload }: { onOpenUpload: () => void }) {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -70,7 +70,6 @@ export default function Header() {
     <header className="w-full bg-white/70 backdrop-blur-lg border-b border-white/20 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* User Profile Section */}
           <div className="flex items-center space-x-4">
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-100/50 to-purple-100/50 rounded-full blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -95,7 +94,6 @@ export default function Header() {
               <p className="text-xs text-gray-500 -mt-1">{user.email}</p>
             </div>
 
-            {/* Mobile greeting */}
             <div className="block sm:hidden">
               <h2 className="text-base font-medium text-gray-800">
                 {getFirstName(user.user_metadata?.full_name || "")}
@@ -103,11 +101,10 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Right side actions */}
           <div className="flex items-center space-x-3">
             <Button
-              className="rounded-xl"
-              // onClick={() => setUploadModalOpen(true)}
+              className="rounded-xl cursor-pointer"
+              onClick={onOpenUpload}
             >
               <Upload className="h-4 w-4 mr-2" />
               Upload Video
