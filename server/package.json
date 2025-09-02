@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "start:worker": "node dist/thumbnails.worker.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.879.0",
     "@supabase/supabase-js": "^2.56.1",
@@ -20,7 +21,13 @@
     "fs-extra": "^11.3.1",
     "install": "^0.13.0",
     "ioredis": "^5.7.0",
+    "nodemon": "^3.1.10",
     "npm": "^11.5.2",
     "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
   }
 }
