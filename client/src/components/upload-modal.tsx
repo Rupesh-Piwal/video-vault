@@ -39,7 +39,7 @@ export function UploadModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
 
-  // format file size
+  // ✅ format file size helper
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -50,7 +50,7 @@ export function UploadModal({
     );
   };
 
-  // validate file
+  // ✅ file validation
   const validateFile = (file: File): string | null => {
     const maxSize = 500 * 1024 * 1024; // 500MB
     const allowedTypes = [
@@ -66,83 +66,102 @@ export function UploadModal({
     return null;
   };
 
-  // upload to S3
-  const uploadToS3 = async (uploadFile: UploadFile) => {
-    try {
-      const res = await fetch("/api/upload-url", {
-        method: "POST",
-        body: JSON.stringify({
-          fileName: uploadFile.file.name,
-          fileType: uploadFile.file.type,
-          fileSize: uploadFile.file.size,
-        }),
-      });
+  // ✅ Upload to S3
+ const uploadToS3 = async (uploadFile: UploadFile) => {
+  try {
+    const res = await fetch("/api/upload-url", {
+      method: "POST",
+      body: JSON.stringify({
+        fileName: uploadFile.file.name,
+        fileType: uploadFile.file.type,
+        fileSize: uploadFile.file.size,
+      }),
+    });
 
-      if (!res.ok) throw new Error("Failed to get upload URL");
-      const { url, key, videoId } = await res.json();
+    if (!res.ok) throw new Error("Failed to get upload URL");
+    const { url, key, videoId } = await res.json();
 
-      // attach videoId to state
-      setFiles((prev) =>
-        prev.map((f) => (f.id === uploadFile.id ? { ...f, videoId } : f))
-      );
+    setFiles((prev) =>
+      prev.map((f) => (f.id === uploadFile.id ? { ...f, videoId } : f))
+    );
 
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", url, true);
-      xhr.setRequestHeader("Content-Type", uploadFile.file.type);
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url, true);
+    xhr.setRequestHeader("Content-Type", uploadFile.file.type);
 
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          const progress = (e.loaded / e.total) * 100;
-          setFiles((prev) =>
-            prev.map((f) => (f.id === uploadFile.id ? { ...f, progress } : f))
-          );
-        }
-      };
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const progress = (e.loaded / e.total) * 100;
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadFile.id ? { ...f, progress } : f
+          )
+        );
+      }
+    };
 
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          // mark as processing
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === uploadFile.id
-                ? { ...f, status: "processing", progress: 100 }
-                : f
-            )
-          );
-        } else {
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === uploadFile.id
-                ? { ...f, status: "failed", error: "Upload failed" }
-                : f
-            )
-          );
-        }
-      };
-
-      xhr.onerror = () => {
+    xhr.onload = async () => {
+      if (xhr.status === 200 || xhr.status === 204) {
+        // 1️⃣ Frontend update
         setFiles((prev) =>
           prev.map((f) =>
             f.id === uploadFile.id
-              ? { ...f, status: "failed", error: "Upload error" }
+              ? { ...f, status: "processing", progress: 100 }
               : f
           )
         );
-      };
 
-      xhr.send(uploadFile.file);
-    } catch (err: any) {
+        // 2️⃣ DB update
+        if (videoId) {
+          const { error } = await supabase
+            .from("videos")
+            .update({ status: "PROCESSING" })
+            .eq("id", videoId);
+
+          if (error) console.error("DB update error:", error.message);
+        }
+
+        // 3️⃣ ✅ ENQUEUE BACKGROUND JOB (VERY IMPORTANT)
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/video-process`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId, s3Key: key }),
+        });
+      } else {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadFile.id
+              ? { ...f, status: "failed", error: "Upload failed" }
+              : f
+          )
+        );
+      }
+    };
+
+    xhr.onerror = () => {
       setFiles((prev) =>
         prev.map((f) =>
           f.id === uploadFile.id
-            ? { ...f, status: "failed", error: err.message }
+            ? { ...f, status: "failed", error: "Upload error" }
             : f
         )
       );
-    }
-  };
+    };
 
-  // handle files
+    xhr.send(uploadFile.file);
+  } catch (err: any) {
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.id === uploadFile.id
+          ? { ...f, status: "failed", error: err.message }
+          : f
+      )
+    );
+  }
+};
+
+
+  // ✅ handle new files
   const handleFiles = useCallback((newFiles: FileList | File[]) => {
     const fileArray = Array.from(newFiles);
     fileArray.forEach((file) => {
@@ -159,26 +178,15 @@ export function UploadModal({
     });
   }, []);
 
-  // drag/drop handlers
+  // ✅ drag/drop
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragOver(false);
-      const droppedFiles = e.dataTransfer.files;
-      if (droppedFiles.length) handleFiles(droppedFiles);
+      if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
     },
     [handleFiles]
   );
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  }, []);
 
   const handleFileInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,18 +199,9 @@ export function UploadModal({
     setFiles((prev) => prev.filter((f) => f.id !== fileId));
   };
 
-  const handleClose = () => {
-    if (onUploadComplete) {
-      onUploadComplete(files.filter((f) => f.status === "ready"));
-    }
-    setFiles([]);
-    onOpenChange(false);
-  };
-
-  // --- Supabase Realtime subscription to update processing → ready ---
+  // ✅ Supabase realtime → update video status
   useEffect(() => {
-    const videoIds = files.map((f) => f.videoId).filter(Boolean);
-    if (!videoIds.length) return;
+    if (!files.some((f) => f.videoId)) return;
 
     const channel = supabase
       .channel("video-status")
@@ -210,12 +209,10 @@ export function UploadModal({
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "videos" },
         (payload: { new: { id: string; status: string } }) => {
-          // now payload.new.id and payload.new.status are typed
-          const updated = payload.new;
           setFiles((prev) =>
             prev.map((f) =>
-              f.videoId === updated.id && updated.status === "thumbnails_ready"
-                ? { ...f, status: "ready" }
+              f.videoId === payload.new.id
+                ? { ...f, status: payload.new.status.toLowerCase() as any }
                 : f
             )
           );
@@ -228,8 +225,19 @@ export function UploadModal({
     };
   }, [files]);
 
+  // ✅ Auto close modal when all uploads are ready
+  useEffect(() => {
+    if (files.length > 0 && files.every((f) => f.status === "ready")) {
+      if (onUploadComplete) onUploadComplete(files);
+      setTimeout(() => {
+        setFiles([]);
+        onOpenChange(false);
+      }, 1000); // small delay so user sees "Upload complete!"
+    }
+  }, [files, onUploadComplete, onOpenChange]);
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Upload Videos</DialogTitle>
@@ -245,8 +253,14 @@ export function UploadModal({
                 : "border-border hover:border-accent/50"
             )}
             onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragOver(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setIsDragOver(false);
+            }}
           >
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
               <Upload className="h-8 w-8 text-muted-foreground" />
@@ -276,7 +290,7 @@ export function UploadModal({
             </p>
           </div>
 
-          {/* Uploaded Files List */}
+          {/* Files List */}
           {files.length > 0 && (
             <div className="space-y-3">
               {files.map((uploadFile) => (
@@ -345,12 +359,6 @@ export function UploadModal({
               ))}
             </div>
           )}
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={handleClose}>
-            {files.some((f) => f.status === "ready") ? "Done" : "Cancel"}
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
