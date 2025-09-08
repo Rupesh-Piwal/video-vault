@@ -1,7 +1,6 @@
 import "dotenv/config";
 import { Worker } from "bullmq";
 import Redis from "ioredis";
-import os from "os";
 import path from "path";
 import fs from "fs";
 import {
@@ -68,10 +67,14 @@ export const worker = new Worker(
     const { videoId, s3Key } = job.data as { videoId: string; s3Key: string };
     console.log(`🎬 Processing video: ${videoId}`);
 
-    const tempDir = os.tmpdir();
-    console.log("===tempDir===", tempDir);
-    const videoPath = path.join(tempDir, `${videoId}.mp4`);
-    const thumbsDir = path.join(tempDir, `thumbs-${videoId}`);
+    // 🔥 project temp dir instead of os.tmpdir()
+    const projectTempDir = path.join(process.cwd(), "tmp");
+    if (!fs.existsSync(projectTempDir)) {
+      fs.mkdirSync(projectTempDir, { recursive: true });
+    }
+
+    const videoPath = path.join(projectTempDir, `${videoId}.mp4`);
+    const thumbsDir = path.join(projectTempDir, `thumbs-${videoId}`);
 
     try {
       // 1️⃣ Download video from S3
@@ -99,8 +102,8 @@ export const worker = new Worker(
           {
             video_id: videoId,
             storage_key: thumbKey,
-            position_seconds: thumb.position, // ✅ use calculated position
-            width: 320, // TODO: dynamically detect via ffprobe if needed
+            position_seconds: thumb.position,
+            width: 320, // TODO: use ffprobe later
             height: 180,
           },
         ]);
@@ -111,7 +114,7 @@ export const worker = new Worker(
       // 4️⃣ Update video status in Supabase
       await supabase
         .from("videos")
-        .update({ status: "ready" }) // ✅ change to ready
+        .update({ status: "ready" })
         .eq("id", videoId);
 
       console.log(`✅ Thumbnails generated for video ${videoId}`);
@@ -124,7 +127,7 @@ export const worker = new Worker(
         .update({ status: "failed" })
         .eq("id", videoId);
     } finally {
-      // 5️⃣ Cleanup temp files
+      // 5️⃣ Cleanup temp files (video + thumbs)
       if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
       if (fs.existsSync(thumbsDir)) fs.rmSync(thumbsDir, { recursive: true });
     }
