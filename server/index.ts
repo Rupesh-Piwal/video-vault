@@ -30,7 +30,17 @@ app.post("/jobs/video-process", async (req, res) => {
       return res.status(400).json({ error: "Missing videoId or s3Key" });
     }
 
-    await videoQueue.add("video-processing", { videoId, s3Key });
+    await videoQueue.add(
+      "video-processing",
+      { videoId, s3Key },
+      {
+        attempts: 5, // max retry attempts
+        backoff: {
+          type: "exponential", // or 'fixed'
+          delay: 2000, // 2s initial, then 4s, 8s, etc
+        },
+      }
+    );
 
     res.json({ success: true, message: "Job queued successfully" });
   } catch (err) {

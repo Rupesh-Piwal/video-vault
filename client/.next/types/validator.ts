@@ -89,16 +89,16 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   handler satisfies RouteHandlerConfig<"/api/auth/callback">
 }
 
-// Validate ../../src/app/api/upload-complete/route.ts
-{
-  const handler = {} as typeof import("../../src/app/api/upload-complete/route.js")
-  handler satisfies RouteHandlerConfig<"/api/upload-complete">
-}
-
 // Validate ../../src/app/api/upload-url/route.ts
 {
   const handler = {} as typeof import("../../src/app/api/upload-url/route.js")
   handler satisfies RouteHandlerConfig<"/api/upload-url">
+}
+
+// Validate ../../src/app/api/video-url/route.ts
+{
+  const handler = {} as typeof import("../../src/app/api/video-url/route.jse.js")
+  handler satisfies RouteHandlerConfig<"/api/video-url">
 }
 
 

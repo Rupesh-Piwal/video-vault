@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Clock, Loader2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,31 @@ interface Video {
 }
 
 export function VideoCard({ video }: { video: Video }) {
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [loadingUrl, setLoadingUrl] = useState(false);
+  const [urlError, setUrlError] = useState(false);
+
+  useEffect(() => {
+    if (video.status === "READY") {
+      setLoadingUrl(true);
+      fetch(`/api/video-url?key=${encodeURIComponent(video.storage_key)}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch signed URL");
+          return res.json();
+        })
+        .then((data) => {
+          setVideoUrl(data.url);
+          console.log("VIDEO-URL----->", data.url);
+          setLoadingUrl(false);
+        })
+        .catch((err) => {
+          console.error("Error fetching signed URL:", err);
+          setUrlError(true);
+          setLoadingUrl(false);
+        });
+    }
+  }, [video.status, video.storage_key]);
+
   const getStatusIcon = () => {
     switch (video.status) {
       case "UPLOADING":
@@ -27,9 +53,6 @@ export function VideoCard({ video }: { video: Video }) {
         return <Clock className="h-5 w-5 text-gray-400" />;
     }
   };
-
-  // ✅ Temporary: construct S3 public URL (replace with CloudFront/signed URL in prod)
-  const videoUrl = `https://YOUR_BUCKET_NAME.s3.amazonaws.com/${video.storage_key}`;
 
   return (
     <Card className="rounded-xl shadow-md overflow-hidden">
@@ -51,7 +74,18 @@ export function VideoCard({ video }: { video: Video }) {
 
         {/* ✅ Show video preview only when READY */}
         {video.status === "READY" && (
-          <video src={videoUrl} controls className="w-full rounded-lg" />
+          <>
+            {loadingUrl && (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span>Loading video...</span>
+              </div>
+            )}
+            {urlError && <p className="text-red-500">Failed to load video.</p>}
+            {videoUrl && !loadingUrl && !urlError && (
+              <video src={videoUrl} controls className="w-full rounded-lg" />
+            )}
+          </>
         )}
       </CardContent>
     </Card>
