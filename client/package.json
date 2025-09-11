@@ -19,6 +19,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.56.0",
+    "axios": "^1.11.0",
     "bullmq": "^5.58.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

@@ -4,13 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/supabase/client";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Download, Loader2 } from "lucide-react";
 import { VideoPlayer } from "./components/video-player";
 import { VideoThumbnails } from "./components/video-thumbnails";
 import { VideoMetadata } from "./components/video-metadata";
 import { ShareLinksSection } from "./components/share-links-section";
 import { CreateShareLinkModal } from "./components/create-share-link-modal";
-
 
 interface VideoPageProps {
   videoId: string;
@@ -24,6 +23,9 @@ export default function VideoPage({ videoId }: VideoPageProps) {
   const [thumbnails, setThumbnails] = useState<any[]>([]);
   const [shareLinks, setShareLinks] = useState<any[]>([]);
   const [createLinkModalOpen, setCreateLinkModalOpen] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [loadingUrl, setLoadingUrl] = useState(false);
+  const [urlError, setUrlError] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -53,12 +55,30 @@ export default function VideoPage({ videoId }: VideoPageProps) {
     fetchData();
   }, [supabase, videoId]);
 
-  if (!video) {
-    return <div className="p-6">Loading...</div>;
-  }
+  // Fetch signed URL when video data is available and status is READY
+  useEffect(() => {
+    if (video?.status === "READY") {
+      setLoadingUrl(true);
+      fetch(`/api/video-url?key=${encodeURIComponent(video.storage_key)}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch signed URL");
+          return res.json();
+        })
+        .then((data) => {
+          setVideoUrl(data.url);
+          setLoadingUrl(false);
+        })
+        .catch((err) => {
+          console.error("Error fetching signed URL:", err);
+          setUrlError(true);
+          setLoadingUrl(false);
+        });
+    }
+  }, [video?.status, video?.storage_key]);
 
-  const bucketName = process.env.NEXT_PUBLIC_AWS_BUCKET_NAME;
-  const videoUrl = `https://${bucketName}.s3.amazonaws.com/${video.storage_key}`;
+  if (!video) {
+    return <div className="p-6">Loading video data...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -80,16 +100,18 @@ export default function VideoPage({ videoId }: VideoPageProps) {
               </h1>
               <p className="text-muted-foreground text-sm">Video Viewer</p>
             </div>
-            <Button
-              variant="outline"
-              className="rounded-xl bg-transparent"
-              asChild
-            >
-              <a href={videoUrl} download>
-                <Download className="h-4 w-4 mr-2" />
-                Download
-              </a>
-            </Button>
+            {videoUrl && (
+              <Button
+                variant="outline"
+                className="rounded-xl bg-transparent"
+                asChild
+              >
+                <a href={videoUrl} download={video.original_filename}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </a>
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -98,12 +120,27 @@ export default function VideoPage({ videoId }: VideoPageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Video Player Section */}
           <div className="lg:col-span-2 space-y-6">
-            <VideoPlayer
-              videoUrl={videoUrl}
-              thumbnails={thumbnails}
-              type={video.mime_type}
-              filename={video.original_filename}
-            />
+            {loadingUrl && (
+              <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Loading video...</span>
+                </div>
+              </div>
+            )}
+            {urlError && (
+              <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
+                <p className="text-red-500">Failed to load video.</p>
+              </div>
+            )}
+            {videoUrl && !loadingUrl && !urlError && (
+              <VideoPlayer
+                videoUrl={videoUrl}
+                thumbnails={thumbnails}
+                type={video.mime_type}
+                filename={video.original_filename}
+              />
+            )}
             <VideoThumbnails thumbnails={thumbnails} />
           </div>
 
@@ -116,6 +153,7 @@ export default function VideoPage({ videoId }: VideoPageProps) {
               duration={video.duration_seconds}
               uploadDate={video.created_at}
               readyDate={video.ready_at}
+              // status={video.status}
             />
             <ShareLinksSection
               shareLinks={shareLinks}

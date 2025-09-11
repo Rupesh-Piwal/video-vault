@@ -1,9 +1,15 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+
+interface Thumbnail {
+  id: string;
+  storage_key: string;
+}
 
 interface VideoThumbnailsProps {
-  thumbnails: { id: string; storage_key: string }[];
+  thumbnails: Thumbnail[];
   filename?: string;
 }
 
@@ -11,8 +17,6 @@ export function VideoThumbnails({
   thumbnails,
   filename,
 }: VideoThumbnailsProps) {
-  const bucketName = process.env.NEXT_PUBLIC_AWS_BUCKET_NAME;
-
   return (
     <Card>
       <CardHeader>
@@ -22,16 +26,12 @@ export function VideoThumbnails({
         {thumbnails.length > 0 ? (
           <div className="grid grid-cols-4 gap-3">
             {thumbnails.map((t, i) => (
-              <div
+              <ThumbnailItem
                 key={t.id}
-                className="aspect-video bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-              >
-                <img
-                  src={`https://${bucketName}.s3.amazonaws.com/${t.storage_key}`}
-                  alt={`${filename} thumbnail ${i + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+                thumbnail={t}
+                index={i}
+                filename={filename}
+              />
             ))}
           </div>
         ) : (
@@ -41,5 +41,49 @@ export function VideoThumbnails({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function ThumbnailItem({
+  thumbnail,
+  index,
+  filename,
+}: {
+  thumbnail: Thumbnail;
+  index: number;
+  filename?: string;
+}) {
+  const [thumbUrl, setThumbUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchThumbUrl() {
+      try {
+        const res = await fetch(
+          `/api/thumbnail-url?key=${encodeURIComponent(thumbnail.storage_key)}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch thumbnail URL");
+        const data = await res.json();
+        setThumbUrl(data.url);
+      } catch (err) {
+        console.error("Error fetching thumbnail URL:", err);
+      }
+    }
+    fetchThumbUrl();
+  }, [thumbnail.storage_key]);
+
+  return (
+    <div className="aspect-video bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
+      {thumbUrl ? (
+        <img
+          src={thumbUrl}
+          alt={`${filename} thumbnail ${index + 1}`}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+          Loading...
+        </div>
+      )}
+    </div>
   );
 }

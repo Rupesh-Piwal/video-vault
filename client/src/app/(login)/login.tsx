@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/supabase/client";
-import config from "../../../client/config";
 import SVGLogo from "@/components/svg-logo";
+import config from "../../../config";
 
 export function Login({ mode = "signin" }: { mode?: "signin" | "signup" }) {
   const [loading, setLoading] = useState(false);

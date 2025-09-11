@@ -57,15 +57,7 @@ export function VideoMetadata({
             <p className="text-sm font-medium text-muted-foreground">Size</p>
             <p className="text-sm">{formatSize(size)}</p>
           </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Duration
-            </p>
-            <p className="text-sm flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {formatDuration(duration)}
-            </p>
-          </div>
+
           <div>
             <p className="text-sm font-medium text-muted-foreground">
               Upload Date
@@ -73,15 +65,6 @@ export function VideoMetadata({
             <p className="text-sm flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               {new Date(uploadDate).toLocaleString()}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Ready Date
-            </p>
-            <p className="text-sm flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {readyDate ? new Date(readyDate).toLocaleString() : "—"}
             </p>
           </div>
         </div>

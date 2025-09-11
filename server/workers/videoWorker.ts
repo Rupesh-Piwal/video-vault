@@ -77,6 +77,8 @@ export const worker = new Worker(
     try {
       // 1️⃣ Download video
       await downloadFromS3(process.env.AWS_BUCKET_NAME!, s3Key, videoPath);
+      console.log("Bucket Name:", process.env.AWS_BUCKET_NAME);
+
 
       // 2️⃣ Generate thumbnails
       const thumbnails: ThumbnailInfo[] = await generateThumbnails(

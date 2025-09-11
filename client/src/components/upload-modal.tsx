@@ -13,12 +13,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, X, CheckCircle, AlertCircle, File } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/supabase/client";
+import axios from "axios";
 
 interface UploadFile {
   id: string;
   file: File;
   progress: number;
-  status: "uploading" | "processing" | "ready" | "failed";
+  status: "UPLOADING" | "PROCESSING" | "READY" | "FAILED";
   error: string | null;
   videoId?: string;
 }
@@ -67,99 +68,74 @@ export function UploadModal({
   };
 
   // ✅ Upload to S3
- const uploadToS3 = async (uploadFile: UploadFile) => {
-  try {
-    const res = await fetch("/api/upload-url", {
-      method: "POST",
-      body: JSON.stringify({
-        fileName: uploadFile.file.name,
-        fileType: uploadFile.file.type,
-        fileSize: uploadFile.file.size,
-      }),
-    });
+  const uploadToS3 = async (uploadFile: UploadFile) => {
+    try {
+      const res = await fetch("/api/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: uploadFile.file.name,
+          fileType: uploadFile.file.type,
+          fileSize: uploadFile.file.size,
+        }),
+      });
 
-    if (!res.ok) throw new Error("Failed to get upload URL");
-    const { url, key, videoId } = await res.json();
+      if (!res.ok) throw new Error("Failed to get upload URL");
+      const { url, key, videoId } = await res.json();
 
-    setFiles((prev) =>
-      prev.map((f) => (f.id === uploadFile.id ? { ...f, videoId } : f))
-    );
+      setFiles((prev) =>
+        prev.map((f) => (f.id === uploadFile.id ? { ...f, videoId } : f))
+      );
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("PUT", url, true);
-    xhr.setRequestHeader("Content-Type", uploadFile.file.type);
+      // ✅ Upload with axios + progress tracking
+      await axios.put(url, uploadFile.file, {
+        headers: {
+          "Content-Type": uploadFile.file.type,
+        },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const progress = (progressEvent.loaded / progressEvent.total) * 100;
+            setFiles((prev) =>
+              prev.map((f) => (f.id === uploadFile.id ? { ...f, progress } : f))
+            );
+          }
+        },
+      });
 
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        const progress = (e.loaded / e.total) * 100;
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === uploadFile.id ? { ...f, progress } : f
-          )
-        );
-      }
-    };
-
-    xhr.onload = async () => {
-      if (xhr.status === 200 || xhr.status === 204) {
-        // 1️⃣ Frontend update
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === uploadFile.id
-              ? { ...f, status: "processing", progress: 100 }
-              : f
-          )
-        );
-
-        // 2️⃣ DB update
-        if (videoId) {
-          const { error } = await supabase
-            .from("videos")
-            .update({ status: "PROCESSING" })
-            .eq("id", videoId);
-
-          if (error) console.error("DB update error:", error.message);
-        }
-
-        // 3️⃣ ✅ ENQUEUE BACKGROUND JOB (VERY IMPORTANT)
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/video-process`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ videoId, s3Key: key }),
-        });
-      } else {
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === uploadFile.id
-              ? { ...f, status: "failed", error: "Upload failed" }
-              : f
-          )
-        );
-      }
-    };
-
-    xhr.onerror = () => {
+      // ✅ After upload success
       setFiles((prev) =>
         prev.map((f) =>
           f.id === uploadFile.id
-            ? { ...f, status: "failed", error: "Upload error" }
+            ? { ...f, status: "PROCESSING", progress: 100 }
             : f
         )
       );
-    };
 
-    xhr.send(uploadFile.file);
-  } catch (err: any) {
-    setFiles((prev) =>
-      prev.map((f) =>
-        f.id === uploadFile.id
-          ? { ...f, status: "failed", error: err.message }
-          : f
-      )
-    );
-  }
-};
+      if (videoId) {
+        const { error } = await supabase
+          .from("videos")
+          .update({ status: "PROCESSING" })
+          .eq("id", videoId);
 
+        if (error) console.error("DB update error:", error.message);
+      }
+
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/video-process`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId, s3Key: key }),
+      });
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.id === uploadFile.id
+            ? { ...f, status: "FAILED", error: err.message }
+            : f
+        )
+      );
+    }
+  };
 
   // ✅ handle new files
   const handleFiles = useCallback((newFiles: FileList | File[]) => {
@@ -170,7 +146,7 @@ export function UploadModal({
         id: crypto.randomUUID(),
         file,
         progress: 0,
-        status: error ? "failed" : "uploading",
+        status: error ? "FAILED" : "UPLOADING",
         error,
       };
       setFiles((prev) => [...prev, uploadFile]);
@@ -201,21 +177,41 @@ export function UploadModal({
 
   // ✅ Supabase realtime → update video status
   useEffect(() => {
-    if (!files.some((f) => f.videoId)) return;
-
     const channel = supabase
       .channel("video-status")
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "videos" },
-        (payload: { new: { id: string; status: string } }) => {
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.videoId === payload.new.id
-                ? { ...f, status: payload.new.status.toLowerCase() as any }
-                : f
-            )
-          );
+        { event: "*", schema: "public", table: "videos" },
+        (payload) => {
+          setFiles((prev) => {
+            if (payload.eventType === "INSERT") {
+              const newVid = payload.new as { id: string; status: string };
+
+              return [
+                ...prev,
+                {
+                  id: newVid.id,
+                  file: null as any,
+                  progress: 100,
+                  error: null,
+                  videoId: newVid.id,
+                  status: newVid.status as UploadFile["status"],
+                },
+              ];
+            }
+
+            if (payload.eventType === "UPDATE") {
+              return prev.map((f) =>
+                f.videoId === payload.new.id
+                  ? {
+                      ...f,
+                      status: payload.new.status as UploadFile["status"],
+                    }
+                  : f
+              );
+            }
+            return prev;
+          });
         }
       )
       .subscribe();
@@ -223,22 +219,25 @@ export function UploadModal({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [files]);
+  }, [supabase, setFiles]);
 
-  // ✅ Auto close modal when all uploads are ready
+  // ✅ Auto close modal when all uploads are READY
   useEffect(() => {
-    if (files.length > 0 && files.every((f) => f.status === "ready")) {
+    if (files.length > 0 && files.every((f) => f.status === "READY")) {
       if (onUploadComplete) onUploadComplete(files);
       setTimeout(() => {
         setFiles([]);
         onOpenChange(false);
-      }, 1000); // small delay so user sees "Upload complete!"
+      }, 1000);
     }
   }, [files, onUploadComplete, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent
+        aria-describedby={undefined}
+        className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+      >
         <DialogHeader>
           <DialogTitle>Upload Videos</DialogTitle>
         </DialogHeader>
@@ -300,18 +299,20 @@ export function UploadModal({
                       <File className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="font-medium truncate">
-                          {uploadFile.file.name}
+                          {uploadFile.file?.name || "Unknown file"}
                         </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatFileSize(uploadFile.file.size)}
-                        </p>
+                        {uploadFile.file && (
+                          <p className="text-sm text-muted-foreground">
+                            {formatFileSize(uploadFile.file.size)}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {uploadFile.status === "ready" && (
+                      {uploadFile.status === "READY" && (
                         <CheckCircle className="h-5 w-5 text-green-600" />
                       )}
-                      {uploadFile.status === "failed" && (
+                      {uploadFile.status === "FAILED" && (
                         <AlertCircle className="h-5 w-5 text-red-600" />
                       )}
                       <Button
@@ -325,7 +326,7 @@ export function UploadModal({
                     </div>
                   </div>
 
-                  {uploadFile.status === "uploading" && (
+                  {uploadFile.status === "UPLOADING" && (
                     <div className="space-y-2">
                       <Progress value={uploadFile.progress} className="h-2" />
                       <p className="text-sm text-muted-foreground">
@@ -334,7 +335,7 @@ export function UploadModal({
                     </div>
                   )}
 
-                  {uploadFile.status === "processing" && (
+                  {uploadFile.status === "PROCESSING" && (
                     <div className="space-y-2">
                       <Progress value={100} className="h-2" />
                       <p className="text-sm text-muted-foreground">
@@ -343,13 +344,13 @@ export function UploadModal({
                     </div>
                   )}
 
-                  {uploadFile.status === "ready" && (
+                  {uploadFile.status === "READY" && (
                     <p className="text-sm text-green-600 font-medium">
                       Upload complete!
                     </p>
                   )}
 
-                  {uploadFile.status === "failed" && uploadFile.error && (
+                  {uploadFile.status === "FAILED" && uploadFile.error && (
                     <Alert variant="destructive" className="mt-2">
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>{uploadFile.error}</AlertDescription>
