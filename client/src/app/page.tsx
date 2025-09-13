@@ -4,17 +4,16 @@ import { UploadModal } from "@/components/upload-modal";
 import { useState } from "react";
 
 export default function Page() {
-  const [uploadModalOpen, setUploadModalOpen] = useState(false); 
 
   return (
     <div>
-      <Header onOpenUpload={() => setUploadModalOpen(true)} />
+      <Header/>
 
-      <UploadModal
+      {/* <UploadModal
         open={uploadModalOpen}
         onOpenChange={setUploadModalOpen}
         // onUploadComplete={handleUploadComplete}
-      />
+      /> */}
     </div>
   );
 }

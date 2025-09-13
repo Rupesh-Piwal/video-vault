@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { Upload } from "lucide-react";
 
-export default function Header({ onOpenUpload }: { onOpenUpload: () => void }) {
+export default function Header() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -104,7 +104,7 @@ export default function Header({ onOpenUpload }: { onOpenUpload: () => void }) {
           <div className="flex items-center space-x-3">
             <Button
               className="rounded-xl cursor-pointer"
-              onClick={onOpenUpload}
+              // onClick={onOpenUpload}
             >
               <Upload className="h-4 w-4 mr-2" />
               Upload Video

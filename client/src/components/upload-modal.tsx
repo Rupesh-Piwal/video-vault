@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,10 +14,11 @@ import { Upload, X, CheckCircle, AlertCircle, File } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/supabase/client";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 interface UploadFile {
   id: string;
-  file: File;
+  file?: File | null; // ✅ allow null for realtime inserts
   progress: number;
   status: "UPLOADING" | "PROCESSING" | "READY" | "FAILED";
   error: string | null;
@@ -38,9 +39,11 @@ export function UploadModal({
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
 
-  // ✅ format file size helper
+  // ✅ memoize supabase client
+  const supabase = useMemo(() => createClient(), []);
+
+  // ✅ helper: format file size
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -54,29 +57,37 @@ export function UploadModal({
   // ✅ file validation
   const validateFile = (file: File): string | null => {
     const maxSize = 500 * 1024 * 1024; // 500MB
-    const allowedTypes = [
-      "video/mp4",
-      "video/webm",
-      "video/ogg",
-      "video/avi",
-      "video/mov",
-    ];
     if (file.size > maxSize) return "File size exceeds 500MB limit";
-    if (!allowedTypes.includes(file.type))
-      return "Only video files are allowed";
-    return null;
+
+    const allowedExtensions = [
+      "mp4",
+      "webm",
+      "ogg",
+      "avi",
+      "mov",
+      "mkv",
+      "hevc",
+      "ts",
+      "m4v",
+    ];
+
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (file.type?.startsWith("video/")) return null;
+    if (ext && allowedExtensions.includes(ext)) return null;
+
+    return "Only video files are allowed";
   };
 
-  // ✅ Upload to S3
+  // ✅ upload to S3
   const uploadToS3 = async (uploadFile: UploadFile) => {
     try {
       const res = await fetch("/api/upload-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fileName: uploadFile.file.name,
-          fileType: uploadFile.file.type,
-          fileSize: uploadFile.file.size,
+          fileName: uploadFile.file?.name,
+          fileType: uploadFile.file?.type,
+          fileSize: uploadFile.file?.size,
         }),
       });
 
@@ -87,10 +98,10 @@ export function UploadModal({
         prev.map((f) => (f.id === uploadFile.id ? { ...f, videoId } : f))
       );
 
-      // ✅ Upload with axios + progress tracking
-      await axios.put(url, uploadFile.file, {
+      // ✅ upload to S3
+      await axios.put(url, uploadFile.file!, {
         headers: {
-          "Content-Type": uploadFile.file.type,
+          "Content-Type": uploadFile.file?.type || "application/octet-stream",
         },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
@@ -102,7 +113,7 @@ export function UploadModal({
         },
       });
 
-      // ✅ After upload success
+      // mark as processing
       setFiles((prev) =>
         prev.map((f) =>
           f.id === uploadFile.id
@@ -111,12 +122,13 @@ export function UploadModal({
         )
       );
 
+      toast.success(`${uploadFile.file?.name} uploaded successfully!`);
+
       if (videoId) {
         const { error } = await supabase
           .from("videos")
           .update({ status: "PROCESSING" })
           .eq("id", videoId);
-
         if (error) console.error("DB update error:", error.message);
       }
 
@@ -134,13 +146,13 @@ export function UploadModal({
             : f
         )
       );
+      toast.error(`${uploadFile.file?.name} failed to upload.`);
     }
   };
 
   // ✅ handle new files
   const handleFiles = useCallback((newFiles: FileList | File[]) => {
-    const fileArray = Array.from(newFiles);
-    fileArray.forEach((file) => {
+    Array.from(newFiles).forEach((file) => {
       const error = validateFile(file);
       const uploadFile: UploadFile = {
         id: crypto.randomUUID(),
@@ -175,7 +187,7 @@ export function UploadModal({
     setFiles((prev) => prev.filter((f) => f.id !== fileId));
   };
 
-  // ✅ Supabase realtime → update video status
+  // ✅ supabase realtime
   useEffect(() => {
     const channel = supabase
       .channel("video-status")
@@ -186,12 +198,11 @@ export function UploadModal({
           setFiles((prev) => {
             if (payload.eventType === "INSERT") {
               const newVid = payload.new as { id: string; status: string };
-
               return [
                 ...prev,
                 {
                   id: newVid.id,
-                  file: null as any,
+                  file: null,
                   progress: 100,
                   error: null,
                   videoId: newVid.id,
@@ -203,10 +214,7 @@ export function UploadModal({
             if (payload.eventType === "UPDATE") {
               return prev.map((f) =>
                 f.videoId === payload.new.id
-                  ? {
-                      ...f,
-                      status: payload.new.status as UploadFile["status"],
-                    }
+                  ? { ...f, status: payload.new.status as UploadFile["status"] }
                   : f
               );
             }
@@ -217,14 +225,18 @@ export function UploadModal({
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe(); // ✅ proper cleanup
     };
-  }, [supabase, setFiles]);
+  }, [supabase]);
 
-  // ✅ Auto close modal when all uploads are READY
+  // ✅ auto close (only if all ready and none failed)
   useEffect(() => {
-    if (files.length > 0 && files.every((f) => f.status === "READY")) {
-      if (onUploadComplete) onUploadComplete(files);
+    if (
+      files.length > 0 &&
+      files.every((f) => f.status === "READY") &&
+      files.every((f) => !f.error)
+    ) {
+      onUploadComplete?.(files);
       setTimeout(() => {
         setFiles([]);
         onOpenChange(false);
@@ -243,7 +255,7 @@ export function UploadModal({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6">
-          {/* Drag Drop Zone */}
+          {/* Drop Zone */}
           <div
             className={cn(
               "border-2 border-dashed rounded-xl p-8 text-center transition-colors",
@@ -265,9 +277,7 @@ export function UploadModal({
               <Upload className="h-8 w-8 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-medium mb-2">Drop your videos here</h3>
-            <p className="text-muted-foreground mb-4">
-              or click to browse files
-            </p>
+            <p className="text-muted-foreground mb-4">or click to browse</p>
             <Button
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
@@ -284,12 +294,11 @@ export function UploadModal({
               className="hidden"
             />
             <p className="text-xs text-muted-foreground mt-4">
-              Maximum file size: 500MB. Supported formats: MP4, WebM, OGG, AVI,
-              MOV
+              Max 500MB. Formats: MP4, WebM, OGG, AVI, MOV, MKV
             </p>
           </div>
 
-          {/* Files List */}
+          {/* File List */}
           {files.length > 0 && (
             <div className="space-y-3">
               {files.map((uploadFile) => (

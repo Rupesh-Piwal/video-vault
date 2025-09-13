@@ -1,38 +1,22 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileVideo, Clock, Calendar } from "lucide-react";
-
-export interface VideoMetadataProps {
-  filename: string;
-  type: string;
-  size: number;
-  duration: number;
-  uploadDate: string;
-  readyDate: string | null;
-}
+import { FileVideo, Calendar } from "lucide-react";
+import {
+  VideoMetadataProps,
+  formatSize,
+  formatDate,
+  formatDuration,
+} from "@/lib/metadata-utils";
 
 export function VideoMetadata({
   filename,
   type,
   size,
-  duration,
   uploadDate,
+  duration,
   readyDate,
 }: VideoMetadataProps) {
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const formatDuration = (seconds: number | null) => {
-    if (!seconds) return "—";
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -57,16 +41,30 @@ export function VideoMetadata({
             <p className="text-sm font-medium text-muted-foreground">Size</p>
             <p className="text-sm">{formatSize(size)}</p>
           </div>
-
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              Duration
+            </p>
+            <p className="text-sm">{formatDuration(duration)}</p>
+          </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
               Upload Date
             </p>
             <p className="text-sm flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {new Date(uploadDate).toLocaleString()}
+              <Calendar className="h-3 w-3" /> {formatDate(uploadDate)}
             </p>
           </div>
+          {readyDate && (
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Ready Date
+              </p>
+              <p className="text-sm flex items-center gap-1">
+                <Calendar className="h-3 w-3" /> {formatDate(readyDate)}
+              </p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
