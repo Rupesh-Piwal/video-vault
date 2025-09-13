@@ -21,12 +21,12 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  
   formatDateOnly,
   formatDuration,
   formatSize,
   VideoCardProps,
 } from "@/lib/metadata-utils";
+import toast from "react-hot-toast"; // Import react-hot-toast
 
 export function VideoCard({
   filename,
@@ -44,6 +44,7 @@ export function VideoCard({
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [downloading, setDownloading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -66,6 +67,78 @@ export function VideoCard({
         });
     }
   }, [status, storage_key]);
+
+  const handleDownload = async () => {
+    if (!videoUrl) return;
+
+    try {
+      setDownloading(true);
+
+      // Show loading toast
+      const toastId = toast.loading(
+        <div className="flex flex-col">
+          <span className="font-medium">Starting download</span>
+          <span className="text-sm text-gray-500">{filename}</span>
+        </div>,
+        {
+          duration: Infinity, // Keep until we manually dismiss
+        }
+      );
+
+      // Fetch the video file
+      const response = await fetch(videoUrl);
+
+      if (!response.ok) {
+        throw new Error(`Download failed with status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = filename || "video.mp4";
+
+      // Trigger the download
+      document.body.appendChild(a);
+      a.click();
+
+      // Update toast to success
+      toast.success(
+        <div className="flex flex-col">
+          <span className="font-medium">Download completed</span>
+          <span className="text-sm text-gray-500">
+            {filename} • {formatSize(blob.size)}
+          </span>
+        </div>,
+        {
+          id: toastId,
+          duration: 4000,
+        }
+      );
+
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Download failed:", error);
+
+      // Show error toast
+      toast.error(
+        <div className="flex flex-col">
+          <span className="font-medium">Download failed</span>
+          <span className="text-sm text-gray-500">Please try again later</span>
+        </div>,
+        {
+          duration: 4000,
+        }
+      );
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const getStatusConfig = () => {
     switch (status) {
@@ -303,12 +376,18 @@ export function VideoCard({
         {status === "READY" && !loadingUrl && (
           <div className="flex items-center gap-2 pt-2">
             <Button
+              onClick={handleDownload}
+              disabled={downloading || !videoUrl}
               variant="outline"
               size="sm"
               className="flex-1 bg-gray-50 hover:bg-gray-100 border-gray-200"
             >
-              <Download className="h-4 w-4 mr-2" />
-              Download
+              {downloading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              {downloading ? "Downloading..." : "Download"}
             </Button>
             <Button
               variant="outline"

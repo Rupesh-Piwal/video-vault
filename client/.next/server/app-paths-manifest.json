@@ -1,5 +1,6 @@
 {
   "/api/video-url/route": "app/api/video-url/route.js",
+  "/api/upload-url/route": "app/api/upload-url/route.js",
   "/page": "app/page.js",
   "/dashboard/page": "app/dashboard/page.js",
   "/videos/[id]/page": "app/videos/[id]/page.js"
