@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,14 @@ import {
   MoreHorizontal,
   Play,
   FileVideo,
+  Pause,
+  Maximize,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  formatDate,
+  
   formatDateOnly,
   formatDuration,
   formatSize,
@@ -35,6 +39,12 @@ export function VideoCard({
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loadingUrl, setLoadingUrl] = useState(false);
   const [urlError, setUrlError] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (status === "READY") {
@@ -97,6 +107,39 @@ export function VideoCard({
     }
   };
 
+  const handlePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      const current = videoRef.current.currentTime;
+      const duration = videoRef.current.duration;
+      setCurrentTime(current);
+      setProgress((current / duration) * 100);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      setVideoDuration(videoRef.current.duration);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
   const statusConfig = getStatusConfig();
 
   return (
@@ -118,18 +161,72 @@ export function VideoCard({
         {status === "READY" && videoUrl && !loadingUrl && !urlError ? (
           <div className="relative w-full h-full group/video">
             <video
+              ref={videoRef}
               src={videoUrl}
               className="w-full h-full object-cover"
               preload="metadata"
-              muted
+              muted={isMuted}
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
             />
-            {/* Play Button Overlay */}
-            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/video:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-              <div className="bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg">
-                <Play
-                  className="h-6 w-6 text-gray-800 ml-0.5"
-                  fill="currentColor"
-                />
+
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/video:opacity-100 transition-all duration-300">
+              {/* Play/Pause Button */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <button
+                  onClick={handlePlayPause}
+                  className="bg-white rounded-full p-3 shadow-lg hover:scale-105 transition-all duration-200"
+                >
+                  {isPlaying ? (
+                    <Pause className="h-6 w-6 text-black" fill="currentColor" />
+                  ) : (
+                    <Play
+                      className="h-6 w-6 text-black ml-0.5"
+                      fill="currentColor"
+                    />
+                  )}
+                </button>
+              </div>
+
+              {/* Bottom Controls */}
+              <div className="absolute bottom-3 left-3 right-3">
+                {/* Progress Bar */}
+                <div className="mb-2">
+                  <div className="w-full h-1 bg-white/30 rounded-full">
+                    <div
+                      className="h-full bg-white rounded-full transition-all duration-150"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Control Buttons */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={toggleMute}
+                      className="bg-white/20 rounded-full p-1.5 hover:bg-white/30 transition-all duration-200"
+                    >
+                      {isMuted ? (
+                        <VolumeX className="h-3 w-3 text-white" />
+                      ) : (
+                        <Volume2 className="h-3 w-3 text-white" />
+                      )}
+                    </button>
+                    <span className="text-white text-xs font-medium">
+                      {Math.floor(currentTime / 60)}:
+                      {String(Math.floor(currentTime % 60)).padStart(2, "0")} /{" "}
+                      {Math.floor(videoDuration / 60)}:
+                      {String(Math.floor(videoDuration % 60)).padStart(2, "0")}
+                    </span>
+                  </div>
+
+                  <button className="bg-white/20 rounded-full p-1.5 hover:bg-white/30 transition-all duration-200">
+                    <Maximize className="h-3 w-3 text-white" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -159,19 +256,15 @@ export function VideoCard({
             ) : (
               <div className="flex flex-col items-center gap-3">
                 <div className="bg-white/80 backdrop-blur-sm rounded-full p-4">
-                  {status === "PROCESSING" ||
-                  status === "UPLOADING" ? (
+                  {status === "PROCESSING" || status === "UPLOADING" ? (
                     statusConfig.icon
                   ) : (
                     <FileVideo className="h-8 w-8 text-gray-600" />
                   )}
                 </div>
-                {(status === "PROCESSING" ||
-                  status === "UPLOADING") && (
+                {(status === "PROCESSING" || status === "UPLOADING") && (
                   <p className="text-sm font-medium text-gray-700">
-                    {status === "UPLOADING"
-                      ? "Uploading..."
-                      : "Processing..."}
+                    {status === "UPLOADING" ? "Uploading..." : "Processing..."}
                   </p>
                 )}
               </div>

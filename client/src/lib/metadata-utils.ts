@@ -42,8 +42,8 @@ export const formatDate = (dateStr: string | null): string => {
   }-${d.getFullYear()}, ${d.toLocaleTimeString()}`;
   return formatted;
 };
-export const formatDateOnly = (dateStr: string)=> {
+export const formatDateOnly = (dateStr: string) => {
   const d = new Date(dateStr);
   // returns "day-month-year" only
   return `${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`;
-}
+};
