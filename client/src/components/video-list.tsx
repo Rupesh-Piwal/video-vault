@@ -5,61 +5,73 @@ import { createClient } from "@/supabase/client";
 import { VideoCard } from "./video-card";
 import { VideoCardProps } from "@/lib/metadata-utils";
 
-// interface Video {
-//   id: string;
-//   original_filename: string;
-//   status: string;
-//   storage_key: string;
-//   created_at: string;
-//   filename: string;
-//   type: string;
-//   size: number;
-//   duration: number | null;
-//   uploadDate: string;
-// }
+interface VideoRow {
+  id: string;
+  original_filename?: string;
+  filename?: string;
+  mime_type?: string;
+  type?: string;
+  size_bytes?: number;
+  duration_seconds?: number | null;
+  created_at: string;
+  ready_at?: string | null;
+  status: string;
+  storage_key: string;
+}
 
 export function VideoList() {
   const [videos, setVideos] = useState<VideoCardProps[]>([]);
   const supabase = createClient();
 
-  // Fetch videos
+  // ✅ Map DB row → VideoCardProps
+  function mapVideoRow(row: VideoRow): VideoCardProps {
+    return {
+      id: row.id,
+      filename: row.original_filename || row.filename || "Unknown",
+      type: row.mime_type || row.type || "unknown",
+      size: row.size_bytes ?? 0,
+      duration: row.duration_seconds ?? null,
+      uploadDate: row.created_at,
+      readyDate: row.ready_at ?? null,
+      status: row.status,
+      storage_key: row.storage_key,
+    };
+  }
+
   useEffect(() => {
+    // Fetch initial videos
     const fetchVideos = async () => {
       const { data, error } = await supabase
         .from("videos")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (!error && data) setVideos(data);
+      if (!error && data) {
+        setVideos(data.map(mapVideoRow));
+      }
     };
 
     fetchVideos();
 
-    // Realtime subscription for updates
-
+    // Realtime subscription for all events
     const channel = supabase
       .channel("video-list")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "videos" },
-        (payload) => {
-          console.log("Realtime payload:", payload);
-
+        (payload: any) => {
           setVideos((prev) => {
             if (payload.eventType === "INSERT") {
-              // naya video add karo
-              return [...prev, payload.new as any];
+              return [...prev, mapVideoRow(payload.new)];
             }
 
             if (payload.eventType === "UPDATE") {
-              // status ya aur fields update karo
               return prev.map((v) =>
-                v.id === payload.new.id ? { ...v, ...payload.new } : v
+                v.id === payload.new.id ? mapVideoRow(payload.new) : v
               );
             }
 
             if (payload.eventType === "DELETE") {
-              // deleted video hatao
               return prev.filter((v) => v.id !== payload.old.id);
             }
 
@@ -70,7 +82,7 @@ export function VideoList() {
       .subscribe();
 
     return () => {
-      channel.unsubscribe(); // ✅ latest supabase cleanup
+      channel.unsubscribe();
     };
   }, [supabase]);
 

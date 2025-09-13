@@ -12,6 +12,7 @@ import {
 import { createClient } from "@supabase/supabase-js";
 import { Readable } from "stream";
 import { generateThumbnails, ThumbnailInfo } from "../utils/generateThumbnails";
+import ffmpeg from "fluent-ffmpeg"; // ✅ For video duration
 
 // Redis connection
 const connection = new Redis(process.env.REDIS_URL!, {
@@ -59,6 +60,16 @@ async function uploadToS3(bucket: string, key: string, filePath: string) {
   await s3.send(command);
 }
 
+// Get video duration using ffmpeg
+function getVideoDuration(videoPath: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(videoPath, (err, metadata) => {
+      if (err) return reject(err);
+      resolve(metadata.format.duration || 0);
+    });
+  });
+}
+
 // BullMQ Worker
 export const worker = new Worker(
   "video-processing",
@@ -66,7 +77,6 @@ export const worker = new Worker(
     const { videoId, s3Key } = job.data as { videoId: string; s3Key: string };
     console.log(`🎬 Processing video: ${videoId}`);
 
-    // Project temp dir
     const projectTempDir = path.join(process.cwd(), "tmp");
     if (!fs.existsSync(projectTempDir))
       fs.mkdirSync(projectTempDir, { recursive: true });
@@ -108,21 +118,29 @@ export const worker = new Worker(
           console.error("❌ Supabase insert error (thumbnail):", error);
       }
 
-      // 4️⃣ Update video status → READY
+      // 3.1️⃣ Get video duration
+      const duration = await getVideoDuration(videoPath);
+
+      // 4️⃣ Update video status → READY + duration
       const { error: updateError } = await supabase
         .from("videos")
-        .update({ status: "READY" })
+        .update({
+          status: "READY",
+          duration_seconds: duration,
+          ready_at: new Date().toISOString(),
+        })
         .eq("id", videoId);
 
       if (updateError) {
         console.error("❌ Supabase update error (video ready):", updateError);
       } else {
-        console.log(`✅ Video status updated to READY for ${videoId}`);
+        console.log(
+          `✅ Video status updated to READY for ${videoId}, duration: ${duration}s`
+        );
       }
     } catch (err) {
       console.error("❌ Worker error:", err);
 
-      // Mark video as FAILED
       const { error: failError } = await supabase
         .from("videos")
         .update({ status: "FAILED" })
@@ -132,7 +150,6 @@ export const worker = new Worker(
         console.error("❌ Supabase update error (video failed):", failError);
       else console.log(`⚠️ Video status marked as FAILED for ${videoId}`);
     } finally {
-      // 5️⃣ Cleanup temp files
       if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
       if (fs.existsSync(thumbsDir)) fs.rmSync(thumbsDir, { recursive: true });
     }

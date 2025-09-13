@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   formatDate,
+  formatDateOnly,
   formatDuration,
   formatSize,
   VideoCardProps,
@@ -25,7 +26,6 @@ import {
 
 export function VideoCard({
   filename,
-  type,
   size,
   uploadDate,
   duration,
@@ -202,7 +202,7 @@ export function VideoCard({
           <div className="flex items-center justify-between text-sm text-gray-600">
             <span className="font-medium">{formatSize(size)}</span>
             <span>{formatDuration(duration)}</span>
-            <span>{formatDate(uploadDate)}</span>
+            <span>{formatDateOnly(uploadDate)}</span>
           </div>
         )}
 

@@ -14,6 +14,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.879.0",
     "@supabase/supabase-js": "^2.56.1",
+    "@types/fluent-ffmpeg": "^2.1.27",
     "bullmq": "^5.58.4",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
