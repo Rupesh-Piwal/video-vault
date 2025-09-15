@@ -3,7 +3,8 @@
 import { createClient } from "@/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import config from "../../../client/config";
+import config from "../../../config";
+
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -19,8 +20,8 @@ export async function login(formData: FormData) {
     redirect("/error");
   }
 
-  revalidatePath("/", "layout");
-  redirect("/");
+  revalidatePath("/dashboard", "layout");
+  redirect("/dashboard");
 }
 
 export async function signup(formData: FormData) {

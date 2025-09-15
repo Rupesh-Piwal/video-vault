@@ -21,11 +21,6 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/video-url/route.js"
     ],
-    "/api/upload-url/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/upload-url/route.js"
-    ],
     "/videos/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",

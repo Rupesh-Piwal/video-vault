@@ -10,6 +10,7 @@ import { VideoThumbnails } from "./components/video-thumbnails";
 import { VideoMetadata } from "./components/video-metadata";
 import { ShareLinksSection } from "./components/share-links-section";
 import { CreateShareLinkModal } from "./components/create-share-link-modal";
+import { DownloadButton } from "@/components/download-button";
 
 interface VideoPageProps {
   videoId: string;
@@ -88,8 +89,8 @@ export default function VideoPage({ videoId }: VideoPageProps) {
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
-              onClick={() => router.push("/")}
-              className="rounded-xl"
+              onClick={() => router.push("/dashboard")}
+              className="rounded-xl cursor-pointer"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
@@ -101,16 +102,10 @@ export default function VideoPage({ videoId }: VideoPageProps) {
               <p className="text-muted-foreground text-sm">Video Viewer</p>
             </div>
             {videoUrl && (
-              <Button
-                variant="outline"
-                className="rounded-xl bg-transparent"
-                asChild
-              >
-                <a href={videoUrl} download={video.original_filename}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </a>
-              </Button>
+              <DownloadButton
+                videoUrl={videoUrl}
+                filename={video.original_filename}
+              />
             )}
           </div>
         </div>

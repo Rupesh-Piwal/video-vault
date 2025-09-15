@@ -1,5 +1,7 @@
 "use client";
 
+import type React from "react";
+
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   Dialog,
@@ -10,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, X, CheckCircle, AlertCircle, File } from "lucide-react";
+import { X, CheckCircle, AlertCircle, CloudUpload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/supabase/client";
 import axios from "axios";
@@ -18,7 +20,7 @@ import toast from "react-hot-toast";
 
 interface UploadFile {
   id: string;
-  file?: File | null; // ✅ allow null for realtime inserts
+  file?: File | null;
   progress: number;
   status: "UPLOADING" | "PROCESSING" | "READY" | "FAILED";
   error: string | null;
@@ -40,10 +42,8 @@ export function UploadModal({
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ memoize supabase client
   const supabase = useMemo(() => createClient(), []);
 
-  // ✅ helper: format file size
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -54,7 +54,6 @@ export function UploadModal({
     );
   };
 
-  // ✅ file validation
   const validateFile = (file: File): string | null => {
     const maxSize = 500 * 1024 * 1024; // 500MB
     if (file.size > maxSize) return "File size exceeds 500MB limit";
@@ -69,16 +68,23 @@ export function UploadModal({
       "hevc",
       "ts",
       "m4v",
+      "wmv",
+      "flv",
+      "3gp",
+      "mpeg",
+      "mpg",
+      "m2v",
+      "m4p",
+      "m4v",
     ];
 
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (file.type?.startsWith("video/")) return null;
     if (ext && allowedExtensions.includes(ext)) return null;
 
-    return "Only video files are allowed";
+    return "Only video files are allowed (MP4, WebM, AVI, MOV, MKV, etc.)";
   };
 
-  // ✅ upload to S3
   const uploadToS3 = async (uploadFile: UploadFile) => {
     try {
       const res = await fetch("/api/upload-url", {
@@ -98,10 +104,9 @@ export function UploadModal({
         prev.map((f) => (f.id === uploadFile.id ? { ...f, videoId } : f))
       );
 
-      // ✅ upload to S3
       await axios.put(url, uploadFile.file!, {
         headers: {
-          "Content-Type": uploadFile.file?.type || "application/octet-stream",
+          "Content-Type": uploadFile.file?.type || "video/mp4",
         },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
@@ -113,7 +118,6 @@ export function UploadModal({
         },
       });
 
-      // mark as processing
       setFiles((prev) =>
         prev.map((f) =>
           f.id === uploadFile.id
@@ -150,7 +154,6 @@ export function UploadModal({
     }
   };
 
-  // ✅ handle new files
   const handleFiles = useCallback((newFiles: FileList | File[]) => {
     Array.from(newFiles).forEach((file) => {
       const error = validateFile(file);
@@ -166,7 +169,6 @@ export function UploadModal({
     });
   }, []);
 
-  // ✅ drag/drop
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
@@ -187,7 +189,6 @@ export function UploadModal({
     setFiles((prev) => prev.filter((f) => f.id !== fileId));
   };
 
-  // ✅ supabase realtime
   useEffect(() => {
     const channel = supabase
       .channel("video-status")
@@ -225,11 +226,10 @@ export function UploadModal({
       .subscribe();
 
     return () => {
-      channel.unsubscribe(); // ✅ proper cleanup
+      channel.unsubscribe();
     };
   }, [supabase]);
 
-  // ✅ auto close (only if all ready and none failed)
   useEffect(() => {
     if (
       files.length > 0 &&
@@ -244,24 +244,33 @@ export function UploadModal({
     }
   }, [files, onUploadComplete, onOpenChange]);
 
+  const getFileIcon = () => {
+    return "🎥";
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         aria-describedby={undefined}
-        className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+        className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col p-0 bg-[#18191A] border-[#2B2C2D] text-white"
       >
-        <DialogHeader>
-          <DialogTitle>Upload Videos</DialogTitle>
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-[#2B2C2D]">
+          <DialogTitle className="text-xl font-semibold text-white">
+            Upload Videos
+          </DialogTitle>
+          <p className="text-sm text-[#8C8C8C] mt-1">
+            Select and upload video files
+          </p>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-6">
+        <div className="flex-1 overflow-y-auto space-y-4 px-6 pb-6">
           {/* Drop Zone */}
           <div
             className={cn(
-              "border-2 border-dashed rounded-xl p-8 text-center transition-colors",
+              "border-2 border-dashed rounded-xl p-8 text-center transition-colors bg-[#2B2C2D]/30",
               isDragOver
-                ? "border-accent bg-accent/5"
-                : "border-border hover:border-accent/50"
+                ? "border-white bg-white/5"
+                : "border-[#383838] hover:border-[#606060]"
             )}
             onDrop={handleDrop}
             onDragOver={(e) => {
@@ -273,17 +282,20 @@ export function UploadModal({
               setIsDragOver(false);
             }}
           >
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-              <Upload className="h-8 w-8 text-muted-foreground" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#383838] flex items-center justify-center border border-[#606060]">
+              <CloudUpload className="h-8 w-8 text-[#8C8C8C]" />
             </div>
-            <h3 className="text-lg font-medium mb-2">Drop your videos here</h3>
-            <p className="text-muted-foreground mb-4">or click to browse</p>
+            <h3 className="text-lg font-medium mb-2 text-white">
+              Choose a video or drag & drop it here
+            </h3>
+            <p className="text-[#8C8C8C] mb-6">
+              MP4, WebM, AVI, MOV, MKV and other video formats, up to 500MB
+            </p>
             <Button
-              variant="outline"
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-xl"
+              className="rounded-lg px-6 bg-white text-black hover:bg-[#8C8C8C] hover:text-white"
             >
-              Choose Files
+              Browse Files
             </Button>
             <input
               ref={fileInputRef}
@@ -293,76 +305,113 @@ export function UploadModal({
               onChange={handleFileInput}
               className="hidden"
             />
-            <p className="text-xs text-muted-foreground mt-4">
-              Max 500MB. Formats: MP4, WebM, OGG, AVI, MOV, MKV
-            </p>
           </div>
 
           {/* File List */}
           {files.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {files.map((uploadFile) => (
-                <div key={uploadFile.id} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-2">
+                <div
+                  key={uploadFile.id}
+                  className="border border-[#2B2C2D] rounded-lg p-4 bg-[#2B2C2D]/50"
+                >
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <File className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                      <div className="text-2xl">{getFileIcon()}</div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate">
+                        <p className="font-medium truncate text-white">
                           {uploadFile.file?.name || "Unknown file"}
                         </p>
                         {uploadFile.file && (
-                          <p className="text-sm text-muted-foreground">
-                            {formatFileSize(uploadFile.file.size)}
-                          </p>
+                          <div className="flex items-center gap-2 text-sm text-[#8C8C8C] mt-1">
+                            <span>{formatFileSize(uploadFile.file.size)}</span>
+                            {uploadFile.status === "UPLOADING" && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                                  Uploading...
+                                </span>
+                              </>
+                            )}
+                            {uploadFile.status === "PROCESSING" && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                  Processing...
+                                </span>
+                              </>
+                            )}
+                            {uploadFile.status === "READY" && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1 text-green-400">
+                                  <CheckCircle className="h-3 w-3" />
+                                  Completed
+                                </span>
+                              </>
+                            )}
+                            {uploadFile.status === "FAILED" && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1 text-red-400">
+                                  <AlertCircle className="h-3 w-3" />
+                                  Failed
+                                </span>
+                              </>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {uploadFile.status === "READY" && (
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                      )}
-                      {uploadFile.status === "FAILED" && (
-                        <AlertCircle className="h-5 w-5 text-red-600" />
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFile(uploadFile.id)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFile(uploadFile.id)}
+                      className="h-8 w-8 p-0 rounded-full hover:bg-[#383838] text-[#8C8C8C] hover:text-white"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
 
                   {uploadFile.status === "UPLOADING" && (
                     <div className="space-y-2">
-                      <Progress value={uploadFile.progress} className="h-2" />
-                      <p className="text-sm text-muted-foreground">
-                        Uploading... {Math.round(uploadFile.progress)}%
-                      </p>
+                      <Progress
+                        value={uploadFile.progress}
+                        className="h-2 bg-[#383838]"
+                      />
+                      <div className="flex justify-between text-xs text-[#8C8C8C]">
+                        <span>{Math.round(uploadFile.progress)}%</span>
+                        <span>
+                          {formatFileSize(
+                            (uploadFile.progress / 100) *
+                              (uploadFile.file?.size || 0)
+                          )}{" "}
+                          of {formatFileSize(uploadFile.file?.size || 0)}
+                        </span>
+                      </div>
                     </div>
                   )}
 
                   {uploadFile.status === "PROCESSING" && (
                     <div className="space-y-2">
-                      <Progress value={100} className="h-2" />
-                      <p className="text-sm text-muted-foreground">
+                      <Progress value={100} className="h-2 bg-[#383838]" />
+                      <p className="text-sm text-[#8C8C8C]">
                         Processing video...
                       </p>
                     </div>
                   )}
 
-                  {uploadFile.status === "READY" && (
-                    <p className="text-sm text-green-600 font-medium">
-                      Upload complete!
-                    </p>
-                  )}
-
                   {uploadFile.status === "FAILED" && uploadFile.error && (
-                    <Alert variant="destructive" className="mt-2">
+                    <Alert
+                      variant="destructive"
+                      className="mt-2 py-2 bg-red-500/10 border-red-500/30"
+                    >
                       <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{uploadFile.error}</AlertDescription>
+                      <AlertDescription className="text-sm text-red-400">
+                        {uploadFile.error}
+                      </AlertDescription>
                     </Alert>
                   )}
                 </div>

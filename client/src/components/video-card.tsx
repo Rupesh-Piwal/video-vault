@@ -15,7 +15,6 @@ import {
   Play,
   FileVideo,
   Pause,
-  Maximize,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -24,11 +23,14 @@ import {
   formatDateOnly,
   formatDuration,
   formatSize,
-  VideoCardProps,
+  type VideoCardProps,
 } from "@/lib/metadata-utils";
-import toast from "react-hot-toast"; // Import react-hot-toast
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { DownloadButton } from "./download-button";
 
 export function VideoCard({
+  id,
   filename,
   size,
   uploadDate,
@@ -44,8 +46,10 @@ export function VideoCard({
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
-  const [downloading, setDownloading] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     if (status === "READY") {
@@ -57,7 +61,6 @@ export function VideoCard({
         })
         .then((data) => {
           setVideoUrl(data.url);
-          console.log("VIDEO-URL----->", data.url);
           setLoadingUrl(false);
         })
         .catch((err) => {
@@ -68,114 +71,39 @@ export function VideoCard({
     }
   }, [status, storage_key]);
 
-  const handleDownload = async () => {
-    if (!videoUrl) return;
 
-    try {
-      setDownloading(true);
-
-      // Show loading toast
-      const toastId = toast.loading(
-        <div className="flex flex-col">
-          <span className="font-medium">Starting download</span>
-          <span className="text-sm text-gray-500">{filename}</span>
-        </div>,
-        {
-          duration: Infinity, // Keep until we manually dismiss
-        }
-      );
-
-      // Fetch the video file
-      const response = await fetch(videoUrl);
-
-      if (!response.ok) {
-        throw new Error(`Download failed with status: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-
-      // Create a download link
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.style.display = "none";
-      a.href = url;
-      a.download = filename || "video.mp4";
-
-      // Trigger the download
-      document.body.appendChild(a);
-      a.click();
-
-      // Update toast to success
-      toast.success(
-        <div className="flex flex-col">
-          <span className="font-medium">Download completed</span>
-          <span className="text-sm text-gray-500">
-            {filename} • {formatSize(blob.size)}
-          </span>
-        </div>,
-        {
-          id: toastId,
-          duration: 4000,
-        }
-      );
-
-      // Clean up
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error("Download failed:", error);
-
-      // Show error toast
-      toast.error(
-        <div className="flex flex-col">
-          <span className="font-medium">Download failed</span>
-          <span className="text-sm text-gray-500">Please try again later</span>
-        </div>,
-        {
-          duration: 4000,
-        }
-      );
-    } finally {
-      setDownloading(false);
-    }
-  };
 
   const getStatusConfig = () => {
     switch (status) {
       case "UPLOADING":
         return {
           text: "UPLOADING",
-          className: "bg-blue-100 text-blue-700 border-blue-200",
+          className: "bg-blue-500/20 text-blue-400 border-blue-500/30",
           icon: <Loader2 className="h-3 w-3 animate-spin" />,
-          bgGradient: "from-blue-400/20 to-cyan-400/20",
         };
       case "PROCESSING":
         return {
           text: "PROCESSING",
-          className: "bg-amber-100 text-amber-700 border-amber-200",
+          className: "bg-amber-500/20 text-amber-400 border-amber-500/30",
           icon: <Clock className="h-3 w-3" />,
-          bgGradient: "from-amber-400/20 to-orange-400/20",
         };
       case "READY":
         return {
           text: "READY",
-          className: "bg-emerald-100 text-emerald-700 border-emerald-200",
+          className: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
           icon: <CheckCircle className="h-3 w-3" />,
-          bgGradient: "from-emerald-400/20 to-green-400/20",
         };
       case "FAILED":
         return {
           text: "FAILED",
-          className: "bg-red-100 text-red-700 border-red-200",
+          className: "bg-red-500/20 text-red-400 border-red-500/30",
           icon: <XCircle className="h-3 w-3" />,
-          bgGradient: "from-red-400/20 to-pink-400/20",
         };
       default:
         return {
           text: "UNKNOWN",
-          className: "bg-gray-100 text-gray-700 border-gray-200",
+          className: "bg-[#606060]/20 text-[#8C8C8C] border-[#606060]/30",
           icon: <Clock className="h-3 w-3" />,
-          bgGradient: "from-gray-400/20 to-slate-400/20",
         };
     }
   };
@@ -216,27 +144,32 @@ export function VideoCard({
   const statusConfig = getStatusConfig();
 
   return (
-    <Card className="group relative overflow-hidden bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 hover:border-gray-300">
+    <Card
+      className="group relative overflow-hidden bg-[#18191A] border border-[#2B2C2D] rounded-xl hover:border-[#383838] transition-all duration-300 hover:shadow-lg hover:shadow-black/20"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Video Thumbnail/Preview Area */}
-      <div className="relative aspect-video overflow-hidden rounded-t-2xl">
-        {/* Status Badge - Positioned absolutely */}
-        <div className="absolute top-4 left-4 z-10">
+      <div className="relative aspect-video overflow-hidden">
+        {/* Status Badge */}
+        <div className="absolute top-3 left-3 z-10">
           <Badge
             className={cn(
-              "text-xs font-semibold px-3 py-1 rounded-full border",
+              "text-xs font-medium px-2.5 py-1 rounded-md border backdrop-blur-sm",
               statusConfig.className
             )}
           >
+            <span className="mr-1.5">{statusConfig.icon}</span>
             {statusConfig.text}
           </Badge>
         </div>
 
         {status === "READY" && videoUrl && !loadingUrl && !urlError ? (
-          <div className="relative w-full h-full group/video">
+          <div className="relative w-full h-full group/video hover:cursor-pointer">
             <video
               ref={videoRef}
               src={videoUrl}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover bg-[#2B2C2D]"
               preload="metadata"
               muted={isMuted}
               onTimeUpdate={handleTimeUpdate}
@@ -245,29 +178,32 @@ export function VideoCard({
               onPause={() => setIsPlaying(false)}
             />
 
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/video:opacity-100 transition-all duration-300">
-              {/* Play/Pause Button */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <button
-                  onClick={handlePlayPause}
-                  className="bg-white rounded-full p-3 shadow-lg hover:scale-105 transition-all duration-200"
-                >
-                  {isPlaying ? (
-                    <Pause className="h-6 w-6 text-black" fill="currentColor" />
-                  ) : (
-                    <Play
-                      className="h-6 w-6 text-black ml-0.5"
-                      fill="currentColor"
-                    />
-                  )}
-                </button>
-              </div>
+            {/* Video Controls Overlay */}
+            <div
+              className={cn(
+                "absolute inset-0 bg-black/60 transition-all duration-300 flex items-center justify-center",
+                isHovered ? "opacity-100" : "opacity-0"
+              )}
+            >
+              <button
+                onClick={handlePlayPause}
+                className="bg-white/90 hover:bg-white rounded-full p-3 shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer"
+              >
+                {isPlaying ? (
+                  <Pause className="h-5 w-5 text-black" fill="currentColor" />
+                ) : (
+                  <Play
+                    className="h-5 w-5 text-black ml-0.5"
+                    fill="currentColor"
+                  />
+                )}
+              </button>
 
               {/* Bottom Controls */}
               <div className="absolute bottom-3 left-3 right-3">
                 {/* Progress Bar */}
                 <div className="mb-2">
-                  <div className="w-full h-1 bg-white/30 rounded-full">
+                  <div className="w-full h-1 bg-white/20 rounded-full">
                     <div
                       className="h-full bg-white rounded-full transition-all duration-150"
                       style={{ width: `${progress}%` }}
@@ -280,7 +216,7 @@ export function VideoCard({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={toggleMute}
-                      className="bg-white/20 rounded-full p-1.5 hover:bg-white/30 transition-all duration-200"
+                      className="bg-black/40 hover:bg-black/60 rounded-full p-1.5 transition-all duration-200"
                     >
                       {isMuted ? (
                         <VolumeX className="h-3 w-3 text-white" />
@@ -295,48 +231,39 @@ export function VideoCard({
                       {String(Math.floor(videoDuration % 60)).padStart(2, "0")}
                     </span>
                   </div>
-
-                  <button className="bg-white/20 rounded-full p-1.5 hover:bg-white/30 transition-all duration-200">
-                    <Maximize className="h-3 w-3 text-white" />
-                  </button>
                 </div>
               </div>
             </div>
           </div>
         ) : (
-          <div
-            className={cn(
-              "w-full h-full bg-gradient-to-br flex items-center justify-center",
-              statusConfig.bgGradient
-            )}
-          >
+          <div className="w-full h-full bg-[#2B2C2D] flex items-center justify-center">
             {loadingUrl ? (
               <div className="flex flex-col items-center gap-3">
-                <div className="bg-white/80 backdrop-blur-sm rounded-full p-4">
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
+                <div className="bg-[#383838] rounded-full p-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-[#8C8C8C]" />
                 </div>
-                <p className="text-sm font-medium text-gray-700">Loading...</p>
+                <p className="text-sm font-medium text-[#8C8C8C]">Loading...</p>
               </div>
             ) : urlError ? (
               <div className="flex flex-col items-center gap-3">
-                <div className="bg-white/80 backdrop-blur-sm rounded-full p-4">
-                  <XCircle className="h-8 w-8 text-red-500" />
+                <div className="bg-[#383838] rounded-full p-4">
+                  <XCircle className="h-6 w-6 text-red-400" />
                 </div>
-                <p className="text-sm font-medium text-gray-700">
+                <p className="text-sm font-medium text-[#8C8C8C]">
                   Failed to load
                 </p>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3">
-                <div className="bg-white/80 backdrop-blur-sm rounded-full p-4">
+                <div className="bg-[#383838] rounded-full p-4">
                   {status === "PROCESSING" || status === "UPLOADING" ? (
                     statusConfig.icon
                   ) : (
-                    <FileVideo className="h-8 w-8 text-gray-600" />
+                    <FileVideo className="h-6 w-6 text-[#8C8C8C]" />
                   )}
                 </div>
                 {(status === "PROCESSING" || status === "UPLOADING") && (
-                  <p className="text-sm font-medium text-gray-700">
+                  <p className="text-sm font-medium text-[#8C8C8C]">
                     {status === "UPLOADING" ? "Uploading..." : "Processing..."}
                   </p>
                 )}
@@ -347,58 +274,38 @@ export function VideoCard({
       </div>
 
       {/* Content Area */}
-      <CardContent className="p-6 space-y-4">
+      <CardContent className="p-4 space-y-3">
         {/* Video Title */}
-        {loadingUrl ? (
-          <div className="w-3/4 h-6 bg-gray-200 rounded animate-pulse"></div>
-        ) : (
-          <h3 className="font-semibold text-gray-900 text-lg leading-tight truncate">
-            {filename}
-          </h3>
-        )}
+        <h3 className="font-medium text-white text-sm leading-tight truncate">
+          {filename}
+        </h3>
 
         {/* Video Metadata */}
-        {loadingUrl ? (
-          <div className="flex items-center justify-between">
-            <div className="w-16 h-4 bg-gray-200 rounded animate-pulse"></div>
-            <div className="w-12 h-4 bg-gray-200 rounded animate-pulse"></div>
-            <div className="w-20 h-4 bg-gray-200 rounded animate-pulse"></div>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <span className="font-medium">{formatSize(size)}</span>
-            <span>{formatDuration(duration)}</span>
-            <span>{formatDateOnly(uploadDate)}</span>
-          </div>
-        )}
+        <div className="flex items-center justify-between text-xs text-[#8C8C8C]">
+          <span>{formatSize(size)}</span>
+          <span>{formatDuration(duration)}</span>
+          <span>{formatDateOnly(uploadDate)}</span>
+        </div>
 
         {/* Action Buttons - Only show for READY videos */}
         {status === "READY" && !loadingUrl && (
-          <div className="flex items-center gap-2 pt-2">
-            <Button
-              onClick={handleDownload}
-              disabled={downloading || !videoUrl}
-              variant="outline"
-              size="sm"
-              className="flex-1 bg-gray-50 hover:bg-gray-100 border-gray-200"
-            >
-              {downloading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4 mr-2" />
-              )}
-              {downloading ? "Downloading..." : "Download"}
-            </Button>
+          <div className="flex items-center gap-2 pt-1">
+            <DownloadButton videoUrl={videoUrl} filename={filename} />
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 bg-gray-50 hover:bg-gray-100 border-gray-200"
+              className="flex-1 bg-[#2B2C2D] hover:bg-[#383838] border-[#383838] text-[#8C8C8C] hover:text-white text-xs h-8"
+              onClick={() => router.push(`/videos/${id}`)}
             >
-              <ExternalLink className="h-4 w-4 mr-2" />
+              <ExternalLink className="h-3 w-3 mr-1.5" />
               View
             </Button>
-            <Button variant="ghost" size="sm" className="px-2">
-              <MoreHorizontal className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="px-2 h-8 hover:bg-[#383838] text-[#8C8C8C] hover:text-white"
+            >
+              <MoreHorizontal className="h-3 w-3" />
             </Button>
           </div>
         )}

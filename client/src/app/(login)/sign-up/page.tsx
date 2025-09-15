@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 export default async function SignUpPage() {
   const user = await getUser();
   if (user) {
-    return redirect("/");
+    return redirect("/dashboard");
   }
 
   return <Login mode="signup" />;
