@@ -89,6 +89,12 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   handler satisfies RouteHandlerConfig<"/api/auth/callback">
 }
 
+// Validate ../../src/app/api/thumbnail-url/[id]/route.ts
+{
+  const handler = {} as typeof import("../../src/app/api/thumbnail-url/[id]/route.js")
+  handler satisfies RouteHandlerConfig<"/api/thumbnail-url/[id]">
+}
+
 // Validate ../../src/app/api/thumbnail-url/route.ts
 {
   const handler = {} as typeof import("../../src/app/api/thumbnail-url/route.js")

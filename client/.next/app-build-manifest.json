@@ -40,6 +40,11 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/auth/callback/route.js"
+    ],
+    "/api/thumbnail-url/[id]/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/thumbnail-url/[id]/route.js"
     ]
   }
 }

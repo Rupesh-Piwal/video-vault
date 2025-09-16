@@ -50,6 +50,7 @@ export function VideoCard({
   const [isHovered, setIsHovered] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const router = useRouter();
@@ -166,6 +167,35 @@ export function VideoCard({
     }
   };
 
+  useEffect(() => {
+    if (status !== "READY") return; // only fetch when ready
+
+    let isMounted = true;
+
+    async function fetchThumbnails() {
+      try {
+        const res = await fetch(`/api/thumbnail-url/${id}`);
+        if (!res.ok) throw new Error("Failed to fetch thumbnails");
+        const data = await res.json();
+
+        if (isMounted && data.urls?.length) {
+          // pick middle thumbnail
+          const midIndex = Math.floor(data.urls.length / 2);
+          console.log("Setting poster URL:", data.urls[midIndex]);
+          setPosterUrl(data.urls[midIndex]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch thumbnails", err);
+      }
+    }
+
+    fetchThumbnails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, status]);
+
   const statusConfig = getStatusConfig();
 
   return (
@@ -195,6 +225,7 @@ export function VideoCard({
               <video
                 ref={videoRef}
                 src={videoUrl}
+                poster={posterUrl || undefined}
                 className="w-full h-full object-cover bg-[#2B2C2D]"
                 preload="metadata"
                 muted={isMuted}
