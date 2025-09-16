@@ -11,6 +11,7 @@ import { VideoMetadata } from "./components/video-metadata";
 import { ShareLinksSection } from "./components/share-links-section";
 import { CreateShareLinkModal } from "./components/create-share-link-modal";
 import { DownloadButton } from "@/components/download-button";
+import { TextShimmer } from "../../../components/motion-primitives/text-shimmer";
 
 interface VideoPageProps {
   videoId: string;
@@ -78,33 +79,49 @@ export default function VideoPage({ videoId }: VideoPageProps) {
   }, [video?.status, video?.storage_key]);
 
   if (!video) {
-    return <div className="p-6">Loading video data...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <TextShimmer
+            className="text-lg md:text-xl font-semibold"
+            duration={1.2}
+          >
+            Loading video data...
+          </TextShimmer>
+          <Loader2 className="h-6 w-6 text-foreground animate-spin" />
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-[#2B2C2D] bg-[#18191A]/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between space-x-4">
             <Button
               variant="ghost"
               onClick={() => router.push("/dashboard")}
-              className="rounded-xl cursor-pointer"
+              className="rounded-xl cursor-pointer border"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
             <div className="flex-1">
-              <h1 className="text-xl font-semibold text-foreground">
+              <h1 className="md:text-xl font-semibold text-foreground">
                 {video.original_filename}
               </h1>
-              <p className="text-muted-foreground text-sm">Video Viewer</p>
+              <p className="text-muted-foreground text-[10px] md:text-sm">
+                Video Viewer
+              </p>
             </div>
             {videoUrl && (
-              <DownloadButton
-                videoUrl={videoUrl}
-                filename={video.original_filename}
-              />
+              <div className="flex-shrink-0">
+                <DownloadButton
+                  videoUrl={videoUrl}
+                  filename={video.original_filename}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -114,18 +131,24 @@ export default function VideoPage({ videoId }: VideoPageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {loadingUrl && (
-              <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
+              <div className="flex items-center justify-center min-h-[16rem] md:min-h-[20rem] bg-muted rounded-lg w-full">
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Loading video...</span>
+                  <TextShimmer className="font-mono text-sm" duration={1}>
+                    Generating code...
+                  </TextShimmer>
                 </div>
               </div>
             )}
+
             {urlError && (
-              <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
-                <p className="text-red-500">Failed to load video.</p>
+              <div className="flex items-center justify-center min-h-[16rem] md:min-h-[20rem] bg-muted rounded-lg w-full">
+                <p className="text-red-500 text-center">
+                  Failed to load video.
+                </p>
               </div>
             )}
+
             {videoUrl && !loadingUrl && !urlError && (
               <VideoPlayer
                 id={video.id}

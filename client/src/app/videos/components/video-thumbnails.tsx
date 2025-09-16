@@ -1,7 +1,9 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Image } from "lucide-react";
 import { useEffect, useState } from "react";
+import { TextShimmer } from "../../../../components/motion-primitives/text-shimmer";
 
 interface Thumbnail {
   id: string;
@@ -20,7 +22,9 @@ export function VideoThumbnails({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Thumbnails</CardTitle>
+        <CardTitle className="text-lg flex items-center flex-row gap-2">
+          <Image size={20} /> Thumbnails
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {thumbnails.length > 0 ? (
@@ -80,9 +84,15 @@ function ThumbnailItem({
           className="w-full h-full object-cover"
         />
       ) : (
-        <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+        <TextShimmer
+          className="flex items-center justify-center h-full font-mono text-sm"
+          duration={1}
+        >
           Loading...
-        </div>
+        </TextShimmer>
+        // <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+
+        // </div>
       )}
     </div>
   );

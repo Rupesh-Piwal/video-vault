@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UploadModal } from "@/components/upload-modal";
 import { VideoList } from "@/components/video-list";
 import { Upload } from "lucide-react";
-import SVGLogo from "@/components/svg-logo";
+
 
 export default function DashboardPage() {
   const [open, setOpen] = useState(false);

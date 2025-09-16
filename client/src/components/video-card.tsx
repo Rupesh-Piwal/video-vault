@@ -28,6 +28,7 @@ import {
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { DownloadButton } from "./download-button";
+import { TextShimmer } from "../../components/motion-primitives/text-shimmer";
 
 export function VideoCard({
   id,
@@ -302,9 +303,10 @@ export function VideoCard({
                   <div className="bg-[#383838] rounded-full p-4">
                     <Loader2 className="h-6 w-6 animate-spin text-[#8C8C8C]" />
                   </div>
-                  <p className="text-sm font-medium text-[#8C8C8C]">
+                
+                  <TextShimmer className="font-mono text-sm" duration={1}>
                     Loading...
-                  </p>
+                  </TextShimmer>
                 </div>
               ) : urlError ? (
                 <div className="flex flex-col items-center gap-3">
@@ -358,7 +360,7 @@ export function VideoCard({
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 bg-[#2B2C2D] hover:bg-[#383838] border-[#383838] text-[#8C8C8C] hover:text-white text-xs h-8"
+                className="flex-1 bg-[#2B2C2D] hover:bg-[#383838] border-[#383838] text-[#8C8C8C] hover:text-white text-xs h-8 cursor-pointer"
                 onClick={() => router.push(`/videos/${id}`)}
               >
                 <ExternalLink className="h-3 w-3 mr-1.5" />

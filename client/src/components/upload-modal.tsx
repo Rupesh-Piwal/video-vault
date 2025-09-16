@@ -59,31 +59,238 @@ export function UploadModal({
     const maxSize = 500 * 1024 * 1024; // 500MB
     if (file.size > maxSize) return "File size exceeds 500MB limit";
 
+    // Debug logging - check what we're getting
+    console.log("=== FILE DEBUG INFO ===");
+    console.log("File name:", file.name);
+    console.log("File type:", file.type);
+    console.log("File size:", file.size);
+    console.log("=======================");
+
+    // Method 1: Check MIME type - allow any video MIME type
+    if (file.type && file.type.startsWith("video/")) {
+      console.log("✅ Passed MIME type check");
+      return null;
+    }
+
+    // Method 2: Check file extension - comprehensive list of video formats
+    const ext = file.name.split(".").pop()?.toLowerCase();
     const allowedExtensions = [
+      // Common video formats
       "mp4",
-      "webm",
-      "ogg",
       "avi",
       "mov",
-      "mkv",
-      "hevc",
-      "ts",
-      "m4v",
       "wmv",
       "flv",
+      "webm",
+      "mkv",
+      "m4v",
       "3gp",
-      "mpeg",
+      "3g2",
+      // MPEG formats
       "mpg",
+      "mpeg",
+      "m1v",
       "m2v",
       "m4p",
       "m4v",
+      // Advanced codecs
+      "hevc",
+      "h264",
+      "h265",
+      "x264",
+      "x265",
+      // Streaming formats
+      "ts",
+      "m2ts",
+      "mts",
+      "m3u8",
+      "f4v",
+      "f4p",
+      "f4a",
+      "f4b",
+      // Professional formats
+      "mxf",
+      "r3d",
+      "braw",
+      "prores",
+      "dnxhd",
+      "avchd",
+      // Container formats
+      "ogv",
+      "ogg",
+      "dv",
+      "divx",
+      "xvid",
+      // Mobile formats
+      "3gpp",
+      "3gp2",
+      // Less common formats
+      "asf",
+      "rm",
+      "rmvb",
+      "vob",
+      "dat",
+      "amv",
+      "mpv",
+      "qt",
+      // Proprietary formats
+      "swf",
+      "nsv",
+      "fla",
+      "flr",
+      "sol",
+      // Raw formats
+      "yuv",
+      "mjpeg",
+      "mjpg",
+      // Additional formats that might be video containers
+      "mobi",
+      "epub",
+      "azw",
+      "azw3", // e-book formats that could potentially contain video
     ];
 
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    if (file.type?.startsWith("video/")) return null;
-    if (ext && allowedExtensions.includes(ext)) return null;
+    if (ext && allowedExtensions.includes(ext)) {
+      console.log("✅ Passed extension check:", ext);
+      return null;
+    }
 
-    return "Only video files are allowed (MP4, WebM, AVI, MOV, MKV, etc.)";
+    // Method 3: Check filename content for video indicators
+    const fileName = file.name.toLowerCase();
+    const videoIndicators = [
+      // Format indicators
+      "mkv",
+      "mp4",
+      "avi",
+      "mov",
+      "hevc",
+      "x264",
+      "x265",
+      "h264",
+      "h265",
+      // Quality indicators
+      "1080p",
+      "720p",
+      "480p",
+      "360p",
+      "240p",
+      "4k",
+      "2k",
+      "uhd",
+      "hd",
+      "sd",
+      // Source indicators
+      "bd",
+      "bluray",
+      "dvd",
+      "webrip",
+      "webdl",
+      "hdtv",
+      "pdtv",
+      "cam",
+      "ts",
+      "tc",
+      // Codec indicators
+      "avc",
+      "hevc",
+      "vp9",
+      "av1",
+      "divx",
+      "xvid",
+      // Audio indicators
+      "ac3",
+      "dts",
+      "aac",
+      "mp3",
+      "flac",
+      // Release indicators
+      "rarbg",
+      "yts",
+      "eztv",
+      "ettv",
+      "torrent",
+      "scene",
+      "internal",
+      // Anime/TV indicators
+      "episode",
+      "ep",
+      "season",
+      "s01",
+      "s02",
+      "batch",
+      "complete",
+      // Language indicators
+      "dual",
+      "audio",
+      "english",
+      "japanese",
+      "korean",
+      "chinese",
+      "hindi",
+      // Subtitle indicators
+      "sub",
+      "dub",
+      "subbed",
+      "dubbed",
+      "hardsub",
+      "softsub",
+    ];
+
+    const hasVideoIndicator = videoIndicators.some((indicator) =>
+      fileName.includes(indicator)
+    );
+
+    if (hasVideoIndicator) {
+      console.log("✅ Passed video indicator check");
+      return null;
+    }
+
+    // Method 4: File size heuristic - videos are typically large
+    if (file.size > 10 * 1024 * 1024) {
+      // If file is larger than 10MB, likely a video
+      console.log("✅ Passed size-based check (large file, likely video)");
+      return null;
+    }
+
+    // Method 5: Allow files with no extension if they have video-like characteristics
+    if (!ext && file.size > 1024 * 1024) {
+      // No extension but >1MB
+      console.log(
+        "✅ Passed no-extension check (large file without extension)"
+      );
+      return null;
+    }
+
+    // Method 6: Very permissive fallback - if filename suggests media content
+    const mediaKeywords = [
+      "video",
+      "movie",
+      "film",
+      "show",
+      "series",
+      "anime",
+      "drama",
+      "documentary",
+      "clip",
+      "trailer",
+      "teaser",
+      "preview",
+      "episode",
+      "season",
+      "part",
+    ];
+
+    const hasMediaKeyword = mediaKeywords.some((keyword) =>
+      fileName.includes(keyword)
+    );
+
+    if (hasMediaKeyword) {
+      console.log("✅ Passed media keyword check");
+      return null;
+    }
+
+    console.log("❌ Failed all checks");
+    return "File doesn't appear to be a video. If this is a video file, please ensure it has a proper extension or video-related content in the filename.";
   };
 
   const uploadToS3 = async (uploadFile: UploadFile) => {
@@ -93,7 +300,7 @@ export function UploadModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fileName: uploadFile.file?.name,
-          fileType: uploadFile.file?.type,
+          fileType: uploadFile.file?.type || "video/mp4", // Default to mp4 if no type
           fileSize: uploadFile.file?.size,
         }),
       });
@@ -261,7 +468,7 @@ export function UploadModal({
             Upload Videos
           </DialogTitle>
           <p className="text-sm text-[#8C8C8C] mt-1">
-            Select and upload video files
+            Select and upload video files in any format
           </p>
         </DialogHeader>
 
@@ -291,11 +498,12 @@ export function UploadModal({
               Choose a video or drag & drop it here
             </h3>
             <p className="text-[#8C8C8C] mb-6">
-              MP4, WebM, AVI, MOV, MKV and other video formats, up to 500MB
+              Any video format supported - MP4, MKV, AVI, MOV, HEVC, and more,
+              up to 500MB
             </p>
             <Button
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-lg px-6 bg-white text-black hover:bg-[#8C8C8C] hover:text-white"
+              className="rounded-lg px-6 bg-white text-black hover:bg-[#8C8C8C] hover:text-white cursor-pointer"
             >
               Browse Files
             </Button>
@@ -303,7 +511,7 @@ export function UploadModal({
               ref={fileInputRef}
               type="file"
               multiple
-              accept="video/*"
+              accept="*/*" // Accept all file types instead of just "video/*"
               onChange={handleFileInput}
               className="hidden"
             />

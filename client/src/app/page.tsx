@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/supabase/client";
 import Header from "@/components/Header";
 import SVGLogo from "@/components/svg-logo";
+import { TextShimmer } from "../../components/motion-primitives/text-shimmer";
 
 export default function Page() {
   const router = useRouter();
@@ -55,9 +56,9 @@ export default function Page() {
               </div>
             </div>
 
-            <h2 className="text-xl font-medium text-white mb-2">
+            <TextShimmer className="font-mono text-xl" duration={1}>
               Redirecting to Dashboard
-            </h2>
+            </TextShimmer>
             <p className="text-gray-400 text-sm">Please wait a moment...</p>
 
             <div

@@ -21,40 +21,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/video-url/route.js"
     ],
-    "/api/videos/[id]/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/videos/[id]/route.js"
-    ],
-    "/(login)/sign-in/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(login)/sign-in/page.js"
-    ],
-    "/(login)/sign-up/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(login)/sign-up/page.js"
-    ],
-    "/api/auth/callback/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/auth/callback/route.js"
-    ],
     "/api/thumbnail-url/[id]/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/thumbnail-url/[id]/route.js"
-    ],
-    "/videos/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/videos/[id]/page.js"
-    ],
-    "/api/thumbnail-url/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/thumbnail-url/route.js"
     ]
   }
 }
