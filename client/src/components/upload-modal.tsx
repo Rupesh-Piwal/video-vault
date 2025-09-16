@@ -7,6 +7,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogOverlay,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -250,6 +251,7 @@ export function UploadModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogOverlay className="fixed inset-0 bg-black/50 backdrop-blur-[6px]" />
       <DialogContent
         aria-describedby={undefined}
         className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col p-0 bg-[#18191A] border-[#2B2C2D] text-white"

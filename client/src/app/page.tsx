@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/supabase/client";
 import Header from "@/components/Header";
+import SVGLogo from "@/components/svg-logo";
 
 export default function Page() {
   const router = useRouter();
@@ -39,118 +40,105 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen" style={{ backgroundColor: "#0B0D0E" }}>
       <Header />
 
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-4">
         {isChecking ? (
           <div className="text-center">
             <div className="relative mb-8">
-              {/* Animated circles */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-24 h-24 border-4 border-blue-200 rounded-full animate-ping"></div>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 border-4 border-blue-300 rounded-full animate-pulse"></div>
-              </div>
-              <div className="relative w-16 h-16 mx-auto bg-blue-500 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-8 h-8 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+              <div
+                className="w-16 h-16 mx-auto rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "#2B2C2D" }}
+              >
+                <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               </div>
             </div>
 
-            <h2 className="text-2xl font-bold text-gray-800 mb-2 animate-pulse">
-              Authentication Successful!
+            <h2 className="text-xl font-medium text-white mb-2">
+              Redirecting to Dashboard
             </h2>
-            <p className="text-gray-600 mb-6">
-              Hold on tight, we're taking you to your dashboard...
-            </p>
+            <p className="text-gray-400 text-sm">Please wait a moment...</p>
 
-            {/* Animated progress bar */}
-            <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden mx-auto">
-              <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full animate-[progressBar_2.5s_ease-in-out]"></div>
-            </div>
-
-            <div className="mt-6 flex justify-center space-x-2">
-              <div
-                className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                style={{ animationDelay: "0ms" }}
-              ></div>
-              <div
-                className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
-                style={{ animationDelay: "200ms" }}
-              ></div>
-              <div
-                className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"
-                style={{ animationDelay: "400ms" }}
-              ></div>
+            <div
+              className="w-48 h-1 rounded-full overflow-hidden mx-auto mt-6"
+              style={{ backgroundColor: "#18191A" }}
+            >
+              <div className="h-full bg-white rounded-full animate-[progressBar_2.5s_ease-in-out]"></div>
             </div>
           </div>
         ) : (
-          <div className="text-center">
+          <div className="text-center max-w-md mx-auto">
             {showWelcome ? (
               <div className="animate-fade-in">
-                <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center">
+                <div
+                  className="w-20 h-20 mx-auto mb-8 rounded-full flex items-center justify-center border"
+                  style={{ backgroundColor: "#18191A", borderColor: "#2B2C2D" }}
+                >
                   <svg
                     className="w-10 h-10 text-white"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    strokeWidth={1.5}
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
                     />
                   </svg>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-800 mb-4">
-                  Welcome to VideoHub
+                <h1 className="text-3xl font-light text-white mb-3 tracking-wide">
+                  Welcome Back
                 </h1>
-                <p className="text-gray-600">Please sign in to continue</p>
+                <p
+                  className="text-gray-400 text-base"
+                  style={{ color: "#8C8C8C" }}
+                >
+                  Sign in to continue to your account
+                </p>
               </div>
             ) : (
               <div className="animate-fade-in-up">
-                <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-3xl flex items-center justify-center shadow-lg">
-                  <svg
-                    className="w-12 h-12 text-indigo-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                <div className="mb-10">
+                  <div
+                    className="w-14 h-14 mx-auto mb-8 rounded-full flex items-center justify-center border"
+                    style={{
+                      backgroundColor: "#18191A",
+                      borderColor: "#2B2C2D",
+                    }}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
+                    <SVGLogo />
+                  </div>
+                  <h1 className="text-2xl font-light text-white mb-4 tracking-wide">
+                    Access Your Content
+                  </h1>
+                  <p
+                    className="text-sm leading-relaxed px-4"
+                    style={{ color: "#8C8C8C" }}
+                  >
+                    Sign in to manage your video library and access all
+                    features.
+                  </p>
                 </div>
-                <h1 className="text-2xl font-bold text-gray-800 mb-4">
-                  Ready to get started?
-                </h1>
-                <p className="text-gray-600 max-w-md mx-auto">
-                  Sign in to access your video library, upload new content, and
-                  manage your account.
-                </p>
+
+                <div className="space-y-4 mt-12">
+                  <button
+                    className="w-full py-3 px-4 rounded-lg text-white font-medium transition-all duration-200 hover:opacity-90 active:opacity-80 cursor-pointer"
+                    style={{ backgroundColor: "#383838" }}
+                    onClick={() => router.push("/sign-in")}
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    className="w-full py-3 px-4 rounded-lg text-white font-medium transition-all duration-200 border hover:opacity-90 active:opacity-80 cursor-pointer"
+                    style={{ borderColor: "#606060", color: "#8C8C8C" }}
+                    onClick={() => router.push("/sign-up")}
+                  >
+                    Create Account
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -166,8 +154,32 @@ export default function Page() {
             width: 100%;
           }
         }
-        .animate-\[progressBar_2\.5s_ease-in-out\] {
+        .animate-\\[progressBar_2\\.5s_ease-in-out\\] {
           animation: progressBar 2.5s ease-in-out;
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.6s ease-out;
+        }
+        .animate-fade-in-up {
+          animation: fadeInUp 0.6s ease-out;
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
       `}</style>
     </div>

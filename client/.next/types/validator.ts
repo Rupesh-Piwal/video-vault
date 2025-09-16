@@ -107,6 +107,12 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   handler satisfies RouteHandlerConfig<"/api/video-url">
 }
 
+// Validate ../../src/app/api/videos/[id]/route.ts
+{
+  const handler = {} as typeof import("../../src/app/api/videos/[id]/route.js")
+  handler satisfies RouteHandlerConfig<"/api/videos/[id]">
+}
+
 
 
 

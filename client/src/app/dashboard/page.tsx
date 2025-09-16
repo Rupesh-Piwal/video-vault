@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { UploadModal } from "@/components/upload-modal";
 import { VideoList } from "@/components/video-list";
 import { Upload } from "lucide-react";
+import SVGLogo from "@/components/svg-logo";
 
 export default function DashboardPage() {
   const [open, setOpen] = useState(false);
@@ -16,7 +17,9 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-semibold text-white">My Videos</h1>
+              <h1 className="text-2xl font-semibold text-white">
+                My Videos
+              </h1>
               <p className="text-[#8C8C8C] text-sm mt-1">
                 Manage and organize your video content
               </p>

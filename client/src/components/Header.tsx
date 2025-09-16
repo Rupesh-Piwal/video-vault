@@ -5,6 +5,7 @@ import { createClient } from "@/supabase/client";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Upload } from "lucide-react";
+import SVGLogo from "./svg-logo";
 
 export default function Header() {
   const [user, setUser] = useState<any>(null);
@@ -36,12 +37,21 @@ export default function Header() {
 
   if (loading) {
     return (
-      <header className="w-full bg-white/70 backdrop-blur-lg border-b border-white/20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header
+        className="w-full border-b"
+        style={{ backgroundColor: "#18191A", borderColor: "#2B2C2D" }}
+      >
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gray-200/50 rounded-full animate-pulse"></div>
-              <div className="h-4 bg-gray-200/50 rounded-lg w-32 animate-pulse"></div>
+              <div
+                className="w-8 h-8 rounded-lg animate-pulse"
+                style={{ backgroundColor: "#2B2C2D" }}
+              ></div>
+              <div
+                className="h-4 rounded w-24 animate-pulse"
+                style={{ backgroundColor: "#2B2C2D" }}
+              ></div>
             </div>
           </div>
         </div>
@@ -51,11 +61,24 @@ export default function Header() {
 
   if (!user) {
     return (
-      <header className="w-full bg-white/70 backdrop-blur-lg border-b border-white/20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 ">
+      <header
+        className="w-full border-b"
+        style={{ backgroundColor: "#18191A", borderColor: "#2B2C2D" }}
+      >
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-2">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: "#2B2C2D" }}
+              >
+                <SVGLogo />
+              </div>
+              <span className="text-white font-medium text-lg">VideoVault</span>
+            </div>
             <Link
-              className="bg-purple-700 text-white p-2 rounded"
+              className="px-4 py-2 rounded-lg text-white font-medium transition-colors hover:opacity-80"
+              style={{ backgroundColor: "#2B2C2D" }}
               href="sign-in"
             >
               Sign In
@@ -67,44 +90,61 @@ export default function Header() {
   }
 
   return (
-    <header className="w-full bg-white/70 backdrop-blur-lg border-b border-white/20 shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header
+      className="w-full border-b sticky top-0 z-50"
+      style={{ backgroundColor: "#18191A", borderColor: "#2B2C2D" }}
+    >
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-4">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-100/50 to-purple-100/50 rounded-full blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="flex items-center space-x-2">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: "#2B2C2D" }}
+              >
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"
+                  />
+                </svg>
+              </div>
+              <span className="text-white font-medium text-lg">VideoHub</span>
+            </div>
+
+            <div className="flex items-center space-x-3 ml-6">
               <img
                 src={user.user_metadata?.avatar_url || "/default-avatar.png"}
                 alt={user.user_metadata?.full_name || "User"}
-                className="relative w-10 h-10 rounded-full border-2 border-white/50 shadow-md transition-all duration-300 group-hover:scale-105"
+                className="w-8 h-8 rounded-full border border-gray-600"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
                     user.user_metadata?.full_name || "User"
-                  )}&background=f3f4f6&color=374151&size=40`;
+                  )}&background=2B2C2D&color=ffffff&size=32`;
                 }}
               />
-            </div>
 
-            <div className="hidden sm:block">
-              <h2 className="text-lg font-medium text-gray-800">
-                Welcome back,{" "}
-                {getFirstName(user.user_metadata?.full_name || "")}
-              </h2>
-              <p className="text-xs text-gray-500 -mt-1">{user.email}</p>
-            </div>
-
-            <div className="block sm:hidden">
-              <h2 className="text-base font-medium text-gray-800">
-                {getFirstName(user.user_metadata?.full_name || "")}
-              </h2>
+              <div className="hidden sm:block">
+                <p className="text-white font-medium text-sm">
+                  {getFirstName(user.user_metadata?.full_name || "")}
+                </p>
+                <p className="text-gray-400 text-xs">{user.email}</p>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center">
             <Button
-              className="rounded-xl cursor-pointer"
-              // onClick={onOpenUpload}
+              className="px-4 py-2 rounded-lg text-white font-medium transition-colors hover:opacity-80"
+              style={{ backgroundColor: "#2B2C2D" }}
             >
               <Upload className="h-4 w-4 mr-2" />
               Upload Video

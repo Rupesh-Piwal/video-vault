@@ -9,14 +9,14 @@ import {
   Clock,
   Loader2,
   XCircle,
-  Download,
   ExternalLink,
-  MoreHorizontal,
   Play,
   FileVideo,
   Pause,
   Volume2,
   VolumeX,
+  Trash2,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -37,7 +37,8 @@ export function VideoCard({
   duration,
   status,
   storage_key,
-}: VideoCardProps) {
+  onDelete,
+}: VideoCardProps & { onDelete?: (id: string) => void }) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loadingUrl, setLoadingUrl] = useState(false);
   const [urlError, setUrlError] = useState(false);
@@ -47,6 +48,8 @@ export function VideoCard({
   const [currentTime, setCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const router = useRouter();
@@ -71,7 +74,29 @@ export function VideoCard({
     }
   }, [status, storage_key]);
 
+  const handleDelete = async () => {
+    if (!onDelete) return;
 
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/videos/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        toast.success("Video deleted successfully");
+        onDelete(id);
+      } else {
+        throw new Error("Failed to delete video");
+      }
+    } catch (error) {
+      console.error("Error deleting video:", error);
+      toast.error("Failed to delete video");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   const getStatusConfig = () => {
     switch (status) {
@@ -144,172 +169,239 @@ export function VideoCard({
   const statusConfig = getStatusConfig();
 
   return (
-    <Card
-      className="group relative overflow-hidden bg-[#18191A] border border-[#2B2C2D] rounded-xl hover:border-[#383838] transition-all duration-300 hover:shadow-lg hover:shadow-black/20"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Video Thumbnail/Preview Area */}
-      <div className="relative aspect-video overflow-hidden">
-        {/* Status Badge */}
-        <div className="absolute top-3 left-3 z-10">
-          <Badge
-            className={cn(
-              "text-xs font-medium px-2.5 py-1 rounded-md border backdrop-blur-sm",
-              statusConfig.className
-            )}
-          >
-            <span className="mr-1.5">{statusConfig.icon}</span>
-            {statusConfig.text}
-          </Badge>
-        </div>
-
-        {status === "READY" && videoUrl && !loadingUrl && !urlError ? (
-          <div className="relative w-full h-full group/video hover:cursor-pointer">
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              className="w-full h-full object-cover bg-[#2B2C2D]"
-              preload="metadata"
-              muted={isMuted}
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-            />
-
-            {/* Video Controls Overlay */}
-            <div
+    <>
+      <Card
+        className="group relative overflow-hidden bg-[#18191A] border border-[#2B2C2D] rounded-xl hover:border-[#383838] transition-all duration-300 hover:shadow-lg hover:shadow-black/20"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Video Thumbnail/Preview Area */}
+        <div className="relative aspect-video overflow-hidden">
+          {/* Status Badge */}
+          <div className="absolute top-3 left-3 z-10">
+            <Badge
               className={cn(
-                "absolute inset-0 bg-black/60 transition-all duration-300 flex items-center justify-center",
-                isHovered ? "opacity-100" : "opacity-0"
+                "text-xs font-medium px-2.5 py-1 rounded-md border backdrop-blur-sm",
+                statusConfig.className
               )}
             >
-              <button
-                onClick={handlePlayPause}
-                className="bg-white/90 hover:bg-white rounded-full p-3 shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer"
-              >
-                {isPlaying ? (
-                  <Pause className="h-5 w-5 text-black" fill="currentColor" />
-                ) : (
-                  <Play
-                    className="h-5 w-5 text-black ml-0.5"
-                    fill="currentColor"
-                  />
+              <span className="mr-1.5">{statusConfig.icon}</span>
+              {statusConfig.text}
+            </Badge>
+          </div>
+
+          {status === "READY" && videoUrl && !loadingUrl && !urlError ? (
+            <div className="relative w-full h-full group/video hover:cursor-pointer">
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                className="w-full h-full object-cover bg-[#2B2C2D]"
+                preload="metadata"
+                muted={isMuted}
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+              />
+
+              {/* Video Controls Overlay */}
+              <div
+                className={cn(
+                  "absolute inset-0 bg-black/60 transition-all duration-300 flex items-center justify-center",
+                  isHovered ? "opacity-100" : "opacity-0"
                 )}
-              </button>
-
-              {/* Bottom Controls */}
-              <div className="absolute bottom-3 left-3 right-3">
-                {/* Progress Bar */}
-                <div className="mb-2">
-                  <div className="w-full h-1 bg-white/20 rounded-full">
-                    <div
-                      className="h-full bg-white rounded-full transition-all duration-150"
-                      style={{ width: `${progress}%` }}
+              >
+                <button
+                  onClick={handlePlayPause}
+                  className="bg-white/90 hover:bg-white rounded-full p-3 shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer"
+                >
+                  {isPlaying ? (
+                    <Pause className="h-5 w-5 text-black" fill="currentColor" />
+                  ) : (
+                    <Play
+                      className="h-5 w-5 text-black ml-0.5"
+                      fill="currentColor"
                     />
-                  </div>
-                </div>
+                  )}
+                </button>
 
-                {/* Control Buttons */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={toggleMute}
-                      className="bg-black/40 hover:bg-black/60 rounded-full p-1.5 transition-all duration-200"
-                    >
-                      {isMuted ? (
-                        <VolumeX className="h-3 w-3 text-white" />
-                      ) : (
-                        <Volume2 className="h-3 w-3 text-white" />
-                      )}
-                    </button>
-                    <span className="text-white text-xs font-medium">
-                      {Math.floor(currentTime / 60)}:
-                      {String(Math.floor(currentTime % 60)).padStart(2, "0")} /{" "}
-                      {Math.floor(videoDuration / 60)}:
-                      {String(Math.floor(videoDuration % 60)).padStart(2, "0")}
-                    </span>
+                {/* Bottom Controls */}
+                <div className="absolute bottom-3 left-3 right-3">
+                  {/* Progress Bar */}
+                  <div className="mb-2">
+                    <div className="w-full h-1 bg-white/20 rounded-full">
+                      <div
+                        className="h-full bg-white rounded-full transition-all duration-150"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Control Buttons */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={toggleMute}
+                        className="bg-black/40 hover:bg-black/60 rounded-full p-1.5 transition-all duration-200"
+                      >
+                        {isMuted ? (
+                          <VolumeX className="h-3 w-3 text-white" />
+                        ) : (
+                          <Volume2 className="h-3 w-3 text-white" />
+                        )}
+                      </button>
+                      <span className="text-white text-xs font-medium">
+                        {Math.floor(currentTime / 60)}:
+                        {String(Math.floor(currentTime % 60)).padStart(2, "0")}{" "}
+                        / {Math.floor(videoDuration / 60)}:
+                        {String(Math.floor(videoDuration % 60)).padStart(
+                          2,
+                          "0"
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="w-full h-full bg-[#2B2C2D] flex items-center justify-center">
-            {loadingUrl ? (
-              <div className="flex flex-col items-center gap-3">
-                <div className="bg-[#383838] rounded-full p-4">
-                  <Loader2 className="h-6 w-6 animate-spin text-[#8C8C8C]" />
+          ) : (
+            <div className="w-full h-full bg-[#2B2C2D] flex items-center justify-center">
+              {loadingUrl ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="bg-[#383838] rounded-full p-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-[#8C8C8C]" />
+                  </div>
+                  <p className="text-sm font-medium text-[#8C8C8C]">
+                    Loading...
+                  </p>
                 </div>
-                <p className="text-sm font-medium text-[#8C8C8C]">Loading...</p>
-              </div>
-            ) : urlError ? (
-              <div className="flex flex-col items-center gap-3">
-                <div className="bg-[#383838] rounded-full p-4">
-                  <XCircle className="h-6 w-6 text-red-400" />
+              ) : urlError ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="bg-[#383838] rounded-full p-4">
+                    <XCircle className="h-6 w-6 text-red-400" />
+                  </div>
+                  <p className="text-sm font-medium text-[#8C8C8C]">
+                    Failed to load
+                  </p>
                 </div>
-                <p className="text-sm font-medium text-[#8C8C8C]">
-                  Failed to load
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-3">
-                <div className="bg-[#383838] rounded-full p-4">
-                  {status === "PROCESSING" || status === "UPLOADING" ? (
-                    statusConfig.icon
-                  ) : (
-                    <FileVideo className="h-6 w-6 text-[#8C8C8C]" />
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="bg-[#383838] rounded-full p-4">
+                    {status === "PROCESSING" || status === "UPLOADING" ? (
+                      statusConfig.icon
+                    ) : (
+                      <FileVideo className="h-6 w-6 text-[#8C8C8C]" />
+                    )}
+                  </div>
+                  {(status === "PROCESSING" || status === "UPLOADING") && (
+                    <p className="text-sm font-medium text-[#8C8C8C]">
+                      {status === "UPLOADING"
+                        ? "Uploading..."
+                        : "Processing..."}
+                    </p>
                   )}
                 </div>
-                {(status === "PROCESSING" || status === "UPLOADING") && (
-                  <p className="text-sm font-medium text-[#8C8C8C]">
-                    {status === "UPLOADING" ? "Uploading..." : "Processing..."}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Content Area */}
-      <CardContent className="p-4 space-y-3">
-        {/* Video Title */}
-        <h3 className="font-medium text-white text-sm leading-tight truncate">
-          {filename}
-        </h3>
-
-        {/* Video Metadata */}
-        <div className="flex items-center justify-between text-xs text-[#8C8C8C]">
-          <span>{formatSize(size)}</span>
-          <span>{formatDuration(duration)}</span>
-          <span>{formatDateOnly(uploadDate)}</span>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Action Buttons - Only show for READY videos */}
-        {status === "READY" && !loadingUrl && (
-          <div className="flex items-center gap-2 pt-1">
-            <DownloadButton videoUrl={videoUrl} filename={filename} />
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 bg-[#2B2C2D] hover:bg-[#383838] border-[#383838] text-[#8C8C8C] hover:text-white text-xs h-8"
-              onClick={() => router.push(`/videos/${id}`)}
-            >
-              <ExternalLink className="h-3 w-3 mr-1.5" />
-              View
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="px-2 h-8 hover:bg-[#383838] text-[#8C8C8C] hover:text-white"
-            >
-              <MoreHorizontal className="h-3 w-3" />
-            </Button>
+        {/* Content Area */}
+        <CardContent className="p-4 space-y-3">
+          {/* Video Title */}
+          <h3 className="font-medium text-white text-sm leading-tight truncate">
+            {filename}
+          </h3>
+
+          {/* Video Metadata */}
+          <div className="flex items-center justify-between text-xs text-[#8C8C8C]">
+            <span>{formatSize(size)}</span>
+            <span>{formatDuration(duration)}</span>
+            <span>{formatDateOnly(uploadDate)}</span>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {/* Action Buttons - Only show for READY videos */}
+          {status === "READY" && !loadingUrl && (
+            <div className="flex items-center gap-2 pt-1">
+              <DownloadButton videoUrl={videoUrl} filename={filename} />
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 bg-[#2B2C2D] hover:bg-[#383838] border-[#383838] text-[#8C8C8C] hover:text-white text-xs h-8"
+                onClick={() => router.push(`/videos/${id}`)}
+              >
+                <ExternalLink className="h-3 w-3 mr-1.5" />
+                View
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="px-2 h-8 text-[#8C8C8C] hover:text-white cursor-pointer transition-all duration-200 group/delete"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <>
+                    <Trash2 className="h-3 w-3 transition-transform duration-200 group-hover/delete:scale-110" />
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover/delete:opacity-100 transition-opacity duration-200"></span>
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#18191A] border border-[#2B2C2D] rounded-xl p-6 max-w-md w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-white">Delete Video</h3>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="text-[#8C8C8C] hover:text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-[#8C8C8C] mb-6">
+              Are you sure you want to delete "{filename}"? This action cannot
+              be undone.
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="border-[#383838] text-[#8C8C8C] hover:text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

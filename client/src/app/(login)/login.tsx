@@ -31,25 +31,43 @@ export function Login({ mode = "signin" }: { mode?: "signin" | "signup" }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center p-4">
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ backgroundColor: "#18191A" }}
+    >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-100/30 to-purple-100/30 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-pink-100/30 to-blue-100/30 rounded-full blur-3xl"></div>
+        <div
+          className="absolute -top-40 -right-40 w-80 h-80 rounded-full blur-3xl"
+          style={{ backgroundColor: "#2B2C2D", opacity: 0.4 }}
+        ></div>
+        <div
+          className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full blur-3xl"
+          style={{ backgroundColor: "#2B2C2D", opacity: 0.4 }}
+        ></div>
       </div>
 
       <div className="relative w-full max-w-md">
-        <div className="backdrop-blur-lg bg-white/70 rounded-3xl shadow-2xl shadow-gray-900/5 border border-white/20 p-8">
+        <div
+          className="rounded-3xl p-8"
+          style={{ backgroundColor: "#2B2C2D", borderColor: "#3A3B3C" }}
+        >
           <div className="flex justify-center mb-8">
-            <div className="p-3 rounded-2xl bg-white/50 backdrop-blur-sm shadow-lg">
+            <div
+              className="p-3 rounded-2xl"
+              style={{ backgroundColor: "#3A3B3C" }}
+            >
               <SVGLogo />
             </div>
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-light text-gray-800 mb-2">
+            <h1
+              className="text-3xl font-light mb-2"
+              style={{ color: "#E4E6EB" }}
+            >
               {mode === "signin" ? "Welcome back" : "Get started"}
             </h1>
-            <p className="text-gray-600 font-light">
+            <p className="font-light" style={{ color: "#B0B3B8" }}>
               {mode === "signin"
                 ? "Sign in to your account"
                 : "Create your new account"}
@@ -59,7 +77,21 @@ export function Login({ mode = "signin" }: { mode?: "signin" | "signup" }) {
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full group relative overflow-hidden rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-200/50 px-6 py-4 text-gray-700 font-medium transition-all duration-300 hover:bg-white/90 hover:shadow-xl hover:shadow-gray-900/10 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full group relative overflow-hidden rounded-2xl px-6 py-4 font-medium transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            style={{
+              backgroundColor: "#3A3B3C",
+              borderColor: "#4E4F50",
+              color: "#E4E6EB",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = "#4A4B4C";
+              e.currentTarget.style.boxShadow =
+                "0 10px 25px rgba(0, 0, 0, 0.2)";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = "#3A3B3C";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           >
             <div className="flex items-center justify-center space-x-3">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -83,20 +115,27 @@ export function Login({ mode = "signin" }: { mode?: "signin" | "signup" }) {
               <span>{loading ? "Connecting..." : `Continue with Google`}</span>
             </div>
             {loading && (
-              <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+              <div
+                className="absolute inset-0 rounded-2xl flex items-center justify-center"
+                style={{ backgroundColor: "rgba(58, 59, 60, 0.8)" }}
+              >
+                <div
+                  className="w-5 h-5 border-2 rounded-full animate-spin"
+                  style={{ borderColor: "#3A3B3C", borderTopColor: "#E4E6EB" }}
+                ></div>
               </div>
             )}
           </button>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-gray-600 font-light">
+            <p className="text-sm font-light" style={{ color: "#B0B3B8" }}>
               {mode === "signin" ? "New here? " : "Already have an account? "}
               <Link
                 href={`${mode === "signin" ? "/sign-up" : "/sign-in"}${
                   redirect ? `?redirect=${redirect}` : ""
                 }${priceId ? `&priceId=${priceId}` : ""}`}
-                className="text-gray-800 font-medium hover:text-gray-600 transition-colors duration-200"
+                className="font-medium transition-colors duration-200 hover:opacity-80"
+                style={{ color: "#E4E6EB" }}
               >
                 {mode === "signin" ? "Create account" : "Sign in"}
               </Link>
@@ -104,7 +143,10 @@ export function Login({ mode = "signin" }: { mode?: "signin" | "signup" }) {
           </div>
         </div>
 
-        <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-gray-200 to-transparent rounded-full"></div>
+        <div
+          className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-32 h-1 rounded-full"
+          style={{ backgroundColor: "#3A3B3C" }}
+        ></div>
       </div>
     </div>
   );

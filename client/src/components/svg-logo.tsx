@@ -1,26 +1,40 @@
 export const SVGLogo = () => (
   <svg
-    width="32"
-    height="32"
-    viewBox="0 0 40 40"
+    className="w-8 h-8"
+    viewBox="0 0 100 100"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <rect width="40" height="40" rx="8" fill="#2C7FF2" />
-    <path
-      d="M10.9986 16.4086L29.0268 6L28.5491 13.408L13.1954 22.2724L10.9986 16.4086Z"
-      fill="white"
+    {/* Background circle with subtle gradient */}
+    <circle
+      cx="50"
+      cy="50"
+      r="40"
+      fill="url(#logoGradient)"
+      stroke="url(#borderGradient)"
+      strokeWidth="2"
     />
-    <path
-      opacity="0.5"
-      d="M13.1955 22.272L25.8746 14.9517L25.3969 22.3596L15.3923 28.1358L13.1955 22.272Z"
-      fill="white"
-    />
-    <path
-      opacity="0.25"
-      d="M15.3909 28.1362L22.7211 23.9041L22.2434 31.3121L17.5878 34L15.3909 28.1362Z"
-      fill="white"
-    />
+
+    {/* Play icon */}
+    <path d="M42 35L62 50L42 65Z" fill="url(#iconGradient)" />
+
+    {/* Gradient definitions */}
+    <defs>
+      <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#2B2C2D" />
+        <stop offset="100%" stopColor="#383838" />
+      </linearGradient>
+
+      <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#8C8C8C" />
+        <stop offset="100%" stopColor="#606060" />
+      </linearGradient>
+
+      <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#606060" />
+        <stop offset="100%" stopColor="#8C8C8C" />
+      </linearGradient>
+    </defs>
   </svg>
 );
 
