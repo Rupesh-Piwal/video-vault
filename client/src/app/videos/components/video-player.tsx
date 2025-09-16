@@ -1,8 +1,11 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 
 interface VideoPlayerProps {
+  id?: string;
+  status?: string;
   videoUrl: string;
   thumbnails: { id: string; storage_key: string }[];
   type: string;
@@ -11,17 +14,39 @@ interface VideoPlayerProps {
 
 export function VideoPlayer({
   videoUrl,
-  thumbnails,
   type,
   filename,
+  id,
+  status,
 }: VideoPlayerProps) {
-  const bucketName = process.env.NEXT_PUBLIC_AWS_BUCKET_NAME;
+  const [posterUrl, setPosterUrl] = useState<string | null>(null);
 
-  // Pehla thumbnail ko poster ke liye use karo
-  const posterUrl =
-    thumbnails.length > 0
-      ? `https://${bucketName}.s3.amazonaws.com/${thumbnails[0].storage_key}`
-      : "/placeholder.jpg";
+  useEffect(() => {
+    if (status !== "READY" || !id) return;
+
+    let isMounted = true;
+
+    async function fetchThumbnails() {
+      try {
+        const res = await fetch(`/api/thumbnail-url/${id}`);
+        if (!res.ok) throw new Error("Failed to fetch thumbnails");
+        const data = await res.json();
+
+        if (isMounted && data.urls?.length) {
+          const midIndex = Math.floor(data.urls.length / 2);
+          setPosterUrl(data.urls[midIndex]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch thumbnails", err);
+      }
+    }
+
+    fetchThumbnails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, status]);
 
   return (
     <Card>
@@ -30,7 +55,7 @@ export function VideoPlayer({
           <video
             controls
             className="w-full h-full"
-            poster={posterUrl}
+            poster={posterUrl || undefined}
             preload="metadata"
             aria-label={`Video player for ${filename}`}
           >

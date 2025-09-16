@@ -83,7 +83,6 @@ export default function VideoPage({ videoId }: VideoPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center gap-4">
@@ -113,7 +112,6 @@ export default function VideoPage({ videoId }: VideoPageProps) {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Video Player Section */}
           <div className="lg:col-span-2 space-y-6">
             {loadingUrl && (
               <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
@@ -130,6 +128,8 @@ export default function VideoPage({ videoId }: VideoPageProps) {
             )}
             {videoUrl && !loadingUrl && !urlError && (
               <VideoPlayer
+                id={video.id}
+                status={video.status}
                 videoUrl={videoUrl}
                 thumbnails={thumbnails}
                 type={video.mime_type}

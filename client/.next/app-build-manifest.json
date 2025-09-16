@@ -45,6 +45,16 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/thumbnail-url/[id]/route.js"
+    ],
+    "/videos/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/videos/[id]/page.js"
+    ],
+    "/api/thumbnail-url/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/thumbnail-url/route.js"
     ]
   }
 }

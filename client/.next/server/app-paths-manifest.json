@@ -1,8 +1,10 @@
 {
-  "/api/video-url/route": "app/api/video-url/route.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/api/video-url/route": "app/api/video-url/route.js",
+  "/api/thumbnail-url/route": "app/api/thumbnail-url/route.js",
   "/api/thumbnail-url/[id]/route": "app/api/thumbnail-url/[id]/route.js",
-  "/(login)/sign-in/page": "app/(login)/sign-in/page.js",
+  "/page": "app/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/page": "app/page.js"
+  "/(login)/sign-in/page": "app/(login)/sign-in/page.js",
+  "/videos/[id]/page": "app/videos/[id]/page.js"
 }
