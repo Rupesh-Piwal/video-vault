@@ -97,28 +97,6 @@ export default function Header() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: "#2B2C2D" }}
-              >
-                <svg
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"
-                  />
-                </svg>
-              </div>
-              <span className="text-white font-medium text-lg">VideoHub</span>
-            </div>
-
             <div className="flex items-center space-x-3 ml-6">
               <img
                 src={user.user_metadata?.avatar_url || "/default-avatar.png"}
@@ -133,10 +111,9 @@ export default function Header() {
               />
 
               <div className="hidden sm:block">
-                <p className="text-white font-medium text-sm">
-                  {getFirstName(user.user_metadata?.full_name || "")}
+                <p className="text-white font-medium md:text-[18px]">
+                  Welcome {getFirstName(user.user_metadata?.full_name || "")}
                 </p>
-                <p className="text-gray-400 text-xs">{user.email}</p>
               </div>
             </div>
           </div>

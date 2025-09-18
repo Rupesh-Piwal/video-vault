@@ -1,10 +1,6 @@
 {
-  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/api/video-url/route": "app/api/video-url/route.js",
-  "/api/thumbnail-url/route": "app/api/thumbnail-url/route.js",
   "/api/thumbnail-url/[id]/route": "app/api/thumbnail-url/[id]/route.js",
   "/page": "app/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/videos/[id]/page": "app/videos/[id]/page.js",
-  "/share/[token]/page": "app/share/[token]/page.js"
+  "/dashboard/page": "app/dashboard/page.js"
 }
