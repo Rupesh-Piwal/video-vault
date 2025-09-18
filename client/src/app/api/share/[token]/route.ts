@@ -10,7 +10,7 @@ export async function GET(
   try {
     const token = params.token;
     const email = req.nextUrl.searchParams.get("email")?.toLowerCase() ?? null;
-    const supabase = await createClient()
+    const supabase = await createClient();
 
     const { data: link, error } = await supabase
       .from("share_links")
@@ -32,18 +32,18 @@ export async function GET(
         .update({ last_viewed_at: new Date().toISOString() })
         .eq("id", link.id);
     } else {
-      if (!email) {
-        return NextResponse.json({ error: "email_required" }, { status: 403 });
-      }
-      const { data: wl } = await supabase
-        .from("share_link_whitelist")
-        .select("email")
-        .eq("share_link_id", link.id)
-        .eq("email", email)
-        .maybeSingle();
+      // if (!email) {
+      //   return NextResponse.json({ error: "email_required" }, { status: 403 });
+      // }
+      // const { data: wl } = await supabase
+      //   .from("share_link_whitelist")
+      //   .select("email")
+      //   .eq("share_link_id", link.id)
+      //   .eq("email", email)
+      //   .maybeSingle();
 
-      if (!wl)
-        return NextResponse.json({ error: "not_whitelisted" }, { status: 403 });
+      // if (!wl)
+      //   return NextResponse.json({ error: "not_whitelisted" }, { status: 403 });
       await supabase
         .from("share_links")
         .update({ last_viewed_at: new Date().toISOString() })
