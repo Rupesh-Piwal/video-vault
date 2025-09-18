@@ -77,6 +77,12 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   handler satisfies AppPageConfig<"/">
 }
 
+// Validate ../../src/app/share/[token]/page.tsx
+{
+  const handler = {} as typeof import("../../src/app/share/[token]/page.js")
+  handler satisfies AppPageConfig<"/share/[token]">
+}
+
 // Validate ../../src/app/videos/[id]/page.tsx
 {
   const handler = {} as typeof import("../../src/app/videos/[id]/page.js")
@@ -87,6 +93,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   const handler = {} as typeof import("../../src/app/api/auth/callback/route.js")
   handler satisfies RouteHandlerConfig<"/api/auth/callback">
+}
+
+// Validate ../../src/app/api/share-links/[id]/disable/route.ts
+{
+  const handler = {} as typeof import("../../src/app/api/share-links/[id]/disable/route.js")
+  handler satisfies RouteHandlerConfig<"/api/share-links/[id]/disable">
+}
+
+// Validate ../../src/app/api/share-links/route.ts
+{
+  const handler = {} as typeof import("../../src/app/api/share-links/route.js")
+  handler satisfies RouteHandlerConfig<"/api/share-links">
+}
+
+// Validate ../../src/app/api/share/[token]/route.ts
+{
+  const handler = {} as typeof import("../../src/app/api/share/[token]/route.js")
+  handler satisfies RouteHandlerConfig<"/api/share/[token]">
 }
 
 // Validate ../../src/app/api/thumbnail-url/[id]/route.ts
@@ -117,6 +141,12 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   const handler = {} as typeof import("../../src/app/api/videos/[id]/route.js")
   handler satisfies RouteHandlerConfig<"/api/videos/[id]">
+}
+
+// Validate ../../src/app/api/videos/[id]/share/route.ts
+{
+  const handler = {} as typeof import("../../src/app/api/videos/[id]/share/route.js")
+  handler satisfies RouteHandlerConfig<"/api/videos/[id]/share">
 }
 
 

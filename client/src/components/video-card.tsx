@@ -303,7 +303,7 @@ export function VideoCard({
                   <div className="bg-[#383838] rounded-full p-4">
                     <Loader2 className="h-6 w-6 animate-spin text-[#8C8C8C]" />
                   </div>
-                
+
                   <TextShimmer className="font-mono text-sm" duration={1}>
                     Loading...
                   </TextShimmer>
@@ -327,11 +327,11 @@ export function VideoCard({
                     )}
                   </div>
                   {(status === "PROCESSING" || status === "UPLOADING") && (
-                    <p className="text-sm font-medium text-[#8C8C8C]">
+                    <TextShimmer className="font-mono text-sm" duration={1}>
                       {status === "UPLOADING"
                         ? "Uploading..."
                         : "Processing..."}
-                    </p>
+                    </TextShimmer>
                   )}
                 </div>
               )}
@@ -410,19 +410,21 @@ export function VideoCard({
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="border-[#383838] text-[#8C8C8C] hover:text-white"
+                className="border-[#383838] text-[#8C8C8C] hover:text-white cursor-pointer"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
               >
                 {isDeleting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Deleting...
+                    <TextShimmer className="font-mono text-sm" duration={1}>
+                      Deleting...
+                    </TextShimmer>
                   </>
                 ) : (
                   <>

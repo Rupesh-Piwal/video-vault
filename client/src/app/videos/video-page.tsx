@@ -4,14 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/supabase/client";
-import { ArrowLeft, Download, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { VideoPlayer } from "./components/video-player";
 import { VideoThumbnails } from "./components/video-thumbnails";
 import { VideoMetadata } from "./components/video-metadata";
-import { ShareLinksSection } from "./components/share-links-section";
-import { CreateShareLinkModal } from "./components/create-share-link-modal";
+
 import { DownloadButton } from "@/components/download-button";
 import { TextShimmer } from "../../../components/motion-primitives/text-shimmer";
+import { ShareLinksSection } from "./[id]/components/share-links-section";
+import { CreateShareLinkModal } from "./[id]/components/create-share-link-modal";
 
 interface VideoPageProps {
   videoId: string;
@@ -127,9 +128,9 @@ export default function VideoPage({ videoId }: VideoPageProps) {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
+      <div className="max-w-8xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-8">
+          <div className="lg:col-span-4 space-y-6">
             {loadingUrl && (
               <div className="flex items-center justify-center min-h-[16rem] md:min-h-[20rem] bg-muted rounded-lg w-full">
                 <div className="flex items-center gap-2">
@@ -159,11 +160,16 @@ export default function VideoPage({ videoId }: VideoPageProps) {
                 filename={video.original_filename}
               />
             )}
-            <VideoThumbnails thumbnails={thumbnails} />
+            <ShareLinksSection
+              shareLinks={shareLinks}
+              onCreateLink={() => setCreateLinkModalOpen(true)}
+            />
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="lg:col-span-3 space-y-6 ">
+            <VideoThumbnails thumbnails={thumbnails} />
+
             <VideoMetadata
               filename={video.original_filename}
               type={video.mime_type}
@@ -171,11 +177,6 @@ export default function VideoPage({ videoId }: VideoPageProps) {
               duration={video.duration_seconds}
               uploadDate={video.created_at}
               readyDate={video.ready_at}
-              // status={video.status}
-            />
-            <ShareLinksSection
-              shareLinks={shareLinks}
-              onCreateLink={() => setCreateLinkModalOpen(true)}
             />
           </div>
         </div>

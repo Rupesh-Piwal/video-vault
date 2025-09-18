@@ -51,7 +51,7 @@ export function VideoPlayer({
   return (
     <Card>
       <CardContent className="p-0">
-        <div className="aspect-video bg-black rounded-lg overflow-hidden">
+        <div className="aspect-video bg-black rounded-lg overflow-hidden ">
           <video
             controls
             className="w-full h-full"

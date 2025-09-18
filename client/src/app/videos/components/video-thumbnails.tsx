@@ -28,7 +28,7 @@ export function VideoThumbnails({
       </CardHeader>
       <CardContent>
         {thumbnails.length > 0 ? (
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {thumbnails.map((t, i) => (
               <ThumbnailItem
                 key={t.id}
@@ -90,9 +90,6 @@ function ThumbnailItem({
         >
           Loading...
         </TextShimmer>
-        // <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-
-        // </div>
       )}
     </div>
   );
