@@ -15,7 +15,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import toast from "react-hot-toast";
 import { createClient } from "@/supabase/client";
 
-
 type ShareLinkStatus = "Active" | "Expired" | "Revoked";
 
 interface RawShareLink {
@@ -68,10 +67,11 @@ export function ShareLinksSection({
   onCreateLink,
   onLinksUpdated,
 }: Props) {
+  const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const toTyped = (raw: RawShareLink[]): ShareLink[] =>
     (raw ?? []).map((r) => ({
       id: r.id,
-      url: r.url,
+      url: r.url || `${APP_URL}/share/${r.id}`,
       visibility: r.visibility,
       expiry: r.expiry,
       last_viewed_at: r.last_viewed_at,
@@ -186,12 +186,17 @@ export function ShareLinksSection({
                       size="sm"
                       variant="outline"
                       onClick={() => {
+                        if (!link.url) {
+                          toast.error("❌ No link available to copy");
+                          return;
+                        }
                         navigator.clipboard.writeText(link.url);
                         toast.success("📋 Link copied to clipboard!");
                       }}
                     >
                       Copy
                     </Button>
+
                     {link.status === "Active" && (
                       <Button
                         size="sm"
