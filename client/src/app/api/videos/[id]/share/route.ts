@@ -1,8 +1,11 @@
+// app/api/videos/[id]/share/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
-import { buildShareUrl, convertPresetToExpiry } from "@/lib/dayUtils";
-import { resend } from "@/lib/resendClient";
+import crypto from "crypto";
 import { createClient } from "@/supabase/server";
+
+function requireUserId(req: NextRequest): string | null {
+  return req.headers.get("x-user-id");
+}
 
 export async function POST(
   req: NextRequest,
@@ -10,101 +13,77 @@ export async function POST(
 ) {
   try {
     const supabase = await createClient();
+    const userId = requireUserId(req);
 
-    // 🔹 Parse body
-    const body = await req.json();
-    const {
-      visibility,
-      emails = [],
-      expiryPreset,
-    } = body as {
-      visibility: "PUBLIC" | "PRIVATE";
-      emails?: string[];
-      expiryPreset: "1h" | "12h" | "1d" | "30d" | "forever";
-    };
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
+    }
+
+    const { visibility, emails = [], expiryPreset } = await req.json();
 
     if (!["PUBLIC", "PRIVATE"].includes(visibility)) {
       return NextResponse.json(
-        { error: "invalid visibility" },
+        { error: "Invalid visibility" },
         { status: 400 }
       );
     }
 
-    const expiry = convertPresetToExpiry(expiryPreset);
-    const token = uuidv4();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const expiryMap: Record<string, number | null> = {
+      "1h": 3600,
+      "12h": 43200,
+      "1d": 86400,
+      "30d": 2592000,
+      forever: null,
+    };
 
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!(expiryPreset in expiryMap)) {
+      return NextResponse.json(
+        { error: "Invalid expiry preset" },
+        { status: 400 }
+      );
     }
 
-    // 🔹 Insert into share_links
-    const { data: share, error: insertError } = await supabase
+    const expiresAt = expiryMap[expiryPreset]
+      ? new Date(Date.now() + expiryMap[expiryPreset]! * 1000).toISOString()
+      : null;
+
+    // Generate raw + hashed token
+    const token = crypto.randomBytes(32).toString("hex");
+    const hashed = crypto.createHash("sha256").update(token).digest("hex");
+
+    const { data: link, error } = await supabase
       .from("share_links")
       .insert({
         video_id: params.id,
-        user_id: user.id,
-        token,
+        user_id: userId,
+        hashed_token: hashed,
         visibility,
-        expiry,
+        expiry: expiresAt,
       })
       .select()
       .single();
 
-    if (insertError) throw insertError;
+    if (error) throw error;
 
-    // 🔹 If PRIVATE → insert whitelist + notify
     if (visibility === "PRIVATE" && emails.length > 0) {
-      const rows = emails.map((e) => ({
-        share_link_id: share.id,
-        email: e.trim().toLowerCase(),
-      }));
-      await supabase.from("share_link_whitelist").insert(rows);
+      for (const email of emails) {
+        await supabase.from("share_link_whitelist").insert({
+          share_link_id: link.id,
+          email: email.trim().toLowerCase(),
+        });
 
-      const { data: registered } = await supabase.auth.admin.listUsers();
-      const registeredEmails = registered?.users
-        .map((u) => u.email)
-        .filter((e): e is string => e !== null);
-
-      const notifyList = rows.filter((r) => registeredEmails.includes(r.email));
-
-      // Get video title
-      const { data: video } = await supabase
-        .from("videos")
-        .select("original_filename")
-        .eq("id", params.id)
-        .single();
-
-      const title = video?.original_filename ?? "a video";
-      const url = buildShareUrl(token);
-      console.log("URL---", url);
-
-      // Fire emails
-      for (const u of notifyList) {
-        await resend.emails.send({
-          from: process.env.EMAIL_FROM!,
-          to: u.email,
-          subject: "A private video was shared with you",
-          html: `<p>A video "<b>${title}</b>" was shared with you.</p><p><a href="${url}">Open link</a></p>`,
+        // enqueue email job
+        await fetch(`${process.env.EXPRESS_URL}/jobs/send-email`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to: email, videoId: params.id, token }),
         });
       }
     }
 
-    // 🔹 Response
-    return NextResponse.json(
-      {
-        id: share.id,
-        token,
-        url: buildShareUrl(token),
-        expiry,
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ url: `${process.env.APP_URL}/share/${token}` });
   } catch (err: any) {
-    console.error(err);
+    console.error("Share link creation error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

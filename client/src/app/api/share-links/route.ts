@@ -1,5 +1,6 @@
+// app/api/share-links/route.ts
 import { buildShareUrl, isExpired } from "@/lib/dayUtils";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { createClient } from "@/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 function requireUserId(req: NextRequest): string | null {
@@ -8,33 +9,41 @@ function requireUserId(req: NextRequest): string | null {
 
 export async function GET(req: NextRequest) {
   try {
+    const supabase = await createClient();
     const userId = requireUserId(req);
-    if (!userId)
-      return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
 
-    const { data, error } = await supabaseAdmin
+    if (!userId) {
+      return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+    }
+
+    const { data, error } = await supabase
       .from("share_links")
       .select(
-        "id, video_id, token, visibility, expiry, last_viewed_at, created_at"
+        "id, video_id, hashed_token, visibility, expiry, revoked, last_viewed_at, created_at"
       )
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    const rows = data.map((r: any) => ({
+    const rows = (data ?? []).map((r: any) => ({
       id: r.id,
       video_id: r.video_id,
-      url: buildShareUrl(r.token),
+      url: buildShareUrl(r.hashed_token), // e.g. `${APP_URL}/s/${token}`
       visibility: r.visibility,
       expiry: r.expiry,
-      status: isExpired(r.expiry) ? "Expired" : "Active",
+      status: r.revoked
+        ? "Revoked"
+        : isExpired(r.expiry)
+        ? "Expired"
+        : "Active",
       last_viewed_at: r.last_viewed_at,
       created_at: r.created_at,
     }));
 
     return NextResponse.json(rows);
   } catch (err: any) {
+    console.error("Share links fetch error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

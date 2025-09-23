@@ -1,38 +1,23 @@
+// app/api/share-links/[id]/disable/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import dayjs from "dayjs";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
-
-function requireUserId(req: NextRequest): string | null {
-  return req.headers.get("x-user-id");
-}
+import { createClient } from "@/supabase/server";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const userId = requireUserId(req);
-    if (!userId)
-      return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+    const supabase = await createClient();
 
-    const { data: link } = await supabaseAdmin
+    const { error } = await supabase
       .from("share_links")
-      .select("user_id")
-      .eq("id", params.id)
-      .maybeSingle();
-
-    if (!link)
-      return NextResponse.json({ error: "not_found" }, { status: 404 });
-    if (link.user_id !== userId)
-      return NextResponse.json({ error: "forbidden" }, { status: 403 });
-
-    await supabaseAdmin
-      .from("share_links")
-      .update({ expiry: dayjs().subtract(1, "minute").toISOString() })
+      .update({ revoked: true })
       .eq("id", params.id);
 
-    return NextResponse.json({ ok: true });
+    if (error) throw error;
+
+    return NextResponse.json({ success: true });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 400 });
   }
 }

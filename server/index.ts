@@ -3,6 +3,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import { videoQueue } from "./queue/videoQueue";
 import cors from "cors";
+import { emailQueue } from "./queue/emailQueue";
 
 const app = express();
 
@@ -46,6 +47,24 @@ app.post("/jobs/video-process", async (req, res) => {
   } catch (err) {
     console.error("Queue error:", err);
     res.status(500).json({ error: "Failed to queue job" });
+  }
+});
+
+// Enqueue email job
+app.post("/jobs/send-email", async (req, res) => {
+  try {
+    const { to, videoId, token } = req.body;
+
+    if (!to || !videoId || !token) {
+      return res.status(400).json({ error: "Missing fields" });
+    }
+
+    await emailQueue.add("send-email", { to, videoId, token });
+
+    res.json({ success: true, message: "Email job queued" });
+  } catch (err) {
+    console.error("Email queue error:", err);
+    res.status(500).json({ error: "Failed to queue email job" });
   }
 });
 
