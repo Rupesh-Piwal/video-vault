@@ -50,6 +50,11 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/share/[token]/route.js"
+    ],
+    "/api/share-links/[id]/disable/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/share-links/[id]/disable/route.js"
     ]
   }
 }

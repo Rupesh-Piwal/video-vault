@@ -72,6 +72,10 @@ export async function POST(
           email: email.trim().toLowerCase(),
         });
 
+        const baseUrl = process.env.EXPRESS_URL;
+        if (!baseUrl) {
+          throw new Error("❌ EXPRESS_URL env var is missing");
+        }
         // enqueue email job
         await fetch(`${process.env.EXPRESS_URL}/jobs/send-email`, {
           method: "POST",
