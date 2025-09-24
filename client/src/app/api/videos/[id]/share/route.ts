@@ -72,12 +72,12 @@ export async function POST(
           email: email.trim().toLowerCase(),
         });
 
-        const baseUrl = process.env.EXPRESS_URL;
+        const baseUrl = process.env.NEXT_PUBLIC_EXPRESS_URL;
         if (!baseUrl) {
           throw new Error("❌ EXPRESS_URL env var is missing");
         }
         // enqueue email job
-        await fetch(`${process.env.EXPRESS_URL}/jobs/send-email`, {
+        await fetch(`${process.env.NEXT_PUBLIC_EXPRESS_URL}/jobs/send-email`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ to: email, videoId: params.id, token }),
@@ -85,7 +85,7 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ url: `${process.env.APP_URL}/share/${token}` });
+    return NextResponse.json({ url: `${process.env.NEXT_PUBLIC_APP_URL}/share/${token}` });
   } catch (err: any) {
     console.error("Share link creation error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
