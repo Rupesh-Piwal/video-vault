@@ -1,10 +1,9 @@
 {
-  "/api/videos/[id]/share/route": "app/api/videos/[id]/share/route.js",
   "/api/share/[token]/route": "app/api/share/[token]/route.js",
   "/api/video-url/route": "app/api/video-url/route.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/api/videos/[id]/share/route": "app/api/videos/[id]/share/route.js",
   "/page": "app/page.js",
+  "/share/[token]/page": "app/share/[token]/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/videos/[id]/page": "app/videos/[id]/page.js",
-  "/share/[token]/page": "app/share/[token]/page.js"
+  "/videos/[id]/page": "app/videos/[id]/page.js"
 }
