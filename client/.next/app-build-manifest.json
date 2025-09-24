@@ -16,6 +16,11 @@
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/page.js"
     ],
+    "/api/upload-url/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/upload-url/route.js"
+    ],
     "/api/video-url/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -35,26 +40,6 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/thumbnail-url/route.js"
-    ],
-    "/api/videos/[id]/share/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/videos/[id]/share/route.js"
-    ],
-    "/share/[token]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/share/[token]/page.js"
-    ],
-    "/api/share/[token]/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/share/[token]/route.js"
-    ],
-    "/api/share-links/[id]/disable/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/share-links/[id]/disable/route.js"
     ]
   }
 }

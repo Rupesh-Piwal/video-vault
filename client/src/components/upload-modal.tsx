@@ -344,7 +344,7 @@ export function UploadModal({
         if (error) console.error("DB update error:", error.message);
       }
 
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/video-process`, {
+      await fetch(`${process.env.NEXT_PUBLIC_EXPRESS_URL}/jobs/video-process`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ videoId, s3Key: key }),
