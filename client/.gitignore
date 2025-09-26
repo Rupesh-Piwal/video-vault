@@ -5,8 +5,10 @@ node_modules/
 
 # Production builds
 /.next/
+.next/
 /out/
 /build/
+
 
 # Debug files
 npm-debug.log*

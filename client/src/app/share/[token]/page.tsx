@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { DownloadButton } from "@/components/download-button";
-import { Lock, AlertCircle, Clock, FileText } from "lucide-react";
+import { Lock, AlertCircle, Clock } from "lucide-react";
 import { formatDuration, formatSize } from "@/lib/metadata-utils";
 import SVGLogo from "@/components/svg-logo";
 
