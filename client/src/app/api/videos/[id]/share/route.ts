@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@/supabase/server";
+import { createAdminClient } from "@/lib/supabase-admin"; // Import the admin client
 
 function requireUserId(req: NextRequest): string | null {
   return req.headers.get("x-user-id");
@@ -13,6 +14,7 @@ export async function POST(
 ) {
   try {
     const supabase = await createClient();
+    const supabaseAdmin = createAdminClient(); // Create admin client
     const userId = requireUserId(req);
 
     if (!userId) {
@@ -66,26 +68,71 @@ export async function POST(
     if (error) throw error;
 
     if (visibility === "PRIVATE" && emails.length > 0) {
+      // Batch check for registered users using admin client
+      const {
+        data: { users },
+        error: authError,
+      } = await supabaseAdmin.auth.admin.listUsers();
+
+      if (authError) {
+        console.error("Auth admin error:", authError);
+        // Continue without email notifications rather than failing the entire request
+      }
+
+      const registeredEmails = new Set(
+        users?.map((user) => user.email?.toLowerCase()).filter(Boolean) || []
+      );
+
       for (const email of emails) {
+        const trimmedEmail = email.trim().toLowerCase();
+
+        // Add to whitelist using regular client
         await supabase.from("share_link_whitelist").insert({
           share_link_id: link.id,
-          email: email.trim().toLowerCase(),
+          email: trimmedEmail,
         });
 
-        const baseUrl = process.env.NEXT_PUBLIC_EXPRESS_URL;
-        if (!baseUrl) {
-          throw new Error("❌ EXPRESS_URL env var is missing");
+        if (registeredEmails.has(trimmedEmail)) {
+          console.log(
+            `📧 Sending notification to registered user: ${trimmedEmail}`
+          );
+
+          const baseUrl = process.env.NEXT_PUBLIC_EXPRESS_URL;
+          if (!baseUrl) {
+            console.error("EXPRESS_URL environment variable is missing");
+            continue;
+          }
+
+          try {
+            await fetch(`${baseUrl}/jobs/send-email`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                to: trimmedEmail,
+                videoId: params.id,
+                token,
+                type: "SHARE_NOTIFICATION",
+              }),
+            });
+            console.log(`✅ Notification sent to: ${trimmedEmail}`);
+          } catch (emailError) {
+            console.error(
+              `❌ Failed to send email to ${trimmedEmail}:`,
+              emailError
+            );
+          }
+        } else {
+          console.log(
+            `⏭️ Skipping email for non-registered user: ${trimmedEmail}`
+          );
         }
-        // enqueue email job
-        await fetch(`${process.env.NEXT_PUBLIC_EXPRESS_URL}/jobs/send-email`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ to: email, videoId: params.id, token }),
-        });
       }
     }
 
-    return NextResponse.json({ url: `${process.env.NEXT_PUBLIC_APP_URL}/share/${token}` });
+    return NextResponse.json({
+      url: `${process.env.NEXT_PUBLIC_APP_URL}/share/${token}`,
+      message: "Share link created successfully",
+    });
   } catch (err: any) {
     console.error("Share link creation error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });

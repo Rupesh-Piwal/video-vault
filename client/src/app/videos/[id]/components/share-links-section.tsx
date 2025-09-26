@@ -1,6 +1,6 @@
+// components/share-links-section.tsx
 "use client";
 
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -13,132 +13,76 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import toast from "react-hot-toast";
-import { createClient } from "@/supabase/client";
-
-type ShareLinkStatus = "Active" | "Expired" | "Revoked";
-
-interface RawShareLink {
-  id: string;
-  url: string;
-  visibility: "PUBLIC" | "PRIVATE";
-  expiry: string | null;
-  last_viewed_at: string | null;
-  status?: string | null;
-}
-
-interface ShareLink {
-  id: string;
-  url: string;
-  visibility: "PUBLIC" | "PRIVATE";
-  expiry: string | null;
-  last_viewed_at: string | null;
-  status: ShareLinkStatus;
-}
+import { ShareLink, useShareLinks, type RawShareLink } from "@/hooks/useShareLinks";
+import { useEffect } from "react";
+import { formatDate, formatDateTime } from "@/lib/metadata-utils";
 
 interface Props {
-  shareLinks: RawShareLink[];
+  shareLinks?: RawShareLink[];
+  videoId?: string;
   onCreateLink: () => void;
   onLinksUpdated?: (links: ShareLink[]) => void;
-}
-
-function normalizeStatus(s?: string | null): ShareLinkStatus {
-  if (!s) return "Active";
-  const st = s.toLowerCase();
-  if (st === "revoked") return "Revoked";
-  if (st === "expired") return "Expired";
-  return "Active";
-}
-
-function formatDateTime(isoString: string | null) {
-  if (!isoString) return "—";
-  const d = new Date(isoString);
-  return d.toLocaleString("en-GB", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+   
 }
 
 export function ShareLinksSection({
-  shareLinks: rawShareLinks,
+  shareLinks = [],
+  videoId,
   onCreateLink,
   onLinksUpdated,
 }: Props) {
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const toTyped = (raw: RawShareLink[]): ShareLink[] =>
-    (raw ?? []).map((r) => ({
-      id: r.id,
-      url: r.url || `${APP_URL}/share/${r.id}`,
-      visibility: r.visibility,
-      expiry: r.expiry,
-      last_viewed_at: r.last_viewed_at,
-      status: normalizeStatus(r.status),
-    }));
+  const { links, loading, error, disableLink } = useShareLinks(shareLinks, videoId);
 
-  const [links, setLinks] = useState<ShareLink[]>(() => toTyped(rawShareLinks));
-
-  // 🔄 keep state in sync when parent props change
+  // Notify parent when links are updated
   useEffect(() => {
-    setLinks(toTyped(rawShareLinks));
-  }, [rawShareLinks]);
+    onLinksUpdated?.(links);
+  }, [links, onLinksUpdated]);
 
-  // 🔔 subscribe to realtime changes in "share_links" table
-  useEffect(() => {
-    const supabase = createClient();
-
-    const channel = supabase
-      .channel("share-links-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*", // INSERT | UPDATE | DELETE
-          schema: "public",
-          table: "share_links",
-        },
-        (payload) => {
-          console.log("Realtime event:", payload);
-
-          if (payload.eventType === "INSERT") {
-            setLinks((prev) => [
-              ...prev,
-              toTyped([payload.new as RawShareLink])[0],
-            ]);
-          }
-          if (payload.eventType === "UPDATE") {
-            setLinks((prev) =>
-              prev.map((l) =>
-                l.id === payload.new.id
-                  ? toTyped([payload.new as RawShareLink])[0]
-                  : l
-              )
-            );
-          }
-          if (payload.eventType === "DELETE") {
-            setLinks((prev) => prev.filter((l) => l.id !== payload.old.id));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  async function disableLink(id: string) {
+  const handleDisableLink = async (id: string) => {
     try {
-      const res = await fetch(`/api/share-links/${id}/disable`, {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("Failed to disable");
+      await disableLink(id);
       toast.success("🚫 Link disabled");
     } catch (err) {
       console.error(err);
       toast.error("❌ Failed to disable link");
     }
+  };
+
+  const handleCopyLink = (url: string) => {
+    if (!url) {
+      toast.error("❌ No link available to copy");
+      return;
+    }
+    navigator.clipboard.writeText(url);
+    toast.success("📋 Link copied to clipboard!");
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Share Links</h2>
+          <Button disabled>+ New Link</Button>
+        </div>
+        <div className="flex items-center justify-center h-[240px]">
+          <p className="text-sm text-muted-foreground">Loading share links...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Share Links</h2>
+          <Button onClick={onCreateLink}>+ New Link</Button>
+        </div>
+        <div className="flex items-center justify-center h-[240px]">
+          <p className="text-sm text-red-500">Error: {error}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -167,7 +111,7 @@ export function ShareLinksSection({
                 <TableRow key={link.id}>
                   <TableCell>{link.visibility}</TableCell>
                   <TableCell>
-                    {link.expiry ? formatDateTime(link.expiry) : "Forever"}
+                    {link.expiry ? formatDate(link.expiry) : "Forever"}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -185,14 +129,7 @@ export function ShareLinksSection({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => {
-                        if (!link.url) {
-                          toast.error("❌ No link available to copy");
-                          return;
-                        }
-                        navigator.clipboard.writeText(link.url);
-                        toast.success("📋 Link copied to clipboard!");
-                      }}
+                      onClick={() => handleCopyLink(link.url)}
                     >
                       Copy
                     </Button>
@@ -201,7 +138,7 @@ export function ShareLinksSection({
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => disableLink(link.id)}
+                        onClick={() => handleDisableLink(link.id)}
                       >
                         Disable
                       </Button>

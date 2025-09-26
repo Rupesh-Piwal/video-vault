@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createClient } from "@/supabase/client";
+import { TextShimmer } from "../../../../../components/motion-primitives/text-shimmer";
 
 interface Props {
   open: boolean;
@@ -75,9 +76,9 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
       // ✅ copy link to clipboard
       if (data.url) {
         await navigator.clipboard.writeText(data.url);
-        toast.success("✅ Share link created & copied to clipboard!");
+        toast.success("Share link created & copied to clipboard!");
       } else {
-        toast.success("✅ Share link created!");
+        toast.success("Share link created!");
       }
 
       onOpenChange(false);
@@ -153,7 +154,11 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
             Cancel
           </Button>
           <Button onClick={handleCreate} disabled={loading}>
-            {loading ? "Creating..." : "Create"}
+            {loading ? (
+              <TextShimmer duration={1.2}>Creating...</TextShimmer>
+            ) : (
+              "Create"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

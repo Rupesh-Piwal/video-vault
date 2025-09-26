@@ -52,14 +52,29 @@ app.post("/jobs/video-process", async (req, res) => {
 
 // Enqueue email job
 app.post("/jobs/send-email", async (req, res) => {
+  console.log("📧 [EXPRESS] Received email request:", req.body);
   try {
     const { to, videoId, token } = req.body;
 
     if (!to || !videoId || !token) {
+      console.log("❌ [EXPRESS] Missing fields");
       return res.status(400).json({ error: "Missing fields" });
     }
 
-    await emailQueue.add("send-email", { to, videoId, token });
+    console.log("📧 [EXPRESS] Adding to email queue...");
+    await emailQueue.add(
+      "send-email",
+      { to, videoId, token },
+      {
+        attempts: 5, // max retry attempts
+        backoff: {
+          type: "exponential", // or 'fixed'
+          delay: 2000, // 2s initial, then 4s, 8s, etc
+        },
+      }
+    );
+
+    console.log("✅ [EXPRESS] Email job queued successfully");
 
     res.json({ success: true, message: "Email job queued" });
   } catch (err) {

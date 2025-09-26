@@ -47,3 +47,17 @@ export const formatDateOnly = (dateStr: string) => {
   // returns "day-month-year" only
   return `${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`;
 };
+
+// utils/dateFormatter.ts
+export function formatDateTime(isoString: string | null): string {
+  if (!isoString) return "—";
+  const d = new Date(isoString);
+  return d.toLocaleString("en-GB", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}

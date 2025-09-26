@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/supabase/client";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { VideoPlayer } from "./components/video-player";
 import { VideoThumbnails } from "./components/video-thumbnails";
 import { VideoMetadata } from "./components/video-metadata";
-
 import { DownloadButton } from "@/components/download-button";
 import { TextShimmer } from "../../../components/motion-primitives/text-shimmer";
 import { ShareLinksSection } from "./[id]/components/share-links-section";
 import { CreateShareLinkModal } from "./[id]/components/create-share-link-modal";
+import { useVideoData } from "@/hooks/useVideoData";
+import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { useState } from "react";
 
 interface VideoPageProps {
   videoId: string;
@@ -20,66 +20,18 @@ interface VideoPageProps {
 
 export default function VideoPage({ videoId }: VideoPageProps) {
   const router = useRouter();
-  const supabase = createClient();
-
-  const [video, setVideo] = useState<any>(null);
-  const [thumbnails, setThumbnails] = useState<any[]>([]);
-  const [shareLinks, setShareLinks] = useState<any[]>([]);
   const [createLinkModalOpen, setCreateLinkModalOpen] = useState(false);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [loadingUrl, setLoadingUrl] = useState(false);
-  const [urlError, setUrlError] = useState(false);
 
-  useEffect(() => {
-    async function fetchData() {
-      const { data: videoData } = await supabase
-        .from("videos")
-        .select("*")
-        .eq("id", videoId)
-        .single();
+  // Use custom hooks
+  const { video, thumbnails, shareLinks, loading, error, refetch } =
+    useVideoData(videoId);
+  const {
+    url: videoUrl,
+    loading: loadingUrl,
+    error: urlError,
+  } = useSignedUrl(video?.storage_key || null, video?.status || "");
 
-      setVideo(videoData);
-
-      const { data: thumbs } = await supabase
-        .from("thumbnails")
-        .select("*")
-        .eq("video_id", videoId);
-
-      setThumbnails(thumbs || []);
-
-      const { data: links } = await supabase
-        .from("share_links")
-        .select("*")
-        .eq("video_id", videoId);
-
-      setShareLinks(links || []);
-    }
-
-    fetchData();
-  }, [supabase, videoId]);
-
-  // Fetch signed URL when video data is available and status is READY
-  useEffect(() => {
-    if (video?.status === "READY") {
-      setLoadingUrl(true);
-      fetch(`/api/video-url?key=${encodeURIComponent(video.storage_key)}`)
-        .then((res) => {
-          if (!res.ok) throw new Error("Failed to fetch signed URL");
-          return res.json();
-        })
-        .then((data) => {
-          setVideoUrl(data.url);
-          setLoadingUrl(false);
-        })
-        .catch((err) => {
-          console.error("Error fetching signed URL:", err);
-          setUrlError(true);
-          setLoadingUrl(false);
-        });
-    }
-  }, [video?.status, video?.storage_key]);
-
-  if (!video) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -90,6 +42,30 @@ export default function VideoPage({ videoId }: VideoPageProps) {
             Loading video data...
           </TextShimmer>
           <Loader2 className="h-6 w-6 text-foreground animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Error: {error}</p>
+          <Button onClick={refetch}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!video) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center">
+          <p className="text-muted-foreground">Video not found</p>
+          <Button onClick={() => router.push("/dashboard")} className="mt-4">
+            Back to Dashboard
+          </Button>
         </div>
       </div>
     );

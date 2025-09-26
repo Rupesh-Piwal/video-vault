@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm:dev:server\" \"npm:dev:worker\"",
+    "dev": "concurrently \"npm:dev:server\" \"npm:dev:videoWorker\" \"npm:dev:emailWorker\"",
     "dev:server": "ts-node-dev --respawn --transpile-only index.ts",
-    "dev:worker": "ts-node-dev --respawn --transpile-only workers/videoWorker.ts"
+    "dev:videoWorker": "ts-node-dev --respawn --transpile-only workers/videoWorker.ts",
+    "dev:emailWorker": "ts-node-dev --respawn --transpile-only workers/emailWorker.ts"
   },
   "keywords": [],
   "author": "",
