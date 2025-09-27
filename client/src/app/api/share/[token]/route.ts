@@ -1,4 +1,3 @@
-// app/api/share/[token]/route.ts
 import { isExpired } from "@/lib/dayUtils";
 import { getSignedS3Url } from "@/lib/s3";
 import { createClient } from "@/supabase/server";

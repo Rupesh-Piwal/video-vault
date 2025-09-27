@@ -15,14 +15,13 @@ new Worker(
 
       const { to, token } = job.data;
 
-      // Validate environment variable
       const appUrl = process.env.NEXT_PUBLIC_APP_URL;
       if (!appUrl) {
         throw new Error("NEXT_PUBLIC_APP_URL is not defined in worker");
       }
 
       const result = await resend.emails.send({
-        from: "no-reply@yourapp.com", // ⚠️ This domain needs to be verified in Resend
+        from: "onboarding@resend.dev", 
         to,
         subject: "📹 You've been granted access to a video",
         html: `
@@ -41,7 +40,7 @@ new Worker(
       return { delivered: true };
     } catch (error) {
       console.error("❌ [EMAIL_WORKER] Failed to send email:", error);
-      throw error; // This will trigger BullMQ retry logic
+      throw error; 
     }
   },
   {
@@ -49,26 +48,3 @@ new Worker(
   }
 );
 
-// new Worker(
-//   "send-email",
-//   async (job) => {
-//     const { to, token } = job.data;
-
-//     await resend.emails.send({
-//       from: "no-reply@yourapp.com",
-//       to,
-//       subject: "📹 You’ve got a video link",
-//       html: `
-//         <p>Hello,</p>
-//         <p>You’ve been invited to view a video.</p>
-//         <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/share/${token}">Watch Now</a></p>
-//       `,
-//     });
-
-//     console.log("📨 Email sent to", to);
-//     return { delivered: true };
-//   },
-//   { connection }
-// );
-
-// console.log("📨 Email worker running...");
