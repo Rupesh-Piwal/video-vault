@@ -1,4 +1,3 @@
-// components/share-links-section.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -242,15 +241,6 @@ export function ShareLinksSection({
                     </TableCell>
                     <TableCell className="py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleCopyLink(link.url)}
-                          className="border-[#2B2C2D] bg-[#0B0D0E] hover:bg-[#2B2C2D] text-gray-300 h-8 px-3 cursor-pointer"
-                        >
-                          <Copy className="h-3 w-3 mr-1" />
-                          Copy
-                        </Button>
 
                         {link.status === "Active" && (
                           <Button
