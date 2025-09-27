@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@/supabase/server";
-import { createAdminClient } from "@/lib/supabase-admin"; // Import the admin client
+import { createAdminClient } from "@/lib/supabaseAdmin";
 
 function requireUserId(req: NextRequest): string | null {
   return req.headers.get("x-user-id");

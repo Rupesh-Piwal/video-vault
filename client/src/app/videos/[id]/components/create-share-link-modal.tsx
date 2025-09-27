@@ -72,7 +72,6 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create link");
-
       // ✅ copy link to clipboard
       if (data.url) {
         await navigator.clipboard.writeText(data.url);

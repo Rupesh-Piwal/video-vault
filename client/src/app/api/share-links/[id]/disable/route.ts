@@ -11,7 +11,8 @@ export async function POST(
 
     const { error } = await supabase
       .from("share_links")
-      .update({ revoked: true })
+      .update({ revoked: true,
+        updated_at: new Date().toISOString()  })
       .eq("id", params.id);
 
     if (error) throw error;

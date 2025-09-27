@@ -28,7 +28,6 @@ import {
   Clock,
   Zap,
   Ban,
-  CheckCircle2,
 } from "lucide-react";
 
 interface Props {

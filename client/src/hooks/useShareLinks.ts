@@ -12,7 +12,9 @@ export interface RawShareLink {
   visibility: "PUBLIC" | "PRIVATE";
   expiry: string | null;
   last_viewed_at: string | null;
-  status?: string | null;
+  revoked?: boolean;
+  status: ShareLinkStatus;
+  video_id?: string; // Add this field
 }
 
 export interface ShareLink {
@@ -38,15 +40,14 @@ export function useShareLinks(
 ): UseShareLinksReturn {
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  const normalizeStatus = (s?: string | null): ShareLinkStatus => {
-    if (!s) return "Active";
-    const st = s.toLowerCase();
-    if (st === "revoked") return "Revoked";
-    if (st === "expired") return "Expired";
+  const normalizeStatus = (raw: RawShareLink): ShareLinkStatus => {
+    if (raw.revoked) return "Revoked";
+    if (raw.expiry && new Date(raw.expiry) < new Date()) {
+      return "Expired";
+    }
     return "Active";
   };
 
-  // Normalize raw share links to typed share links
   const toTyped = (raw: RawShareLink[]): ShareLink[] =>
     (raw ?? []).map((r) => ({
       id: r.id,
@@ -54,7 +55,7 @@ export function useShareLinks(
       visibility: r.visibility,
       expiry: r.expiry,
       last_viewed_at: r.last_viewed_at,
-      status: normalizeStatus(r.status),
+      status: normalizeStatus(r),
     }));
 
   const [links, setLinks] = useState<ShareLink[]>(() =>
@@ -75,7 +76,8 @@ export function useShareLinks(
       const { data, error: fetchError } = await supabase
         .from("share_links")
         .select("*")
-        .eq("video_id", videoId);
+        .eq("video_id", videoId)
+        .order("created_at", { ascending: false }); // Order by newest first
 
       if (fetchError) throw fetchError;
       setLinks(toTyped(data || []));
@@ -98,59 +100,78 @@ export function useShareLinks(
     }
   }, [videoId, initialShareLinks]);
 
-  // Realtime subscription for share links
+  // FIXED: Realtime subscription for share links
   useEffect(() => {
     const supabase = createClient();
+
+    // If we have a videoId, subscribe to changes for that specific video
+    // If no videoId, we might be in a context where we need to listen to all changes
+    let filter = "";
+    if (videoId) {
+      filter = `video_id=eq.${videoId}`;
+    }
 
     const channel = supabase
       .channel("share-links-changes")
       .on(
         "postgres_changes",
         {
-          event: "*", // INSERT | UPDATE | DELETE
+          event: "*",
           schema: "public",
           table: "share_links",
-          ...(videoId && { filter: `video_id=eq.${videoId}` }),
+          ...(filter && { filter }), // Only add filter if it exists
         },
         (payload) => {
           console.log("Realtime event:", payload);
 
+          // For INSERT events, check if the new link belongs to our current video
           if (payload.eventType === "INSERT") {
-            setLinks((prev) => [
-              ...prev,
-              toTyped([payload.new as RawShareLink])[0],
-            ]);
-          }
-          if (payload.eventType === "UPDATE") {
-            setLinks((prev) =>
-              prev.map((l) =>
-                l.id === payload.new.id
-                  ? toTyped([payload.new as RawShareLink])[0]
-                  : l
-              )
-            );
-          }
-          if (payload.eventType === "DELETE") {
+            const newLink = payload.new as RawShareLink;
+
+            // If we have a videoId filter, only add if it matches
+            // If no videoId, add all new links (for contexts like admin views)
+            if (!videoId || newLink.video_id === videoId) {
+              setLinks((prev) => {
+                // Check if link already exists to avoid duplicates
+                if (prev.some((link) => link.id === newLink.id)) {
+                  return prev;
+                }
+                return [toTyped([newLink])[0], ...prev]; // Add to beginning
+              });
+            }
+          } else if (payload.eventType === "UPDATE") {
+            const updatedLink = payload.new as RawShareLink;
+
+            // If we have a videoId filter, only update if it matches
+            // If no videoId, update all matching links
+            if (!videoId || updatedLink.video_id === videoId) {
+              setLinks((prev) =>
+                prev.map((l) =>
+                  l.id === updatedLink.id ? toTyped([updatedLink])[0] : l
+                )
+              );
+            } else {
+              // If the updated link no longer belongs to our video, remove it
+              setLinks((prev) => prev.filter((l) => l.id !== updatedLink.id));
+            }
+          } else if (payload.eventType === "DELETE") {
+            // Always remove deleted links regardless of video_id
             setLinks((prev) => prev.filter((l) => l.id !== payload.old.id));
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Realtime subscription status:", status);
+      });
 
     return () => {
+      console.log("Cleaning up realtime subscription");
       supabase.removeChannel(channel);
     };
-  }, [videoId]);
+  }, [videoId]); // Re-subscribe when videoId changes
 
-  // Disable link function
   const disableLink = async (id: string): Promise<void> => {
     try {
-      const res = await fetch(`/api/share-links/${id}/disable`, {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("Failed to disable link");
-
-      // Optimistic update
       setLinks((prev) =>
         prev.map((link) =>
           link.id === id
@@ -158,8 +179,26 @@ export function useShareLinks(
             : link
         )
       );
+
+      const res = await fetch(`/api/share-links/${id}/disable`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to disable link");
+      }
     } catch (err) {
       console.error("Error disabling link:", err);
+
+      setLinks((prev) =>
+        prev.map((link) =>
+          link.id === id
+            ? { ...link, status: "Active" as ShareLinkStatus }
+            : link
+        )
+      );
+
       throw err;
     }
   };
