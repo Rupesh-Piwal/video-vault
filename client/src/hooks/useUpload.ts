@@ -1,45 +1,118 @@
 import { useState } from "react";
-
 import axios from "axios";
 import toast from "react-hot-toast";
 import { createClient } from "@/supabase/client";
 import { UploadFile } from "@/types/upload";
 import { validateFile } from "@/lib/upload.utils";
 
+const CHUNK_SIZE = 50 * 1024 * 1024; 
+const MAX_RETRIES = 3;
+
 export function useUpload() {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const supabase = createClient();
 
-  const uploadToS3 = async (uploadFile: UploadFile) => {
+  const retry = async <T>(
+    fn: () => Promise<T>,
+    retries = MAX_RETRIES
+  ): Promise<T> => {
+    let attempt = 0;
+    while (true) {
+      try {
+        return await fn();
+      } catch (err: any) {
+        if (!navigator.onLine) {
+          toast.error("No internet connection. Please check your network.");
+          throw new Error("Network offline");
+        }
+
+        if (err.response?.status === 0) {
+          toast.error("Network error: unable to reach server.");
+        }
+
+        if (attempt >= retries) throw err;
+        attempt++;
+        const delay = Math.pow(2, attempt) * 500;
+        await new Promise((res) => setTimeout(res, delay));
+      }
+    }
+  };
+
+  const uploadMultipart = async (uploadFile: UploadFile) => {
     try {
-      const res = await fetch("/api/upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const startRes = await retry(() =>
+        axios.post("/api/upload-url", {
+          action: "start",
           fileName: uploadFile.file?.name,
           fileType: uploadFile.file?.type || "video/mp4",
           fileSize: uploadFile.file?.size,
-        }),
-      });
+        })
+      );
 
-      if (!res.ok) throw new Error("Failed to get upload URL");
-      const { url, key, videoId } = await res.json();
+      const { uploadId, key, videoId } = startRes.data;
+
+      console.log("Multipart Upload Started:", { uploadId, key, videoId });
 
       setFiles((prev) =>
         prev.map((f) => (f.id === uploadFile.id ? { ...f, videoId } : f))
       );
 
-      await axios.put(url, uploadFile.file!, {
-        headers: { "Content-Type": uploadFile.file?.type || "video/mp4" },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const progress = (progressEvent.loaded / progressEvent.total) * 100;
-            setFiles((prev) =>
-              prev.map((f) => (f.id === uploadFile.id ? { ...f, progress } : f))
-            );
-          }
-        },
-      });
+      const file = uploadFile.file!;
+      const totalParts = Math.ceil(file.size / CHUNK_SIZE);
+      const parts: { ETag: string; PartNumber: number }[] = [];
+
+      for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
+        const start = (partNumber - 1) * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunk = file.slice(start, end);
+
+        const {
+          data: { url },
+        } = await retry(() =>
+          axios.post("/api/upload-url", {
+            action: "signPart",
+            key,
+            uploadId,
+            partNumber,
+          })
+        );
+
+        console.log(`Part ${partNumber} presigned URL:`, url);
+
+        const uploadRes = await retry(() =>
+          axios.put(url, chunk, {
+            headers: { "Content-Type": "application/octet-stream" },
+          })
+        );
+
+        const ETag = uploadRes.headers["etag"];
+        if (!ETag) throw new Error(`Missing ETag for part ${partNumber}`);
+
+        parts.push({
+          ETag: ETag.replace(/^"|"$/g, ""),
+          PartNumber: partNumber,
+        });
+
+        const uploadedSoFar = (partNumber / totalParts) * 100;
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadFile.id
+              ? { ...f, progress: Math.min(99, uploadedSoFar) }
+              : f
+          )
+        );
+      }
+
+      const completeRes = await retry(() =>
+        axios.post("/api/upload-url", {
+          action: "complete",
+          key,
+          uploadId,
+          parts,
+        })
+      );
+
+      console.log("Multipart upload completed:", completeRes.data);
 
       setFiles((prev) =>
         prev.map((f) =>
@@ -49,7 +122,7 @@ export function useUpload() {
         )
       );
 
-      toast.success(`${uploadFile.file?.name} uploaded successfully!`);
+      toast.success(`${file.name} uploaded successfully!`);
 
       if (videoId) {
         await supabase
@@ -58,13 +131,15 @@ export function useUpload() {
           .eq("id", videoId);
       }
 
-      await fetch(`${process.env.NEXT_PUBLIC_EXPRESS_URL}/jobs/video-process`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId, s3Key: key }),
-      });
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_EXPRESS_URL}/jobs/video-process`,
+        {
+          videoId,
+          s3Key: key,
+        }
+      );
     } catch (err: any) {
-      console.error("Upload error:", err);
+      console.error("Multipart upload error:", err);
       setFiles((prev) =>
         prev.map((f) =>
           f.id === uploadFile.id
@@ -87,7 +162,7 @@ export function useUpload() {
         error,
       };
       setFiles((prev) => [...prev, uploadFile]);
-      if (!error) uploadToS3(uploadFile);
+      if (!error) uploadMultipart(uploadFile);
     });
   };
 
@@ -95,5 +170,5 @@ export function useUpload() {
     setFiles((prev) => prev.filter((f) => f.id !== fileId));
   };
 
-  return { files, setFiles, handleFiles, removeFile, uploadToS3 };
+  return { files, setFiles, handleFiles, removeFile, uploadMultipart };
 }
