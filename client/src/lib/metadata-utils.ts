@@ -19,7 +19,7 @@ export interface VideoCardProps {
 }
 
 export const formatSize = (bytes?: number | null): string => {
-  if (bytes == null || isNaN(bytes)) return "—"; // safe fallback
+  if (bytes == null || isNaN(bytes)) return "—"; 
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   if (bytes < 1024 * 1024 * 1024)
@@ -44,11 +44,9 @@ export const formatDate = (dateStr: string | null): string => {
 };
 export const formatDateOnly = (dateStr: string) => {
   const d = new Date(dateStr);
-  // returns "day-month-year" only
   return `${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`;
 };
 
-// utils/dateFormatter.ts
 export function formatDateTime(isoString: string | null): string {
   if (!isoString) return "—";
   const d = new Date(isoString);

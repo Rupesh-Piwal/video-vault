@@ -27,8 +27,9 @@ import {
 } from "@/lib/metadata-utils";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { DownloadButton } from "./download-button";
-import { TextShimmer } from "../../components/motion-primitives/text-shimmer";
+import { TextShimmer } from "../../../../components/motion-primitives/text-shimmer";
+import { DownloadButton } from "@/components/download-button";
+
 
 export function VideoCard({
   id,
@@ -169,8 +170,7 @@ export function VideoCard({
   };
 
   useEffect(() => {
-    if (status !== "READY") return; // only fetch when ready
-
+    if (status !== "READY") return; 
     let isMounted = true;
 
     async function fetchThumbnails() {
@@ -180,7 +180,6 @@ export function VideoCard({
         const data = await res.json();
 
         if (isMounted && data.urls?.length) {
-          // pick middle thumbnail
           const midIndex = Math.floor(data.urls.length / 2);
           console.log("Setting poster URL:", data.urls[midIndex]);
           setPosterUrl(data.urls[midIndex]);
@@ -206,9 +205,9 @@ export function VideoCard({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Video Thumbnail/Preview Area */}
+
         <div className="relative aspect-video overflow-hidden">
-          {/* Status Badge */}
+
           <div className="absolute top-3 left-3 z-10">
             <Badge
               className={cn(
@@ -236,7 +235,6 @@ export function VideoCard({
                 onPause={() => setIsPlaying(false)}
               />
 
-              {/* Video Controls Overlay */}
               <div
                 className={cn(
                   "absolute inset-0 bg-black/60 transition-all duration-300 flex items-center justify-center",
@@ -257,9 +255,7 @@ export function VideoCard({
                   )}
                 </button>
 
-                {/* Bottom Controls */}
                 <div className="absolute bottom-3 left-3 right-3">
-                  {/* Progress Bar */}
                   <div className="mb-2">
                     <div className="w-full h-1 bg-white/20 rounded-full">
                       <div
@@ -269,7 +265,6 @@ export function VideoCard({
                     </div>
                   </div>
 
-                  {/* Control Buttons */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <button
@@ -338,22 +333,17 @@ export function VideoCard({
             </div>
           )}
         </div>
-
-        {/* Content Area */}
         <CardContent className="p-4 space-y-3">
-          {/* Video Title */}
           <h3 className="font-medium text-white text-sm leading-tight truncate">
             {filename}
           </h3>
 
-          {/* Video Metadata */}
           <div className="flex items-center justify-between text-xs text-[#8C8C8C]">
             <span>{formatSize(size)}</span>
             <span>{formatDuration(duration)}</span>
             <span>{formatDateOnly(uploadDate)}</span>
           </div>
 
-          {/* Action Buttons - Only show for READY videos */}
           {status === "READY" && !loadingUrl && (
             <div className="flex items-center gap-2 pt-1">
               <DownloadButton videoUrl={videoUrl} filename={filename} />
@@ -387,7 +377,6 @@ export function VideoCard({
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[#18191A] border border-[#2B2C2D] rounded-xl p-6 max-w-md w-full">

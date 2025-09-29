@@ -1,4 +1,3 @@
-// app/api/share-links/[id]/disable/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/supabase/server";
 

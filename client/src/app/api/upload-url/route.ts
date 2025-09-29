@@ -36,7 +36,6 @@ export async function POST(req: Request) {
     // ----- UNIQUE KEY PER USER -----
     const key = `uploads/${user.id}/${Date.now()}-${fileName}`;
 
-    // Insert into Supabase videos table
     const { data: video, error: insertError } = await supabase
       .from("videos")
       .insert([
@@ -60,7 +59,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Generate S3 presigned URL
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME!,
       Key: key,
@@ -69,7 +67,6 @@ export async function POST(req: Request) {
 
     const url = await getSignedUrl(s3, command, { expiresIn: 60 });
 
-    // Return upload URL + video DB ID
     return NextResponse.json({ url, key, videoId: video.id });
   } catch (err) {
     console.error("Upload URL error:", err);

@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { UploadModal } from "@/components/upload-modal";
-import { VideoList } from "@/components/video-list";
+import { UploadModal } from "@/app/dashboard/components/upload-modal";
 import { Upload } from "lucide-react";
+import { VideoList } from "./components/video-list";
 
 
 export default function DashboardPage() {
@@ -12,7 +12,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#0B0D0E] text-white">
-      {/* Header */}
       <div className="border-b border-[#2B2C2D] bg-[#18191A]/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
@@ -35,7 +34,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <VideoList />
       </div>

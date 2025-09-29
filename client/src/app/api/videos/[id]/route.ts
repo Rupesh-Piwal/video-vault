@@ -5,7 +5,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const supabase = await createClient(); // 👈 await here
+  const supabase = await createClient(); 
 
   const { error } = await supabase.from("videos").delete().eq("id", params.id);
 

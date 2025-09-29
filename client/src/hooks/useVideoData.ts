@@ -1,59 +1,9 @@
-// hooks/useVideoData.ts
 "use client";
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/supabase/client";
-
-interface VideoData {
-  id: string;
-  original_filename: string;
-  status: string;
-  storage_key: string;
-  mime_type: string;
-  size_bytes: number;
-  duration_seconds: number;
-  created_at: string;
-  ready_at: string | null;
-}
-
-interface Thumbnail {
-  id: string;
-  video_id: string;
-  storage_key: string;
-  created_at: string;
-}
-
-
-type ShareLinkStatus = "Active" | "Expired" | "Revoked";
-
-export interface RawShareLink {
-  id: string;
-  url: string;
-  visibility: "PUBLIC" | "PRIVATE";
-  expiry: string | null;
-  last_viewed_at: string | null;
-  status?: string | null;
-}
-
-interface ShareLink {
-  id: string;
-  url: string;
-  visibility: "PUBLIC" | "PRIVATE";
-  expiry: string | null;
-  last_viewed_at: string | null;
-  status: ShareLinkStatus;
-}
-
-
-
-interface UseVideoDataReturn {
-  video: VideoData | null;
-  thumbnails: Thumbnail[];
-  shareLinks: ShareLink[];
-  loading: boolean;
-  error: string | null;
-  refetch: () => void;
-}
+import { Thumbnail, UseVideoDataReturn, VideoData } from "@/types/videoData";
+import { ShareLink } from "@/types/share";
 
 export function useVideoData(videoId: string): UseVideoDataReturn {
   const [video, setVideo] = useState<VideoData | null>(null);
@@ -69,7 +19,6 @@ export function useVideoData(videoId: string): UseVideoDataReturn {
 
       const supabase = createClient();
 
-      // Fetch video data
       const { data: videoData, error: videoError } = await supabase
         .from("videos")
         .select("*")
@@ -79,7 +28,6 @@ export function useVideoData(videoId: string): UseVideoDataReturn {
       if (videoError) throw videoError;
       setVideo(videoData);
 
-      // Fetch thumbnails
       const { data: thumbs, error: thumbsError } = await supabase
         .from("thumbnails")
         .select("*")
@@ -88,7 +36,6 @@ export function useVideoData(videoId: string): UseVideoDataReturn {
       if (thumbsError) throw thumbsError;
       setThumbnails(thumbs || []);
 
-      // Fetch share links
       const { data: links, error: linksError } = await supabase
         .from("share_links")
         .select("*")

@@ -37,7 +37,6 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
 
   const supabase = createClient();
 
-  // ✅ Fetch current logged-in user once
   useEffect(() => {
     supabase.auth.getUser().then((res) => {
       if (res.data.user) setUser({ id: res.data.user.id });
@@ -55,7 +54,7 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": user.id, // ✅ attach user id
+          "x-user-id": user.id, 
         },
         body: JSON.stringify({
           visibility,
@@ -72,7 +71,6 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create link");
-      // ✅ copy link to clipboard
       if (data.url) {
         await navigator.clipboard.writeText(data.url);
         toast.success("Share link created & copied to clipboard!");
@@ -96,7 +94,6 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Visibility */}
           <div>
             <Label>Visibility</Label>
             <Select
@@ -127,7 +124,6 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
             </div>
           )}
 
-          {/* Expiry */}
           <div>
             <Label>Expiry</Label>
             <Select

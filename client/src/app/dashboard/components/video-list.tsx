@@ -2,30 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/supabase/client";
-import { VideoCard } from "./video-card";
 import type { VideoCardProps } from "@/lib/metadata-utils";
 import { FileVideo } from "lucide-react";
-
-interface VideoRow {
-  id: string;
-  original_filename?: string;
-  filename?: string;
-  mime_type?: string;
-  type?: string;
-  size_bytes?: number;
-  duration_seconds?: number | null;
-  created_at: string;
-  ready_at?: string | null;
-  status: string;
-  storage_key: string;
-}
+import { VideoCard } from "./video-card";
+import { VideoRow } from "@/types/video";
 
 export function VideoList() {
   const [videos, setVideos] = useState<VideoCardProps[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
-  // ✅ Map DB row → VideoCardProps
   function mapVideoRow(row: VideoRow): VideoCardProps {
     return {
       id: row.id,
@@ -41,7 +27,6 @@ export function VideoList() {
   }
 
   useEffect(() => {
-    // Fetch initial videos
     const fetchVideos = async () => {
       const { data, error } = await supabase
         .from("videos")
@@ -56,7 +41,6 @@ export function VideoList() {
 
     fetchVideos();
 
-    // Realtime subscription for all events
     const channel = supabase
       .channel("video-list")
       .on(

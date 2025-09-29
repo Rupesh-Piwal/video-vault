@@ -22,7 +22,7 @@ export async function GET(req: Request) {
       Key: key,
     });
 
-    const url = await getSignedUrl(s3, command, { expiresIn: 900 }); // 15 min
+    const url = await getSignedUrl(s3, command, { expiresIn: 900 }); 
     return NextResponse.json({ url });
   } catch (err) {
     console.error("Video signed URL error:", err);

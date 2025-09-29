@@ -1,4 +1,3 @@
-// app/api/share-links/route.ts
 import { buildShareUrl, isExpired } from "@/lib/dayUtils";
 import { createClient } from "@/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
@@ -29,7 +28,7 @@ export async function GET(req: NextRequest) {
     const rows = (data ?? []).map((r: any) => ({
       id: r.id,
       video_id: r.video_id,
-      url: buildShareUrl(r.hashed_token), // e.g. `${APP_URL}/s/${token}`
+      url: buildShareUrl(r.hashed_token),
       visibility: r.visibility,
       expiry: r.expiry,
       status: r.revoked

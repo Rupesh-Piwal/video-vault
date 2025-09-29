@@ -60,7 +60,7 @@ export default function RootLayout({
               },
             },
             loading: {
-              duration: Infinity, // Keep until manually dismissed
+              duration: Infinity, 
             },
           }}
         />

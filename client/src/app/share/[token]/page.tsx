@@ -19,24 +19,9 @@ import { DownloadButton } from "@/components/download-button";
 import { Lock, AlertCircle, Clock } from "lucide-react";
 import { formatDuration, formatSize } from "@/lib/metadata-utils";
 import SVGLogo from "@/components/svg-logo";
+import { ShareResponse, Video } from "@/types/video";
 
-type Video = {
-  id: string;
-  original_filename: string;
-  storage_key: string;
-  playback_url?: string;
-  description?: string;
-  mime_type: string;
-  size_bytes: number;
-  duration_seconds: number;
-  created_at: string;
-  ready_at: string | null;
-};
 
-type ShareResponse =
-  | { requireEmail: true }
-  | { requireEmail: false; video: Video }
-  | { error: string };
 
 const fetcher = async (url: string): Promise<ShareResponse> => {
   const res = await fetch(url);
@@ -94,7 +79,6 @@ export default function SharedVideoPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#0B0D0E] to-[#18191A]">
       <div className="mx-auto max-w-4xl px-4 py-8">
-        {/* Header Section */}
         {!isLoading && video && (
           <div className="mb-8">
             <div className="flex items-center justify-between">
@@ -138,7 +122,6 @@ export default function SharedVideoPage() {
           </div>
         )}
 
-        {/* Loading State */}
         {isLoading && (
           <Card className="border-[#2B2C2D] bg-[#18191A] shadow-2xl">
             <CardHeader className="text-center">
@@ -155,7 +138,6 @@ export default function SharedVideoPage() {
           </Card>
         )}
 
-        {/* Error State */}
         {!isLoading && (error || (data && "error" in data)) && (
           <Card className="border-[#2B2C2D] bg-[#18191A] shadow-2xl">
             <CardHeader className="text-center">
@@ -186,7 +168,6 @@ export default function SharedVideoPage() {
           </Card>
         )}
 
-        {/* Email Gate */}
         {!isLoading && data && "requireEmail" in data && data.requireEmail && (
           <Card className="border-[#2B2C2D] bg-[#18191A] shadow-2xl max-w-md mx-auto">
             <CardHeader className="text-center">
@@ -233,7 +214,6 @@ export default function SharedVideoPage() {
           </Card>
         )}
 
-        {/* Video Player */}
         {!isLoading && video && video.playback_url && (
           <section className="space-y-6">
             <div
@@ -252,7 +232,6 @@ export default function SharedVideoPage() {
               />
             </div>
 
-            {/* Quick Info Bar */}
             <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
               <span className="bg-[#2B2C2D] px-4 py-2 rounded-lg">
                 Shared via VideoVault
@@ -261,7 +240,6 @@ export default function SharedVideoPage() {
           </section>
         )}
 
-        {/* Video Unavailable */}
         {!isLoading && video && !video.playback_url && (
           <Card className="border-[#2B2C2D] bg-[#18191A] shadow-2xl text-center">
             <CardContent className="py-16">

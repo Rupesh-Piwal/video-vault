@@ -1,4 +1,3 @@
-// app/api/videos/[id]/share/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@/supabase/server";
@@ -14,7 +13,7 @@ export async function POST(
 ) {
   try {
     const supabase = await createClient();
-    const supabaseAdmin = createAdminClient(); // Create admin client
+    const supabaseAdmin = createAdminClient(); 
     const userId = requireUserId(req);
 
     if (!userId) {
@@ -49,7 +48,6 @@ export async function POST(
       ? new Date(Date.now() + expiryMap[expiryPreset]! * 1000).toISOString()
       : null;
 
-    // Generate raw + hashed token
     const token = crypto.randomBytes(32).toString("hex");
     const hashed = crypto.createHash("sha256").update(token).digest("hex");
 
@@ -68,7 +66,6 @@ export async function POST(
     if (error) throw error;
 
     if (visibility === "PRIVATE" && emails.length > 0) {
-      // Batch check for registered users using admin client
       const {
         data: { users },
         error: authError,
@@ -76,7 +73,6 @@ export async function POST(
 
       if (authError) {
         console.error("Auth admin error:", authError);
-        // Continue without email notifications rather than failing the entire request
       }
 
       const registeredEmails = new Set(
@@ -86,7 +82,6 @@ export async function POST(
       for (const email of emails) {
         const trimmedEmail = email.trim().toLowerCase();
 
-        // Add to whitelist using regular client
         await supabase.from("share_link_whitelist").insert({
           share_link_id: link.id,
           email: trimmedEmail,

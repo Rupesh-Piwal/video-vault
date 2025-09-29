@@ -20,7 +20,6 @@ export default function Page() {
       } = await supabase.auth.getSession();
 
       if (session) {
-        // Show redirect message before actually redirecting
         setTimeout(() => {
           router.replace("/dashboard");
         }, 2500);
@@ -32,7 +31,6 @@ export default function Page() {
     checkAuth();
   }, [supabase, router]);
 
-  // Hide welcome message after initial animation
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowWelcome(false);

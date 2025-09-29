@@ -22,7 +22,6 @@ export default function VideoPage({ videoId }: VideoPageProps) {
   const router = useRouter();
   const [createLinkModalOpen, setCreateLinkModalOpen] = useState(false);
 
-  // Use custom hooks
   const { video, thumbnails, shareLinks, loading, error, refetch } =
     useVideoData(videoId);
   const {
@@ -141,8 +140,7 @@ export default function VideoPage({ videoId }: VideoPageProps) {
               onCreateLink={() => setCreateLinkModalOpen(true)}
             />
           </div>
-
-          {/* Sidebar */}
+          
           <div className="lg:col-span-3 space-y-6 ">
             <VideoThumbnails thumbnails={thumbnails} />
 

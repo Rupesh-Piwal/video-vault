@@ -17,7 +17,6 @@ export async function GET(
   try {
     const videoId = params.id;
 
-    // thumbnails ka path => thumbnails/<videoId>/thumb-{1..4}.jpg
     const keys = Array.from({ length: 4 }).map(
       (_, i) => `thumbnails/${videoId}/thumb-${i + 1}.jpg`
     );

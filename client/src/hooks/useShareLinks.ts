@@ -1,38 +1,13 @@
-// hooks/useShareLinks.ts
 "use client";
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/supabase/client";
-
-export type ShareLinkStatus = "Active" | "Expired" | "Revoked";
-
-export interface RawShareLink {
-  id: string;
-  url: string;
-  visibility: "PUBLIC" | "PRIVATE";
-  expiry: string | null;
-  last_viewed_at: string | null;
-  revoked?: boolean;
-  status: ShareLinkStatus;
-  video_id?: string; // Add this field
-}
-
-export interface ShareLink {
-  id: string;
-  url: string;
-  visibility: "PUBLIC" | "PRIVATE";
-  expiry: string | null;
-  last_viewed_at: string | null;
-  status: ShareLinkStatus;
-}
-
-interface UseShareLinksReturn {
-  links: ShareLink[];
-  loading: boolean;
-  error: string | null;
-  disableLink: (id: string) => Promise<void>;
-  refetch: () => void;
-}
+import {
+  RawShareLink,
+  ShareLink,
+  ShareLinkStatus,
+  UseShareLinksReturn,
+} from "@/types/share";
 
 export function useShareLinks(
   initialShareLinks: RawShareLink[] = [],
@@ -64,7 +39,6 @@ export function useShareLinks(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch share links if videoId is provided
   const fetchShareLinks = async () => {
     if (!videoId) return;
 
@@ -77,7 +51,7 @@ export function useShareLinks(
         .from("share_links")
         .select("*")
         .eq("video_id", videoId)
-        .order("created_at", { ascending: false }); // Order by newest first
+        .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
       setLinks(toTyped(data || []));
@@ -91,7 +65,6 @@ export function useShareLinks(
     }
   };
 
-  // Initialize with provided data or fetch if videoId is provided
   useEffect(() => {
     if (videoId) {
       fetchShareLinks();
@@ -100,12 +73,9 @@ export function useShareLinks(
     }
   }, [videoId, initialShareLinks]);
 
-  // FIXED: Realtime subscription for share links
   useEffect(() => {
     const supabase = createClient();
 
-    // If we have a videoId, subscribe to changes for that specific video
-    // If no videoId, we might be in a context where we need to listen to all changes
     let filter = "";
     if (videoId) {
       filter = `video_id=eq.${videoId}`;
@@ -119,31 +89,25 @@ export function useShareLinks(
           event: "*",
           schema: "public",
           table: "share_links",
-          ...(filter && { filter }), // Only add filter if it exists
+          ...(filter && { filter }),
         },
         (payload) => {
           console.log("Realtime event:", payload);
 
-          // For INSERT events, check if the new link belongs to our current video
           if (payload.eventType === "INSERT") {
             const newLink = payload.new as RawShareLink;
 
-            // If we have a videoId filter, only add if it matches
-            // If no videoId, add all new links (for contexts like admin views)
             if (!videoId || newLink.video_id === videoId) {
               setLinks((prev) => {
-                // Check if link already exists to avoid duplicates
                 if (prev.some((link) => link.id === newLink.id)) {
                   return prev;
                 }
-                return [toTyped([newLink])[0], ...prev]; // Add to beginning
+                return [toTyped([newLink])[0], ...prev];
               });
             }
           } else if (payload.eventType === "UPDATE") {
             const updatedLink = payload.new as RawShareLink;
 
-            // If we have a videoId filter, only update if it matches
-            // If no videoId, update all matching links
             if (!videoId || updatedLink.video_id === videoId) {
               setLinks((prev) =>
                 prev.map((l) =>
@@ -151,11 +115,9 @@ export function useShareLinks(
                 )
               );
             } else {
-              // If the updated link no longer belongs to our video, remove it
               setLinks((prev) => prev.filter((l) => l.id !== updatedLink.id));
             }
           } else if (payload.eventType === "DELETE") {
-            // Always remove deleted links regardless of video_id
             setLinks((prev) => prev.filter((l) => l.id !== payload.old.id));
           }
         }
@@ -168,7 +130,7 @@ export function useShareLinks(
       console.log("Cleaning up realtime subscription");
       supabase.removeChannel(channel);
     };
-  }, [videoId]); // Re-subscribe when videoId changes
+  }, [videoId]);
 
   const disableLink = async (id: string): Promise<void> => {
     try {

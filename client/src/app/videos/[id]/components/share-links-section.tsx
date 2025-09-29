@@ -13,14 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import toast from "react-hot-toast";
 import {
-  ShareLink,
+  
   useShareLinks,
-  type RawShareLink,
+   
 } from "@/hooks/useShareLinks";
 import { useEffect } from "react";
 import { formatDate, formatDateTime } from "@/lib/metadata-utils";
 import {
-  Copy,
   Shield,
   Eye,
   Calendar,
@@ -28,6 +27,7 @@ import {
   Zap,
   Ban,
 } from "lucide-react";
+import { RawShareLink, ShareLink } from "@/types/share";
 
 interface Props {
   shareLinks?: RawShareLink[];
@@ -47,7 +47,6 @@ export function ShareLinksSection({
     videoId
   );
 
-  // Notify parent when links are updated
   useEffect(() => {
     onLinksUpdated?.(links);
   }, [links, onLinksUpdated]);
