@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import {
   Dialog,
@@ -19,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { X } from "lucide-react";
 import { createClient } from "@/supabase/client";
 import { TextShimmer } from "../../../../../components/motion-primitives/text-shimmer";
 
@@ -28,10 +30,108 @@ interface Props {
   videoId: string;
 }
 
+function EmailMultiSelect({
+  emails,
+  onChange,
+}: {
+  emails: string[];
+  onChange: (emails: string[]) => void;
+}) {
+  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const addEmail = (email: string) => {
+    const trimmedEmail = email.trim().toLowerCase();
+    if (
+      trimmedEmail &&
+      validateEmail(trimmedEmail) &&
+      !emails.includes(trimmedEmail)
+    ) {
+      onChange([...emails, trimmedEmail]);
+      setInputValue("");
+    }
+  };
+
+  const removeEmail = (emailToRemove: string) => {
+    onChange(emails.filter((email) => email !== emailToRemove));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      if (inputValue.trim()) {
+        addEmail(inputValue);
+      }
+    } else if (e.key === "Backspace" && !inputValue && emails.length > 0) {
+      removeEmail(emails[emails.length - 1]);
+    }
+  };
+
+  const handleBlur = () => {
+    if (inputValue.trim()) {
+      addEmail(inputValue);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData("text");
+    const emailList = pastedText.split(/[,;\s]+/).filter(Boolean);
+
+    emailList.forEach((email) => {
+      addEmail(email);
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-[2.5rem] bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+        {emails.map((email) => (
+          <Badge
+            key={email}
+            variant="secondary"
+            className="flex items-center gap-1 px-2 py-1"
+          >
+            {email}
+            <button
+              type="button"
+              onClick={() => removeEmail(email)}
+              className="hover:bg-destructive hover:text-destructive-foreground rounded-full p-0.5 transition-colors"
+            >
+              <X size={12} />
+            </button>
+          </Badge>
+        ))}
+        <Input
+          ref={inputRef}
+          type="email"
+          placeholder={
+            emails.length === 0 ? "Enter email addresses..." : "Add more..."
+          }
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          onPaste={handlePaste}
+          className="flex-1 min-w-[200px] border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Type email addresses and press Enter or comma to add. Only these users
+        will be able to open the link.
+      </p>
+    </div>
+  );
+}
+
 export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
-  const [emails, setEmails] = useState("");
+  const [emails, setEmails] = useState<string[]>([]);
   const [expiryPreset, setExpiryPreset] = useState("1d");
   const [loading, setLoading] = useState(false);
 
@@ -43,9 +143,20 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
     });
   }, [supabase]);
 
+  // Reset emails when switching from private to public
+  useEffect(() => {
+    if (visibility === "PUBLIC") {
+      setEmails([]);
+    }
+  }, [visibility]);
+
   async function handleCreate() {
     if (!user) {
       return toast.error("⚠️ Please log in first.");
+    }
+
+    if (visibility === "PRIVATE" && emails.length === 0) {
+      return toast.error("⚠️ Please add at least one email for private links.");
     }
 
     setLoading(true);
@@ -54,23 +165,18 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-id": user.id, 
+          "x-user-id": user.id,
         },
         body: JSON.stringify({
           visibility,
-          emails:
-            visibility === "PRIVATE"
-              ? emails
-                  .split(",")
-                  .map((e) => e.trim())
-                  .filter(Boolean)
-              : [],
+          emails: visibility === "PRIVATE" ? emails : [],
           expiryPreset,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create link");
+
       if (data.url) {
         await navigator.clipboard.writeText(data.url);
         toast.success("Share link created & copied to clipboard!");
@@ -79,6 +185,11 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
       }
 
       onOpenChange(false);
+
+      // Reset form
+      setEmails([]);
+      setVisibility("PUBLIC");
+      setExpiryPreset("1d");
     } catch (err: any) {
       toast.error(`❌ ${err.message}`);
     } finally {
@@ -88,7 +199,7 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined}>
+      <DialogContent aria-describedby={undefined} className="max-w-md">
         <DialogHeader>
           <DialogTitle>Create Share Link</DialogTitle>
         </DialogHeader>
@@ -113,14 +224,7 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
           {visibility === "PRIVATE" && (
             <div>
               <Label>Allowed Emails</Label>
-              <Input
-                placeholder="user1@example.com, user2@example.com"
-                value={emails}
-                onChange={(e) => setEmails(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Only these users will be able to open the link.
-              </p>
+              <EmailMultiSelect emails={emails} onChange={setEmails} />
             </div>
           )}
 
@@ -148,7 +252,12 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleCreate} disabled={loading}>
+          <Button
+            onClick={handleCreate}
+            disabled={
+              loading || (visibility === "PRIVATE" && emails.length === 0)
+            }
+          >
             {loading ? (
               <TextShimmer duration={1.2}>Creating...</TextShimmer>
             ) : (
