@@ -12,14 +12,13 @@ import {
 import { createClient } from "@supabase/supabase-js";
 import { Readable } from "stream";
 import { generateThumbnails, ThumbnailInfo } from "../utils/generateThumbnails";
-import ffmpeg from "fluent-ffmpeg"; // ✅ For video duration
+import ffmpeg from "fluent-ffmpeg"; 
 
-// Redis connection
 const connection = new Redis(process.env.REDIS_URL!, {
   maxRetriesPerRequest: null,
 });
 
-// S3 client
+
 const s3 = new S3Client({
   region: process.env.AWS_BUCKET_REGION!,
   credentials: {
@@ -28,13 +27,11 @@ const s3 = new S3Client({
   },
 });
 
-// Supabase client (service role)
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Download video from S3
 async function downloadFromS3(bucket: string, key: string, destPath: string) {
   const command = new GetObjectCommand({ Bucket: bucket, Key: key });
   const response = await s3.send(command);
@@ -48,7 +45,6 @@ async function downloadFromS3(bucket: string, key: string, destPath: string) {
   });
 }
 
-// Upload file (thumbnail) to S3
 async function uploadToS3(bucket: string, key: string, filePath: string) {
   const fileStream = fs.createReadStream(filePath);
   const command = new PutObjectCommand({

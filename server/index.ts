@@ -7,22 +7,20 @@ import { emailQueue } from "./queue/emailQueue";
 
 const app = express();
 
-// ✅ Allow requests from your Next.js frontend
 app.use(
   cors({
-    origin: "http://localhost:3000", // frontend origin
+    origin: process.env.NEXT_PUBLIC_APP_URL,
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
   })
 );
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// Health check
 app.get("/", (req, res) => {
   res.send("Express server is running 🚀");
 });
 
-// Enqueue job after upload is completed
 app.post("/jobs/video-process", async (req, res) => {
   try {
     const { videoId, s3Key } = req.body;
@@ -35,10 +33,10 @@ app.post("/jobs/video-process", async (req, res) => {
       "video-processing",
       { videoId, s3Key },
       {
-        attempts: 5, // max retry attempts
+        attempts: 5,
         backoff: {
-          type: "exponential", // or 'fixed'
-          delay: 2000, // 2s initial, then 4s, 8s, etc
+          type: "exponential",
+          delay: 2000,
         },
       }
     );
@@ -50,7 +48,6 @@ app.post("/jobs/video-process", async (req, res) => {
   }
 });
 
-// Enqueue email job
 app.post("/jobs/send-email", async (req, res) => {
   console.log("📧 [EXPRESS] Received email request:", req.body);
   try {
@@ -66,10 +63,10 @@ app.post("/jobs/send-email", async (req, res) => {
       "send-email",
       { to, videoId, token },
       {
-        attempts: 5, // max retry attempts
+        attempts: 5,
         backoff: {
-          type: "exponential", // or 'fixed'
-          delay: 2000, // 2s initial, then 4s, 8s, etc
+          type: "exponential",
+          delay: 2000,
         },
       }
     );
