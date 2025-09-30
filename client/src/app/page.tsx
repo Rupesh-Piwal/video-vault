@@ -1,16 +1,13 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/supabase/client";
 import Header from "@/components/Header";
 import SVGLogo from "@/components/svg-logo";
 import { TextShimmer } from "../../components/motion-primitives/text-shimmer";
 
-export default function Page() {
+function PageContent() {
   const router = useRouter();
   const supabase = createClient();
   const [isChecking, setIsChecking] = useState(true);
@@ -116,5 +113,17 @@ export default function Page() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen" style={{ backgroundColor: "#0B0D0E" }} />
+      }
+    >
+      <PageContent />
+    </Suspense>
   );
 }
