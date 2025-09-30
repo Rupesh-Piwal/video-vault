@@ -1,13 +1,15 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/supabase/client";
 import Header from "@/components/Header";
 import SVGLogo from "@/components/svg-logo";
 import { TextShimmer } from "../../components/motion-primitives/text-shimmer";
 
-function PageContent() {
+export const dynamic = "force-dynamic";
+
+export default function Page() {
   const router = useRouter();
   const supabase = createClient();
   const [isChecking, setIsChecking] = useState(true);
@@ -113,17 +115,5 @@ function PageContent() {
         }
       `}</style>
     </div>
-  );
-}
-
-export default function Page() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen" style={{ backgroundColor: "#0B0D0E" }} />
-      }
-    >
-      <PageContent />
-    </Suspense>
   );
 }

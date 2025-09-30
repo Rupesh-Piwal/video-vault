@@ -21,12 +21,16 @@ export default function Header() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Ensure this only runs on client
+    if (typeof window === "undefined") return;
+
     const fetchUser = async () => {
       try {
         const supabase = createClient();
         const {
           data: { user },
         } = await supabase.auth.getUser();
+
         if (user) {
           setUser({
             id: user.id,
@@ -39,6 +43,7 @@ export default function Header() {
         setLoading(false);
       }
     };
+
     fetchUser();
   }, []);
 
@@ -49,6 +54,7 @@ export default function Header() {
     );
   };
 
+  // Loading skeleton
   if (loading) {
     return (
       <header
@@ -73,6 +79,7 @@ export default function Header() {
     );
   }
 
+  // User not signed in
   if (!user) {
     return (
       <header
@@ -103,6 +110,7 @@ export default function Header() {
     );
   }
 
+  // User signed in
   return (
     <header
       className="w-full border-b sticky top-0 z-50"
@@ -117,11 +125,20 @@ export default function Header() {
                 alt={user.user_metadata?.full_name || "User"}
                 fill
                 className="rounded-full border border-gray-600 object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    user.user_metadata?.full_name || "User"
-                  )}&background=2B2C2D&color=ffffff&size=32`;
+                onError={() => {
+                  setUser((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          user_metadata: {
+                            ...prev.user_metadata,
+                            avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                              user.user_metadata?.full_name || "User"
+                            )}&background=2B2C2D&color=ffffff&size=32`,
+                          },
+                        }
+                      : prev
+                  );
                 }}
               />
             </div>

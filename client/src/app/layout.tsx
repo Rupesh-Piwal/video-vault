@@ -3,6 +3,8 @@ import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 
+export const dynamic = "force-dynamic";
+
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -60,7 +62,7 @@ export default function RootLayout({
               },
             },
             loading: {
-              duration: Infinity, 
+              duration: Infinity,
             },
           }}
         />
