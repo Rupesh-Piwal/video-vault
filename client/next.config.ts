@@ -1,11 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'standalone', 
+
   images: {
-    domains: [
-      "lh3.googleusercontent.com",
-      "video-vault-rp.s3.ap-south-1.amazonaws.com",
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "video-vault-rp.s3.ap-south-1.amazonaws.com",
+      },
     ],
   },
   eslint: {
