@@ -61,15 +61,6 @@ export function ShareLinksSection({
     }
   };
 
-  const handleCopyLink = (url: string) => {
-    if (!url) {
-      toast.error("❌ No link available to copy");
-      return;
-    }
-    navigator.clipboard.writeText(url);
-    toast.success("📋 Link copied to clipboard!");
-  };
-
   const getStatusVariant = (status: string) => {
     switch (status) {
       case "Active":

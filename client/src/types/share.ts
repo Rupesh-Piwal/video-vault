@@ -27,3 +27,14 @@ export interface UseShareLinksReturn {
   disableLink: (id: string) => Promise<void>;
   refetch: () => void;
 }
+
+export interface ShareLinkRow {
+  id: string;
+  video_id: string;
+  hashed_token: string;
+  visibility: "PUBLIC" | "PRIVATE";
+  expiry: string | null;
+  revoked: boolean;
+  last_viewed_at: string | null;
+  created_at: string;
+}

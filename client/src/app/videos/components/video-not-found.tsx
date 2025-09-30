@@ -12,7 +12,7 @@ export function VideoNotFound() {
       <div className="text-center">
         <h1 className="text-2xl font-semibold mb-2">Video not found</h1>
         <p className="text-muted-foreground mb-4">
-          The video you're looking for doesn't exist.
+          The video you&apos;re looking for doesn&apos;t exist.
         </p>
         <Button onClick={() => router.push("/")}>
           <ArrowLeft className="h-4 w-4 mr-2" />

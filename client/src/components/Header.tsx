@@ -6,9 +6,18 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { Upload } from "lucide-react";
 import SVGLogo from "./svg-logo";
+import Image from "next/image";
+
+interface User {
+  id: string;
+  user_metadata?: {
+    full_name?: string;
+    avatar_url?: string;
+  };
+}
 
 export default function Header() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,7 +27,12 @@ export default function Header() {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        setUser(user);
+        if (user) {
+          setUser({
+            id: user.id,
+            user_metadata: user.user_metadata,
+          });
+        }
       } catch (error) {
         console.error("Error fetching user:", error);
       } finally {
@@ -47,11 +61,11 @@ export default function Header() {
               <div
                 className="w-8 h-8 rounded-lg animate-pulse"
                 style={{ backgroundColor: "#2B2C2D" }}
-              ></div>
+              />
               <div
                 className="h-4 rounded w-24 animate-pulse"
                 style={{ backgroundColor: "#2B2C2D" }}
-              ></div>
+              />
             </div>
           </div>
         </div>
@@ -97,11 +111,12 @@ export default function Header() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3 ml-6">
-              <img
+            <div className="flex items-center space-x-3 ml-6 relative w-8 h-8">
+              <Image
                 src={user.user_metadata?.avatar_url || "/default-avatar.png"}
                 alt={user.user_metadata?.full_name || "User"}
-                className="w-8 h-8 rounded-full border border-gray-600"
+                fill
+                className="rounded-full border border-gray-600 object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -109,12 +124,11 @@ export default function Header() {
                   )}&background=2B2C2D&color=ffffff&size=32`;
                 }}
               />
-
-              <div className="hidden sm:block">
-                <p className="text-white font-medium md:text-[18px]">
-                  Welcome {getFirstName(user.user_metadata?.full_name || "")}
-                </p>
-              </div>
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-white font-medium md:text-[18px]">
+                Welcome {getFirstName(user.user_metadata?.full_name || "")}
+              </p>
             </div>
           </div>
 

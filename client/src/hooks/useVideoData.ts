@@ -1,6 +1,4 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/supabase/client";
 import { Thumbnail, UseVideoDataReturn, VideoData } from "@/types/videoData";
 import { ShareLink } from "@/types/share";
@@ -12,7 +10,7 @@ export function useVideoData(videoId: string): UseVideoDataReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -49,13 +47,13 @@ export function useVideoData(videoId: string): UseVideoDataReturn {
     } finally {
       setLoading(false);
     }
-  };
+  }, [videoId]);
 
   useEffect(() => {
     if (videoId) {
       fetchData();
     }
-  }, [videoId]);
+  }, [videoId, fetchData]);
 
   return {
     video,

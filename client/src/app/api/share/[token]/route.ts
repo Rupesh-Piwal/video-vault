@@ -73,8 +73,13 @@ export async function GET(
     return NextResponse.json({
       video: { ...video, url: signedUrl },
     });
-  } catch (err: any) {
-    console.error("Share link error:", err);
+  } catch (err: unknown) {
+  console.error("Share link error:", err);
+
+  if (err instanceof Error) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+
+  return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+}
 }

@@ -4,6 +4,7 @@ import {
   CompleteMultipartUploadCommand,
   AbortMultipartUploadCommand,
   UploadPartCommand,
+  CompletedPart,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createClient } from "@/supabase/server";
@@ -122,10 +123,9 @@ export async function POST(req: Request) {
         );
       }
 
-      // Validate parts structure
-      const validParts = parts.map((part: any) => ({
-        ETag: part.ETag,
-        PartNumber: part.PartNumber,
+      const validParts = parts.map((part: CompletedPart) => ({
+        ETag: part.ETag!,
+        PartNumber: part.PartNumber!,
       }));
 
       const command = new CompleteMultipartUploadCommand({

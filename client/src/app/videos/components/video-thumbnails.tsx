@@ -1,8 +1,9 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Image } from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import Image from "next/image"; 
 import { TextShimmer } from "../../../../components/motion-primitives/text-shimmer";
 
 interface Thumbnail {
@@ -23,7 +24,7 @@ export function VideoThumbnails({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center flex-row gap-2">
-          <Image size={20} /> Thumbnails
+          <ImageIcon size={20} /> Thumbnails
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -66,7 +67,7 @@ function ThumbnailItem({
           `/api/thumbnail-url?key=${encodeURIComponent(thumbnail.storage_key)}`
         );
         if (!res.ok) throw new Error("Failed to fetch thumbnail URL");
-        const data = await res.json();
+        const data: { url: string } = await res.json();
         setThumbUrl(data.url);
       } catch (err) {
         console.error("Error fetching thumbnail URL:", err);
@@ -76,12 +77,14 @@ function ThumbnailItem({
   }, [thumbnail.storage_key]);
 
   return (
-    <div className="aspect-video bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
+    <div className="aspect-video bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity relative">
       {thumbUrl ? (
-        <img
+        <Image
           src={thumbUrl}
-          alt={`${filename} thumbnail ${index + 1}`}
-          className="w-full h-full object-cover"
+          alt={`${filename || "Video"} thumbnail ${index + 1}`}
+          fill
+          className="object-cover"
+          priority={index === 0} 
         />
       ) : (
         <TextShimmer

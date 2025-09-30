@@ -6,6 +6,7 @@ import type { VideoCardProps } from "@/lib/metadata-utils";
 import { FileVideo } from "lucide-react";
 import { VideoCard } from "./video-card";
 import { VideoRow } from "@/types/video";
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export function VideoList() {
   const [videos, setVideos] = useState<VideoCardProps[]>([]);
@@ -46,19 +47,19 @@ export function VideoList() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "videos" },
-        (payload: any) => {
+        (payload: RealtimePostgresChangesPayload<VideoRow>) => {
           setVideos((prev) => {
-            if (payload.eventType === "INSERT") {
+            if (payload.eventType === "INSERT" && payload.new) {
               return [...prev, mapVideoRow(payload.new)];
             }
 
-            if (payload.eventType === "UPDATE") {
+            if (payload.eventType === "UPDATE" && payload.new) {
               return prev.map((v) =>
-                v.id === payload.new.id ? mapVideoRow(payload.new) : v
+                v.id === payload.new!.id ? mapVideoRow(payload.new!) : v
               );
             }
 
-            if (payload.eventType === "DELETE") {
+            if (payload.eventType === "DELETE" && payload.old) {
               return prev.filter((v) => v.id !== payload.old.id);
             }
 
@@ -117,7 +118,7 @@ export function VideoList() {
           <h3 className="text-xl font-medium text-white mb-2">No videos yet</h3>
           <p className="text-[#8C8C8C] max-w-md">
             Upload your first video to get started. Your videos will appear here
-            once they're processed.
+            once they&apos;re processed.
           </p>
         </div>
       )}

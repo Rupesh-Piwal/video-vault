@@ -1,9 +1,14 @@
 import { buildShareUrl, isExpired } from "@/lib/dayUtils";
 import { createClient } from "@/supabase/server";
+import { ShareLinkRow } from "@/types/share";
 import { NextRequest, NextResponse } from "next/server";
 
 function requireUserId(req: NextRequest): string | null {
   return req.headers.get("x-user-id");
+}
+
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : "Internal server error";
 }
 
 export async function GET(req: NextRequest) {
@@ -25,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     if (error) throw error;
 
-    const rows = (data ?? []).map((r: any) => ({
+    const rows = ((data as ShareLinkRow[]) ?? []).map((r) => ({
       id: r.id,
       video_id: r.video_id,
       url: buildShareUrl(r.hashed_token),
@@ -41,8 +46,8 @@ export async function GET(req: NextRequest) {
     }));
 
     return NextResponse.json(rows);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Share links fetch error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }
 }

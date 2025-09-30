@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/supabase/client";
 import {
   RawShareLink,
@@ -15,23 +15,24 @@ export function useShareLinks(
 ): UseShareLinksReturn {
   const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  const normalizeStatus = (raw: RawShareLink): ShareLinkStatus => {
+  const normalizeStatus = useCallback((raw: RawShareLink): ShareLinkStatus => {
     if (raw.revoked) return "Revoked";
-    if (raw.expiry && new Date(raw.expiry) < new Date()) {
-      return "Expired";
-    }
+    if (raw.expiry && new Date(raw.expiry) < new Date()) return "Expired";
     return "Active";
-  };
+  }, []);
 
-  const toTyped = (raw: RawShareLink[]): ShareLink[] =>
-    (raw ?? []).map((r) => ({
-      id: r.id,
-      url: r.url || `${APP_URL}/share/${r.id}`,
-      visibility: r.visibility,
-      expiry: r.expiry,
-      last_viewed_at: r.last_viewed_at,
-      status: normalizeStatus(r),
-    }));
+  const toTyped = useCallback(
+    (raw: RawShareLink[]): ShareLink[] =>
+      (raw ?? []).map((r) => ({
+        id: r.id,
+        url: r.url || `${APP_URL}/share/${r.id}`,
+        visibility: r.visibility,
+        expiry: r.expiry,
+        last_viewed_at: r.last_viewed_at,
+        status: normalizeStatus(r),
+      })),
+    [APP_URL, normalizeStatus]
+  );
 
   const [links, setLinks] = useState<ShareLink[]>(() =>
     toTyped(initialShareLinks)
@@ -39,7 +40,7 @@ export function useShareLinks(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchShareLinks = async () => {
+  const fetchShareLinks = useCallback(async () => {
     if (!videoId) return;
 
     try {
@@ -63,7 +64,7 @@ export function useShareLinks(
     } finally {
       setLoading(false);
     }
-  };
+  }, [videoId, toTyped]);
 
   useEffect(() => {
     if (videoId) {
@@ -71,15 +72,11 @@ export function useShareLinks(
     } else {
       setLinks(toTyped(initialShareLinks));
     }
-  }, [videoId, initialShareLinks]);
+  }, [videoId, initialShareLinks, fetchShareLinks, toTyped]);
 
   useEffect(() => {
     const supabase = createClient();
-
-    let filter = "";
-    if (videoId) {
-      filter = `video_id=eq.${videoId}`;
-    }
+    let filter = videoId ? `video_id=eq.${videoId}` : "";
 
     const channel = supabase
       .channel("share-links-changes")
@@ -92,22 +89,16 @@ export function useShareLinks(
           ...(filter && { filter }),
         },
         (payload) => {
-          console.log("Realtime event:", payload);
-
           if (payload.eventType === "INSERT") {
             const newLink = payload.new as RawShareLink;
-
             if (!videoId || newLink.video_id === videoId) {
               setLinks((prev) => {
-                if (prev.some((link) => link.id === newLink.id)) {
-                  return prev;
-                }
+                if (prev.some((link) => link.id === newLink.id)) return prev;
                 return [toTyped([newLink])[0], ...prev];
               });
             }
           } else if (payload.eventType === "UPDATE") {
             const updatedLink = payload.new as RawShareLink;
-
             if (!videoId || updatedLink.video_id === videoId) {
               setLinks((prev) =>
                 prev.map((l) =>
@@ -122,23 +113,18 @@ export function useShareLinks(
           }
         }
       )
-      .subscribe((status) => {
-        console.log("Realtime subscription status:", status);
-      });
+      .subscribe();
 
     return () => {
-      console.log("Cleaning up realtime subscription");
       supabase.removeChannel(channel);
     };
-  }, [videoId]);
+  }, [videoId, toTyped]);
 
   const disableLink = async (id: string): Promise<void> => {
     try {
       setLinks((prev) =>
         prev.map((link) =>
-          link.id === id
-            ? { ...link, status: "Revoked" as ShareLinkStatus }
-            : link
+          link.id === id ? { ...link, status: "Revoked" } : link
         )
       );
 
@@ -155,9 +141,7 @@ export function useShareLinks(
 
       setLinks((prev) =>
         prev.map((link) =>
-          link.id === id
-            ? { ...link, status: "Active" as ShareLinkStatus }
-            : link
+          link.id === id ? { ...link, status: "Active" } : link
         )
       );
 

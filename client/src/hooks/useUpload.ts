@@ -1,11 +1,11 @@
 import { useState } from "react";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import toast from "react-hot-toast";
 import { createClient } from "@/supabase/client";
 import { UploadFile } from "@/types/upload";
 import { validateFile } from "@/lib/upload.utils";
 
-const CHUNK_SIZE = 50 * 1024 * 1024; 
+const CHUNK_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_RETRIES = 3;
 
 export function useUpload() {
@@ -20,13 +20,22 @@ export function useUpload() {
     while (true) {
       try {
         return await fn();
-      } catch (err: any) {
+      } catch (err: unknown) {
+        let errorMessage = "Unknown error";
+
+        if (err instanceof Error) errorMessage = err.message;
+
         if (!navigator.onLine) {
           toast.error("No internet connection. Please check your network.");
           throw new Error("Network offline");
         }
 
-        if (err.response?.status === 0) {
+        if (
+          typeof err === "object" &&
+          err !== null &&
+          "response" in err &&
+          (err as { response?: { status?: number } }).response?.status === 0
+        ) {
           toast.error("Network error: unable to reach server.");
         }
 
@@ -40,7 +49,11 @@ export function useUpload() {
 
   const uploadMultipart = async (uploadFile: UploadFile) => {
     try {
-      const startRes = await retry(() =>
+      const startRes: AxiosResponse<{
+        uploadId: string;
+        key: string;
+        videoId: string;
+      }> = await retry(() =>
         axios.post("/api/upload-url", {
           action: "start",
           fileName: uploadFile.file?.name,
@@ -50,8 +63,6 @@ export function useUpload() {
       );
 
       const { uploadId, key, videoId } = startRes.data;
-
-      console.log("Multipart Upload Started:", { uploadId, key, videoId });
 
       setFiles((prev) =>
         prev.map((f) => (f.id === uploadFile.id ? { ...f, videoId } : f))
@@ -66,10 +77,8 @@ export function useUpload() {
         const end = Math.min(start + CHUNK_SIZE, file.size);
         const chunk = file.slice(start, end);
 
-        const {
-          data: { url },
-        } = await retry(() =>
-          axios.post("/api/upload-url", {
+        const { data } = await retry(() =>
+          axios.post<{ url: string }>("/api/upload-url", {
             action: "signPart",
             key,
             uploadId,
@@ -77,10 +86,8 @@ export function useUpload() {
           })
         );
 
-        console.log(`Part ${partNumber} presigned URL:`, url);
-
         const uploadRes = await retry(() =>
-          axios.put(url, chunk, {
+          axios.put(data.url, chunk, {
             headers: { "Content-Type": "application/octet-stream" },
           })
         );
@@ -103,7 +110,7 @@ export function useUpload() {
         );
       }
 
-      const completeRes = await retry(() =>
+      await retry(() =>
         axios.post("/api/upload-url", {
           action: "complete",
           key,
@@ -111,8 +118,6 @@ export function useUpload() {
           parts,
         })
       );
-
-      console.log("Multipart upload completed:", completeRes.data);
 
       setFiles((prev) =>
         prev.map((f) =>
@@ -138,12 +143,16 @@ export function useUpload() {
           s3Key: key,
         }
       );
-    } catch (err: any) {
-      console.error("Multipart upload error:", err);
+    } catch (err: unknown) {
+      let errorMessage = "Unknown error";
+      if (err instanceof Error) errorMessage = err.message;
+
+      console.error("Multipart upload error:", errorMessage);
+
       setFiles((prev) =>
         prev.map((f) =>
           f.id === uploadFile.id
-            ? { ...f, status: "FAILED", error: err.message }
+            ? { ...f, status: "FAILED", error: errorMessage }
             : f
         )
       );

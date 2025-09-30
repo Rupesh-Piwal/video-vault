@@ -19,6 +19,8 @@ import { UploadModalProps } from "@/types/upload";
 import { useUpload } from "@/hooks/useUpload";
 import { formatFileSize } from "@/lib/upload.utils";
 
+type VideoStatus = "UPLOADING" | "PROCESSING" | "READY" | "FAILED";
+
 export function UploadModal({
   open,
   onOpenChange,
@@ -47,7 +49,7 @@ export function UploadModal({
                   progress: 100,
                   error: null,
                   videoId: newVid.id,
-                  status: newVid.status as any,
+                  status: newVid.status as VideoStatus,
                 },
               ];
             }
@@ -55,7 +57,7 @@ export function UploadModal({
             if (payload.eventType === "UPDATE") {
               return prev.map((f) =>
                 f.videoId === payload.new.id
-                  ? { ...f, status: payload.new.status as any }
+                  ? { ...f, status: payload.new.status as VideoStatus }
                   : f
               );
             }
@@ -103,14 +105,14 @@ export function UploadModal({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-4 px-6 pb-6">
-       
           <div
             className={cn(
               "border-2 border-dashed rounded-xl p-8 text-center transition-colors bg-[#2B2C2D]/30"
             )}
             onDrop={(e) => {
               e.preventDefault();
-              if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+              if (e.dataTransfer.files.length)
+                handleFiles(e.dataTransfer.files);
             }}
             onDragOver={(e) => e.preventDefault()}
           >

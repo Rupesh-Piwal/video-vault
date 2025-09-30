@@ -30,7 +30,6 @@ import { useRouter } from "next/navigation";
 import { TextShimmer } from "../../../../components/motion-primitives/text-shimmer";
 import { DownloadButton } from "@/components/download-button";
 
-
 export function VideoCard({
   id,
   filename,
@@ -170,7 +169,7 @@ export function VideoCard({
   };
 
   useEffect(() => {
-    if (status !== "READY") return; 
+    if (status !== "READY") return;
     let isMounted = true;
 
     async function fetchThumbnails() {
@@ -205,9 +204,7 @@ export function VideoCard({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-
         <div className="relative aspect-video overflow-hidden">
-
           <div className="absolute top-3 left-3 z-10">
             <Badge
               className={cn(
@@ -279,7 +276,7 @@ export function VideoCard({
                       </button>
                       <span className="text-white text-xs font-medium">
                         {Math.floor(currentTime / 60)}:
-                        {String(Math.floor(currentTime % 60)).padStart(2, "0")}{" "}
+                        {String(Math.floor(currentTime % 60)).padStart(2, "0")}
                         / {Math.floor(videoDuration / 60)}:
                         {String(Math.floor(videoDuration % 60)).padStart(
                           2,
@@ -391,8 +388,8 @@ export function VideoCard({
             </div>
 
             <p className="text-[#8C8C8C] mb-6">
-              Are you sure you want to delete "{filename}"? This action cannot
-              be undone.
+              Are you sure you want to delete &quot;{filename}&quot;? This
+              action cannot be undone.
             </p>
 
             <div className="flex gap-3 justify-end">

@@ -30,19 +30,21 @@ interface Props {
   videoId: string;
 }
 
-function EmailMultiSelect({
-  emails,
-  onChange,
-}: {
+interface User {
+  id: string;
+}
+
+interface EmailMultiSelectProps {
   emails: string[];
   onChange: (emails: string[]) => void;
-}) {
+}
+
+function EmailMultiSelect({ emails, onChange }: EmailMultiSelectProps) {
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
+  const validateEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const addEmail = (email: string) => {
     const trimmedEmail = email.trim().toLowerCase();
@@ -60,31 +62,24 @@ function EmailMultiSelect({
     onChange(emails.filter((email) => email !== emailToRemove));
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
-      if (inputValue.trim()) {
-        addEmail(inputValue);
-      }
+      if (inputValue.trim()) addEmail(inputValue);
     } else if (e.key === "Backspace" && !inputValue && emails.length > 0) {
       removeEmail(emails[emails.length - 1]);
     }
   };
 
   const handleBlur = () => {
-    if (inputValue.trim()) {
-      addEmail(inputValue);
-    }
+    if (inputValue.trim()) addEmail(inputValue);
   };
 
-  const handlePaste = (e: React.ClipboardEvent) => {
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedText = e.clipboardData.getData("text");
     const emailList = pastedText.split(/[,;\s]+/).filter(Boolean);
-
-    emailList.forEach((email) => {
-      addEmail(email);
-    });
+    emailList.forEach(addEmail);
   };
 
   return (
@@ -129,10 +124,10 @@ function EmailMultiSelect({
 }
 
 export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
-  const [user, setUser] = useState<{ id: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
   const [emails, setEmails] = useState<string[]>([]);
-  const [expiryPreset, setExpiryPreset] = useState("1d");
+  const [expiryPreset, setExpiryPreset] = useState<string>("1d");
   const [loading, setLoading] = useState(false);
 
   const supabase = createClient();
@@ -143,20 +138,17 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
     });
   }, [supabase]);
 
-  // Reset emails when switching from private to public
   useEffect(() => {
-    if (visibility === "PUBLIC") {
-      setEmails([]);
-    }
+    if (visibility === "PUBLIC") setEmails([]);
   }, [visibility]);
 
-  async function handleCreate() {
+  const handleCreate = async () => {
     if (!user) {
-      return toast.error("⚠️ Please log in first.");
+      return toast.error("⚠️ Please log in first");
     }
 
     if (visibility === "PRIVATE" && emails.length === 0) {
-      return toast.error("⚠️ Please add at least one email for private links.");
+      return toast.error("⚠️ Please add at least one email for private links");
     }
 
     setLoading(true);
@@ -174,7 +166,7 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
         }),
       });
 
-      const data = await res.json();
+      const data: { url?: string; error?: string } = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create link");
 
       if (data.url) {
@@ -185,17 +177,19 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
       }
 
       onOpenChange(false);
-
-      // Reset form
       setEmails([]);
       setVisibility("PUBLIC");
       setExpiryPreset("1d");
-    } catch (err: any) {
-      toast.error(`❌ ${err.message}`);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(`❌ ${err.message}`);
+      } else {
+        toast.error("❌ Unknown error");
+      }
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -230,10 +224,7 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
 
           <div>
             <Label>Expiry</Label>
-            <Select
-              value={expiryPreset}
-              onValueChange={(v) => setExpiryPreset(v)}
-            >
+            <Select value={expiryPreset} onValueChange={setExpiryPreset}>
               <SelectTrigger>
                 <SelectValue placeholder="Select expiry" />
               </SelectTrigger>
