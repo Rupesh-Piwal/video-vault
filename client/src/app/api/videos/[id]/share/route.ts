@@ -13,7 +13,7 @@ export async function POST(
 ) {
   try {
     const supabase = await createClient();
-    const supabaseAdmin = createAdminClient(); 
+    const supabaseAdmin = createAdminClient();
     const userId = requireUserId(req);
 
     if (!userId) {
@@ -128,8 +128,14 @@ export async function POST(
       url: `${process.env.NEXT_PUBLIC_APP_URL}/share/${token}`,
       message: "Share link created successfully",
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Share link creation error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    if (err instanceof Error) {
+      return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

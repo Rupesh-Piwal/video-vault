@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/supabase/client";
 import {
   RawShareLink,
@@ -76,7 +76,7 @@ export function useShareLinks(
 
   useEffect(() => {
     const supabase = createClient();
-    let filter = videoId ? `video_id=eq.${videoId}` : "";
+    const filter = videoId ? `video_id=eq.${videoId}` : "";
 
     const channel = supabase
       .channel("share-links-changes")
