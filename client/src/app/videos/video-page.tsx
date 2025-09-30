@@ -111,7 +111,7 @@ export default function VideoPage({ videoId }: VideoPageProps) {
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin" />
                   <TextShimmer className="font-mono text-sm" duration={1}>
-                    Generating code...
+                    Loading video...
                   </TextShimmer>
                 </div>
               </div>
@@ -140,7 +140,7 @@ export default function VideoPage({ videoId }: VideoPageProps) {
               onCreateLink={() => setCreateLinkModalOpen(true)}
             />
           </div>
-          
+
           <div className="lg:col-span-3 space-y-6 ">
             <VideoThumbnails thumbnails={thumbnails} />
 

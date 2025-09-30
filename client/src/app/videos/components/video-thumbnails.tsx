@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Image as ImageIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import Image from "next/image"; 
+import Image from "next/image";
 import { TextShimmer } from "../../../../components/motion-primitives/text-shimmer";
 
 interface Thumbnail {
@@ -84,7 +84,8 @@ function ThumbnailItem({
           alt={`${filename || "Video"} thumbnail ${index + 1}`}
           fill
           className="object-cover"
-          priority={index === 0} 
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+          priority={index === 0}
         />
       ) : (
         <TextShimmer
