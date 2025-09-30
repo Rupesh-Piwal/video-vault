@@ -5,10 +5,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> } // ✅ Add Promise wrapper
 ) {
   try {
-    const rawToken = params.token;
+    const { token } = await params; // ✅ Await the params
+    const rawToken = token; // ✅ Use the awaited token
     const email = req.nextUrl.searchParams.get("email")?.toLowerCase() ?? null;
 
     const supabase = await createClient();
@@ -74,12 +75,15 @@ export async function GET(
       video: { ...video, url: signedUrl },
     });
   } catch (err: unknown) {
-  console.error("Share link error:", err);
+    console.error("Share link error:", err);
 
-  if (err instanceof Error) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    if (err instanceof Error) {
+      return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-}
 }
