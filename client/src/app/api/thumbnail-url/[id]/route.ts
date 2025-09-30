@@ -12,10 +12,11 @@ const s3 = new S3Client({
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const videoId = params.id;
+    const { id } = await params; 
+    const videoId = id; 
 
     const keys = Array.from({ length: 4 }).map(
       (_, i) => `thumbnails/${videoId}/thumb-${i + 1}.jpg`

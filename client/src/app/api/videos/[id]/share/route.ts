@@ -9,12 +9,13 @@ function requireUserId(req: NextRequest): string | null {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } 
 ) {
   try {
     const supabase = await createClient();
     const supabaseAdmin = createAdminClient();
     const userId = requireUserId(req);
+    const { id } = await params; 
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -54,7 +55,7 @@ export async function POST(
     const { data: link, error } = await supabase
       .from("share_links")
       .insert({
-        video_id: params.id,
+        video_id: id, 
         user_id: userId,
         hashed_token: hashed,
         visibility,
@@ -104,7 +105,7 @@ export async function POST(
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 to: trimmedEmail,
-                videoId: params.id,
+                videoId: id, 
                 token,
                 type: "SHARE_NOTIFICATION",
               }),
