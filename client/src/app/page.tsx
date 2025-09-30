@@ -11,7 +11,7 @@ export default function Page() {
   const router = useRouter();
   const supabase = createClient();
   const [isChecking, setIsChecking] = useState(true);
-  const [showWelcome, setShowWelcome] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     async function checkAuth() {
@@ -20,23 +20,15 @@ export default function Page() {
       } = await supabase.auth.getSession();
 
       if (session) {
-        setTimeout(() => {
-          router.replace("/dashboard");
-        }, 2500);
+        router.replace("/dashboard");
       } else {
         setIsChecking(false);
+        setShowWelcome(true);
       }
     }
 
     checkAuth();
   }, [supabase, router]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowWelcome(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0B0D0E" }}>
@@ -55,51 +47,14 @@ export default function Page() {
             </div>
 
             <TextShimmer className="font-mono text-xl" duration={1}>
-              Redirecting to Dashboard
+              Checking Authentication
             </TextShimmer>
-            <p className="text-gray-400 text-sm">Please wait a moment...</p>
-
-            <div
-              className="w-48 h-1 rounded-full overflow-hidden mx-auto mt-6"
-              style={{ backgroundColor: "#18191A" }}
-            >
-              <div className="h-full bg-white rounded-full animate-[progressBar_2.5s_ease-in-out]"></div>
-            </div>
+            <p className="text-gray-400 text-sm">Please wait...</p>
           </div>
         ) : (
           <div className="text-center max-w-md mx-auto">
             {showWelcome ? (
               <div className="animate-fade-in">
-                <div
-                  className="w-20 h-20 mx-auto mb-8 rounded-full flex items-center justify-center border"
-                  style={{ backgroundColor: "#18191A", borderColor: "#2B2C2D" }}
-                >
-                  <svg
-                    className="w-10 h-10 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-                    />
-                  </svg>
-                </div>
-                <h1 className="text-3xl font-light text-white mb-3 tracking-wide">
-                  Welcome Back
-                </h1>
-                <p
-                  className="text-gray-400 text-base"
-                  style={{ color: "#8C8C8C" }}
-                >
-                  Sign in to continue to your account
-                </p>
-              </div>
-            ) : (
-              <div className="animate-fade-in-up">
                 <div className="mb-10">
                   <div
                     className="w-14 h-14 mx-auto mb-8 rounded-full flex items-center justify-center border"
@@ -139,28 +94,14 @@ export default function Page() {
                   </button>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
         )}
       </div>
 
       <style jsx global>{`
-        @keyframes progressBar {
-          0% {
-            width: 0%;
-          }
-          100% {
-            width: 100%;
-          }
-        }
-        .animate-\\[progressBar_2\\.5s_ease-in-out\\] {
-          animation: progressBar 2.5s ease-in-out;
-        }
         .animate-fade-in {
-          animation: fadeIn 0.6s ease-out;
-        }
-        .animate-fade-in-up {
-          animation: fadeInUp 0.6s ease-out;
+          animation: fadeIn 0.3s ease-out;
         }
         @keyframes fadeIn {
           from {
@@ -168,16 +109,6 @@ export default function Page() {
           }
           to {
             opacity: 1;
-          }
-        }
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
           }
         }
       `}</style>
