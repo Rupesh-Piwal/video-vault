@@ -7,10 +7,11 @@ function getErrorMessage(err: unknown): string {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
+    const { id } = await params;
 
     const { error } = await supabase
       .from("share_links")
@@ -18,7 +19,7 @@ export async function POST(
         revoked: true,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (error) throw error;
 
