@@ -56,7 +56,7 @@ async function uploadToS3(bucket: string, key: string, filePath: string) {
   await s3.send(command);
 }
 
-// Get video duration using ffmpeg
+
 function getVideoDuration(videoPath: string): Promise<number> {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(videoPath, (err, metadata) => {
@@ -66,7 +66,7 @@ function getVideoDuration(videoPath: string): Promise<number> {
   });
 }
 
-// BullMQ Worker
+
 export const worker = new Worker(
   "video-processing",
   async (job) => {
@@ -81,11 +81,9 @@ export const worker = new Worker(
     const thumbsDir = path.join(projectTempDir, `thumbs-${videoId}`);
 
     try {
-      // 1️⃣ Download video
       await downloadFromS3(process.env.AWS_BUCKET_NAME!, s3Key, videoPath);
       console.log("Bucket Name:", process.env.AWS_BUCKET_NAME);
 
-      // 2️⃣ Generate thumbnails
       const thumbnails: ThumbnailInfo[] = await generateThumbnails(
         videoPath,
         thumbsDir,
@@ -93,7 +91,6 @@ export const worker = new Worker(
       );
       console.log("thumbnails------>", thumbnails);
 
-      // 3️⃣ Upload thumbnails + insert into Supabase
       for (let i = 0; i < thumbnails.length; i++) {
         const thumb = thumbnails[i];
         const thumbKey = `thumbnails/${videoId}/thumb-${i + 1}.jpg`;
@@ -114,10 +111,8 @@ export const worker = new Worker(
           console.error("❌ Supabase insert error (thumbnail):", error);
       }
 
-      // 3.1️⃣ Get video duration
       const duration = await getVideoDuration(videoPath);
 
-      // 4️⃣ Update video status → READY + duration
       const { error: updateError } = await supabase
         .from("videos")
         .update({

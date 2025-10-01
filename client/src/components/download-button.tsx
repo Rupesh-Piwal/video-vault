@@ -65,7 +65,7 @@ export function DownloadButton({ videoUrl, filename }: DownloadButtonProps) {
       ) : (
         <Download className="h-3 w-3 mr-1.5" />
       )}
-      {downloading ? "Downloading..." : "Download"}
+      <span className="hidden md:flex">{downloading ? "Downloading..." : "Download"}</span>
     </Button>
   );
 }
