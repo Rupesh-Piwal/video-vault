@@ -61,11 +61,13 @@ export function DownloadButton({ videoUrl, filename }: DownloadButtonProps) {
                  text-[#8C8C8C] hover:text-white text-xs h-8 cursor-pointer"
     >
       {downloading ? (
-        <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+        <Loader2 className="h-3 w-3 md:mr-1.5 animate-spin" />
       ) : (
-        <Download className="h-3 w-3 mr-1.5" />
+        <Download className="h-3 w-3 md:mr-1.5" />
       )}
-      <span className="hidden md:flex">{downloading ? "Downloading..." : "Download"}</span>
+      <span className="hidden md:flex">
+        {downloading ? "Downloading..." : "Download"}
+      </span>
     </Button>
   );
 }

@@ -12,22 +12,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import toast from "react-hot-toast";
-import {
-  
-  useShareLinks,
-   
-} from "@/hooks/useShareLinks";
+import { useShareLinks } from "@/hooks/useShareLinks";
 import { useEffect } from "react";
 import { formatDate, formatDateTime } from "@/lib/metadata-utils";
-import {
-  Shield,
-  Eye,
-  Calendar,
-  Clock,
-  Zap,
-  Ban,
-} from "lucide-react";
-import { RawShareLink, ShareLink } from "@/types/share";
+import { Shield, Eye, Calendar, Clock, Zap, Ban } from "lucide-react";
+import type { RawShareLink, ShareLink } from "@/types/share";
 
 interface Props {
   shareLinks?: RawShareLink[];
@@ -161,96 +150,153 @@ export function ShareLinksSection({
           </p>
         </div>
       ) : (
-        <ScrollArea className="w-full h-[280px] rounded-lg">
-          <div className="border border-[#2B2C2D] rounded-lg bg-[#18191A]">
-            <Table>
-              <TableHeader className="border-b border-[#2B2C2D]">
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-gray-400 font-medium py-3">
-                    Visibility
-                  </TableHead>
-                  <TableHead className="text-gray-400 font-medium py-3">
-                    Expiry
-                  </TableHead>
-                  <TableHead className="text-gray-400 font-medium py-3">
-                    Status
-                  </TableHead>
-                  <TableHead className="text-gray-400 font-medium py-3">
-                    Last Viewed
-                  </TableHead>
-                  <TableHead className="text-right text-gray-400 font-medium py-3">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {links.map((link) => (
-                  <TableRow
-                    key={link.id}
-                    className="border-b border-[#2B2C2D] last:border-b-0 hover:bg-[#2B2C2D]/50"
+        <>
+          <div className="md:hidden space-y-3">
+            {links.map((link) => (
+              <div
+                key={link.id}
+                className="bg-[#18191A] border border-[#2B2C2D] rounded-lg p-4 space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm font-medium text-white">
+                      {link.visibility}
+                    </span>
+                  </div>
+                  <Badge
+                    variant={getStatusVariant(link.status)}
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                      link.status === "Active"
+                        ? "bg-green-500/10 text-green-400 border-green-500/20"
+                        : link.status === "Expired"
+                        ? "bg-gray-500/10 text-gray-400 border-gray-500/20"
+                        : "bg-red-500/10 text-red-400 border-red-500/20"
+                    }`}
                   >
-                    <TableCell className="py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-white font-medium">
-                          {link.visibility}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-3 w-3 text-gray-500" />
-                        <span className="text-gray-300">
-                          {link.expiry ? formatDate(link.expiry) : "Never"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <Badge
-                        variant={getStatusVariant(link.status)}
-                        className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
-                          link.status === "Active"
-                            ? "bg-green-500/10 text-green-400 border-green-500/20"
-                            : link.status === "Expired"
-                            ? "bg-gray-500/10 text-gray-400 border-gray-500/20"
-                            : "bg-red-500/10 text-red-400 border-red-500/20"
-                        }`}
-                      >
-                        {getStatusIcon(link.status)}
-                        {link.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <div className="flex items-center gap-2">
-                        <Eye className="h-3 w-3 text-gray-500" />
-                        <span className="text-gray-300 text-sm">
-                          {link.last_viewed_at
-                            ? formatDateTime(link.last_viewed_at)
-                            : "Never"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                    {getStatusIcon(link.status)}
+                    {link.status}
+                  </Badge>
+                </div>
 
-                        {link.status === "Active" && (
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDisableLink(link.id)}
-                            className="h-8 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/20 cursor-pointer"
-                          >
-                            <Ban className="h-3 w-3 mr-1" />
-                            Disable
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <div className="flex items-center gap-1.5 text-gray-400 mb-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span className="text-xs">Expiry</span>
+                    </div>
+                    <p className="text-gray-300">
+                      {link.expiry ? formatDate(link.expiry) : "Never"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-1.5 text-gray-400 mb-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span className="text-xs">Last Viewed</span>
+                    </div>
+                    <p className="text-gray-300">
+                      {link.last_viewed_at
+                        ? formatDateTime(link.last_viewed_at)
+                        : "Never"}
+                    </p>
+                  </div>
+                </div>
+
+                {link.status === "Active" && (
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDisableLink(link.id)}
+                    className="w-full h-9 bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/20 cursor-pointer"
+                  >
+                    <Ban className="h-3.5 w-3.5 mr-1.5" />
+                    Disable Link
+                  </Button>
+                )}
+              </div>
+            ))}
           </div>
-        </ScrollArea>
+
+          <div className="hidden md:block w-full rounded-lg overflow-hidden">
+            <ScrollArea className="w-full">
+              <div className="min-w-[600px]">
+                <div className="border border-[#2B2C2D] rounded overflow-hidden">
+                  <Table className="min-w-full">
+                    <TableHeader className="bg-[#18191A]">
+                      <TableRow className="border-b border-[#2B2C2D] hover:bg-[#2B2C2D]/30">
+                        <TableHead className="text-gray-400 font-medium py-3">
+                          Visibility
+                        </TableHead>
+                        <TableHead className="text-gray-400 font-medium py-3">
+                          Expiry
+                        </TableHead>
+                        <TableHead className="text-gray-400 font-medium py-3">
+                          Status
+                        </TableHead>
+                        <TableHead className="text-gray-400 font-medium py-3">
+                          Last Viewed
+                        </TableHead>
+                        <TableHead className="text-right text-gray-400 font-medium py-3">
+                          Actions
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+
+                    <TableBody>
+                      {links.map((link) => (
+                        <TableRow
+                          key={link.id}
+                          className="border-b border-[#2B2C2D] last:border-b-0 hover:bg-[#2B2C2D]/50"
+                        >
+                          <TableCell className="py-3 text-sm text-white">
+                            {link.visibility}
+                          </TableCell>
+                          <TableCell className="py-3 text-sm text-gray-300">
+                            {link.expiry ? formatDate(link.expiry) : "Never"}
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <Badge
+                              variant={getStatusVariant(link.status)}
+                              className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                                link.status === "Active"
+                                  ? "bg-green-500/10 text-green-400 border-green-500/20"
+                                  : link.status === "Expired"
+                                  ? "bg-gray-500/10 text-gray-400 border-gray-500/20"
+                                  : "bg-red-500/10 text-red-400 border-red-500/20"
+                              }`}
+                            >
+                              {getStatusIcon(link.status)}
+                              {link.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="py-3 text-sm text-gray-300">
+                            {link.last_viewed_at
+                              ? formatDateTime(link.last_viewed_at)
+                              : "Never"}
+                          </TableCell>
+                          <TableCell className="py-3 text-right">
+                            {link.status === "Active" && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDisableLink(link.id)}
+                                className="h-8 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/20 cursor-pointer"
+                              >
+                                <Ban className="h-3 w-3 mr-1" />
+                                Disable
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </ScrollArea>
+          </div>
+        </>
       )}
     </div>
   );
