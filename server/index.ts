@@ -8,7 +8,7 @@ import { emailQueue } from "./queue/emailQueue";
 const app = express();
 
 const allowedOrigins = [
-  "http://localhost:3000", 
+  "http://localhost:3000",
   process.env.NEXT_PUBLIC_APP_URL, 
 ];
 
@@ -28,16 +28,13 @@ app.use(
   })
 );
 
-app.options("*", cors());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
 app.get("/", (req, res) => {
   res.send("🚀 Express server is running");
 });
-
 
 app.post("/jobs/video-process", async (req, res) => {
   try {
@@ -89,7 +86,7 @@ const PORT = process.env.EXPRESS_PORT || 4000;
 app.listen(PORT, () => {
   console.log(
     `🚀 Express server running at ${
-      process.env.APP_URL || "http://localhost:" + PORT
+      process.env.APP_URL || `http://localhost:${PORT}`
     }`
   );
 });
