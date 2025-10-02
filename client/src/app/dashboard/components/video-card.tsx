@@ -200,7 +200,7 @@ export function VideoCard({
   return (
     <>
       <Card
-        className="group relative overflow-hidden bg-[#18191A] border border-[#2B2C2D] rounded-xl hover:border-[#383838] transition-all duration-300 hover:shadow-lg hover:shadow-black/20"
+        className="group relative z-0 overflow-hidden bg-[#18191A] border border-[#2B2C2D] rounded-xl hover:border-[#383838] transition-all duration-300 hover:shadow-lg hover:shadow-black/20"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -276,8 +276,8 @@ export function VideoCard({
                       </button>
                       <span className="text-white text-xs font-medium">
                         {Math.floor(currentTime / 60)}:
-                        {String(Math.floor(currentTime % 60)).padStart(2, "0")}
-                        / {Math.floor(videoDuration / 60)}:
+                        {String(Math.floor(currentTime % 60)).padStart(2, "0")}/{" "}
+                        {Math.floor(videoDuration / 60)}:
                         {String(Math.floor(videoDuration % 60)).padStart(
                           2,
                           "0"

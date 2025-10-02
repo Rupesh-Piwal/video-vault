@@ -16,7 +16,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-semibold text-white flex items-center gap-2">
+              <h1 className="md:text-2xl text-xl font-semibold text-white flex items-center gap-2">
                 <span className="inline-block md:hidden">
                   <SVGLogo />
                 </span>

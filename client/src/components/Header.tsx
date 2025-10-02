@@ -53,8 +53,6 @@ export default function Header() {
         fullName?.split(" ")[0]?.slice(1) || "User"
     );
   };
-
-  // Loading skeleton
   if (loading) {
     return (
       <header
@@ -110,7 +108,6 @@ export default function Header() {
     );
   }
 
-  // User signed in
   return (
     <header
       className="w-full border-b sticky top-0 z-50"
