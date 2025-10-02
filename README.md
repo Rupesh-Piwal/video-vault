@@ -8,9 +8,9 @@
 
 ## Demo
 
-#### LIVE DEMO 👉🏻 [Not Deployed Yet!](https://finsyncai.vercel.app/)
+#### LIVE DEMO 👉🏻 [Click to visit VidVault](https://vidsvault.vercel.app/)
 
-#### GITHUB REPO 👉🏻 [Click to visit VidVault](https://finsyncai.vercel.app/)
+#### GITHUB REPO 👉🏻 [Click to visit Codebase](https://github.com/Rupesh-Piwal/video-vault)
 
 #### PORTFOLIO 👉🏻 [View My Portfolio](https://rupesh-piwal-portfolio.vercel.app)
 
@@ -149,10 +149,10 @@ Contributions are welcome!
 3. Commit your changes
 4. Push to GitHub
 5. Create a Pull Request
+```
+
+---
 
 Feel free to reach out to me for guidance or collaboration:
 
 [<img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" width="38">](mailto:rpiwal02@gmail.com)
-
----
-```
