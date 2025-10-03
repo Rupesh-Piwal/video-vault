@@ -2,14 +2,18 @@ import "dotenv/config";
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
+import { fork } from "child_process";
 import { videoQueue } from "./queue/videoQueue";
 import { emailQueue } from "./queue/emailQueue";
 
 const app = express();
 
+fork("./workers/videoWorker.ts");
+fork("./workers/emailWorker.ts");
+
 const allowedOrigins = [
   "http://localhost:3000",
-  process.env.NEXT_PUBLIC_APP_URL, 
+  process.env.NEXT_PUBLIC_APP_URL,
 ];
 
 app.use(
@@ -28,7 +32,6 @@ app.use(
   })
 );
 
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -46,10 +49,7 @@ app.post("/jobs/video-process", async (req, res) => {
     await videoQueue.add(
       "video-processing",
       { videoId, s3Key },
-      {
-        attempts: 5,
-        backoff: { type: "exponential", delay: 2000 },
-      }
+      { attempts: 5, backoff: { type: "exponential", delay: 2000 } }
     );
 
     res.json({ success: true, message: "Job queued successfully" });
@@ -69,10 +69,7 @@ app.post("/jobs/send-email", async (req, res) => {
     await emailQueue.add(
       "send-email",
       { to, videoId, token },
-      {
-        attempts: 5,
-        backoff: { type: "exponential", delay: 2000 },
-      }
+      { attempts: 5, backoff: { type: "exponential", delay: 2000 } }
     );
 
     res.json({ success: true, message: "Email job queued" });
