@@ -14,10 +14,6 @@
 
 #### PORTFOLIO 👉🏻 [View My Portfolio](https://rupesh-piwal-portfolio.vercel.app)
 
-#### 🤝 Connect With Me
-
-[![Linkedin](https://skillicons.dev/icons?i=linkedin)](https://www.linkedin.com/in/rupesh-piwal21/) [![GitHub](https://skillicons.dev/icons?i=github)](https://github.com/Rupesh-Piwal) [![Twitter](https://skillicons.dev/icons?i=twitter)](https://x.com/rpmarch21)
-
 ---
 
 ## 🎯 Key Features
@@ -58,6 +54,13 @@
 - **Expiry presets**: 1h, 12h, 1d, 30d, Forever
 - Tracks **last_viewed_at** for analytics
 - PRIVATE links: if whitelisted email matches a registered user → send **email notification instantly**
+
+---
+
+## 📸 ScreenShots
+
+![Dashboard](./client//public//dashboard.png)
+![Sharelink](./client//public//sharelink.png)
 
 ---
 
