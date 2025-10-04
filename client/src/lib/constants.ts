@@ -1,4 +1,4 @@
-export const MAX_FILE_SIZE = 10 * 1024 * 1024; //10MB
+export const MAX_FILE_SIZE = 350 * 1024 * 1024; //10MB
 
 export const ALLOWED_EXTENSIONS = [
   "mp4",
