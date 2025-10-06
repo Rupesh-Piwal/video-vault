@@ -20,7 +20,7 @@ export default function DashboardPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        router.replace("/login");
+        router.replace("/sign-in");
       }
     };
     checkAuth();
