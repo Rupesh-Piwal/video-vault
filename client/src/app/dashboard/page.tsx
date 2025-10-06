@@ -1,14 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UploadModal } from "@/app/dashboard/components/upload-modal";
 import { Upload } from "lucide-react";
 import { VideoList } from "./components/video-list";
 import SVGLogo from "@/components/svg-logo";
+import { createClient } from "@/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.replace("/login");
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-[#0B0D0E] text-white">
