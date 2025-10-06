@@ -66,8 +66,6 @@
 
 ## 🗂️ Database Schema
 
-Visual overview of the core tables (Accounts, Transactions, Budgets, Users, etc.)
-
 ![Database Schema](./client//public//database-design.png)
 
 ---
