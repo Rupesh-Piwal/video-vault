@@ -124,7 +124,7 @@ export function UploadModal({
             </h3>
             <p className="text-[#8C8C8C] mb-6">
               Any video format supported - MP4, MKV, AVI, MOV, HEVC, and more,
-              up to 500MB
+              up to 300MB
             </p>
             <Button
               onClick={() => fileInputRef.current?.click()}
@@ -136,7 +136,7 @@ export function UploadModal({
               ref={fileInputRef}
               type="file"
               multiple
-              accept="*/*"
+              accept="video/*"
               onChange={(e) => e.target.files && handleFiles(e.target.files)}
               className="hidden"
             />

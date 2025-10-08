@@ -5,7 +5,7 @@ import { createClient } from "@/supabase/client";
 import { UploadFile } from "@/types/upload";
 import { validateFile } from "@/lib/upload.utils";
 
-const CHUNK_SIZE = 50 * 1024 * 1024; // 50MB
+const CHUNK_SIZE = 5 * 1024 * 1024;
 const MAX_RETRIES = 3;
 
 export function useUpload() {
