@@ -12,12 +12,11 @@ import {
 import { createClient } from "@supabase/supabase-js";
 import { Readable } from "stream";
 import { generateThumbnails, ThumbnailInfo } from "../utils/generateThumbnails";
-import ffmpeg from "fluent-ffmpeg"; 
+import ffmpeg from "fluent-ffmpeg";
 
 const connection = new Redis(process.env.REDIS_URL!, {
   maxRetriesPerRequest: null,
 });
-
 
 const s3 = new S3Client({
   region: process.env.AWS_BUCKET_REGION!,
@@ -56,7 +55,6 @@ async function uploadToS3(bucket: string, key: string, filePath: string) {
   await s3.send(command);
 }
 
-
 function getVideoDuration(videoPath: string): Promise<number> {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(videoPath, (err, metadata) => {
@@ -66,12 +64,13 @@ function getVideoDuration(videoPath: string): Promise<number> {
   });
 }
 
-
 export const worker = new Worker(
   "video-processing",
   async (job) => {
     const { videoId, s3Key } = job.data as { videoId: string; s3Key: string };
-    console.log(`🎬 Processing video: ${videoId}`);
+    console.log(
+      `🎬 Processing video: ${videoId}, attempt ${job.attemptsMade + 1}`
+    );
 
     const projectTempDir = path.join(process.cwd(), "tmp");
     if (!fs.existsSync(projectTempDir))
@@ -79,6 +78,9 @@ export const worker = new Worker(
 
     const videoPath = path.join(projectTempDir, `${videoId}.mp4`);
     const thumbsDir = path.join(projectTempDir, `thumbs-${videoId}`);
+
+    let errorOccurred = false;
+    let finalError: Error | null = null;
 
     try {
       await downloadFromS3(process.env.AWS_BUCKET_NAME!, s3Key, videoPath);
@@ -107,8 +109,10 @@ export const worker = new Worker(
           },
         ]);
 
-        if (error)
+        if (error) {
           console.error("❌ Supabase insert error (thumbnail):", error);
+          throw new Error(`Failed to insert thumbnail: ${error.message}`);
+        }
       }
 
       const duration = await getVideoDuration(videoPath);
@@ -124,12 +128,17 @@ export const worker = new Worker(
 
       if (updateError) {
         console.error("❌ Supabase update error (video ready):", updateError);
-      } else {
-        console.log(
-          `✅ Video status updated to READY for ${videoId}, duration: ${duration}s`
+        throw new Error(
+          `Failed to update video status: ${updateError.message}`
         );
       }
+
+      console.log(
+        `✅ Video status updated to READY for ${videoId}, duration: ${duration}s`
+      );
     } catch (err) {
+      errorOccurred = true;
+      finalError = err as Error;
       console.error("❌ Worker error:", err);
 
       const { error: failError } = await supabase
@@ -137,13 +146,44 @@ export const worker = new Worker(
         .update({ status: "FAILED" })
         .eq("id", videoId);
 
-      if (failError)
+      if (failError) {
         console.error("❌ Supabase update error (video failed):", failError);
-      else console.log(`⚠️ Video status marked as FAILED for ${videoId}`);
+      } else {
+        console.log(`⚠️ Video status marked as FAILED for ${videoId}`);
+      }
     } finally {
       if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
       if (fs.existsSync(thumbsDir)) fs.rmSync(thumbsDir, { recursive: true });
+
+      if (errorOccurred && finalError) {
+        throw finalError;
+      }
     }
   },
   { connection }
 );
+
+worker.on("failed", (job, err) => {
+  console.log(`❌ Job ${job?.id} failed with: ${err.message}`);
+  console.log(`Attempts made: ${job?.attemptsMade}`);
+  console.log(`Video ID: ${job?.data.videoId}`);
+});
+
+worker.on("completed", (job) => {
+  console.log(`✅ Job ${job.id} completed successfully`);
+  console.log(`Video ID: ${job.data.videoId}`);
+});
+
+worker.on("active", (job) => {
+  console.log(
+    `🔄 Job ${job.id} is now active (attempt ${job.attemptsMade + 1})`
+  );
+  console.log(`Video ID: ${job.data.videoId}`);
+});
+
+worker.on("error", (err) => {
+  console.error("Worker error:", err);
+});
+
+console.log("🎯 Video processing worker started with event listeners");
+

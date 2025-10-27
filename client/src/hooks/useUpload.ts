@@ -57,7 +57,7 @@ export function useUpload() {
         axios.post("/api/upload-url", {
           action: "start",
           fileName: uploadFile.file?.name,
-          fileType: uploadFile.file?.type || "video/mp4",
+          fileType: uploadFile.file?.type,
           fileSize: uploadFile.file?.size,
         })
       );
@@ -181,3 +181,13 @@ export function useUpload() {
 
   return { files, setFiles, handleFiles, removeFile, uploadMultipart };
 }
+
+
+
+
+
+
+
+
+
+

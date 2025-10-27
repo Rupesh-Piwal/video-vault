@@ -2,6 +2,9 @@ import "dotenv/config";
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
+import { createBullBoard } from "@bull-board/api";
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
+import { ExpressAdapter } from "@bull-board/express";
 import { videoQueue } from "./queue/videoQueue";
 import { emailQueue } from "./queue/emailQueue";
 
@@ -11,6 +14,16 @@ const allowedOrigins = [
   "http://localhost:3000",
   process.env.NEXT_PUBLIC_APP_URL,
 ];
+
+const serverAdapter = new ExpressAdapter();
+serverAdapter.setBasePath("/admin/queues");
+
+createBullBoard({
+  queues: [new BullMQAdapter(videoQueue)], 
+  serverAdapter: serverAdapter,
+});
+
+app.use("/admin/queues", serverAdapter.getRouter());
 
 app.use(
   cors({
