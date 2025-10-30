@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UploadModal } from "@/app/dashboard/components/upload-modal";
-import { Upload } from "lucide-react";
+import { LogOut, Upload } from "lucide-react";
 import { VideoList } from "./components/video-list";
 import SVGLogo from "@/components/svg-logo";
 import { createClient } from "@/supabase/client";
@@ -12,6 +12,14 @@ import { useRouter } from "next/navigation";
 export default function DashboardPage() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+
+  const supabase = createClient();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.refresh();
+    router.push("/sign-in");
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -42,13 +50,22 @@ export default function DashboardPage() {
                 Manage and organize your video content
               </p>
             </div>
-            <Button
-              onClick={() => setOpen(true)}
-              className="bg-white text-black hover:bg-[#424242] hover:text-white transition-all duration-200 rounded-lg px-6 py-2.5 font-medium cursor-pointer"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Video
-            </Button>
+            <div className="flex flex-row items-center gap-3">
+              <Button
+                onClick={() => setOpen(true)}
+                className="bg-white text-black hover:bg-[#424242] hover:text-white transition-all duration-200 rounded-lg px-6 py-2.5 font-medium cursor-pointer"
+              >
+                <Upload className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:block">Upload Video</span>
+              </Button>
+              <Button
+                onClick={handleLogout}
+                className="bg-white text-black hover:bg-[#424242] hover:text-white transition-all duration-200 rounded-lg px-6 py-2.5 font-medium cursor-pointer"
+              >
+                <span className="hidden md:block">SignOut</span>
+                <LogOut className="h-4 w-4 md:mr-2" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>

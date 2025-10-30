@@ -42,6 +42,7 @@ export async function POST(req: Request) {
       parts,
       partNumber,
     } = body;
+    console.log(body);
 
     // ----- Start Multipart Upload -----
     if (action === "start") {
