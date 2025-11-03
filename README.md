@@ -8,6 +8,11 @@
 
 ## Demo
 
+![VIDEO DEMO](./client//public/Vidvault%20Demo.mp4)
+
+#### VIDEO DEMO 👉🏻 [Click to see VIDEO-DEMO](https://drive.google.com/file/d/1kIBYPanK2UbRBiyZ2eSNtfw8VyOU9VNg/view?usp=sharing)
+
+
 #### LIVE DEMO 👉🏻 [Click to visit VidVault](https://vidsvault.vercel.app/)
 
 #### GITHUB REPO 👉🏻 [Click to visit Codebase](https://github.com/Rupesh-Piwal/video-vault)
