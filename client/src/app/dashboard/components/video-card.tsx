@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,6 @@ import {
   ExternalLink,
   Play,
   FileVideo,
-  Pause,
-  Volume2,
-  VolumeX,
   Trash2,
   X,
 } from "lucide-react";
@@ -29,6 +26,7 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { TextShimmer } from "../../../../components/motion-primitives/text-shimmer";
 import { DownloadButton } from "@/components/download-button";
+import { VideoPlayerModal } from "./video-player-modal";
 
 export function VideoCard({
   id,
@@ -43,16 +41,10 @@ export function VideoCard({
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loadingUrl, setLoadingUrl] = useState(false);
   const [urlError, setUrlError] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [videoDuration, setVideoDuration] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const router = useRouter();
 
@@ -135,39 +127,6 @@ export function VideoCard({
     }
   };
 
-  const handlePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      const current = videoRef.current.currentTime;
-      const duration = videoRef.current.duration;
-      setCurrentTime(current);
-      setProgress((current / duration) * 100);
-    }
-  };
-
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      setVideoDuration(videoRef.current.duration);
-    }
-  };
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
   useEffect(() => {
     if (status !== "READY") return;
     let isMounted = true;
@@ -180,7 +139,6 @@ export function VideoCard({
 
         if (isMounted && data.urls?.length) {
           const midIndex = Math.floor(data.urls.length / 2);
-          console.log("Setting poster URL:", data.urls[midIndex]);
           setPosterUrl(data.urls[midIndex]);
         }
       } catch (err) {
@@ -199,11 +157,7 @@ export function VideoCard({
 
   return (
     <>
-      <Card
-        className="group relative z-0 overflow-hidden bg-[#18191A] border border-[#2B2C2D] rounded-xl hover:border-[#383838] transition-all duration-300 hover:shadow-lg hover:shadow-black/20"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
+      <Card className="group relative z-0 overflow-hidden bg-[#18191A] border border-[#2B2C2D] rounded-xl hover:border-[#383838] transition-all duration-300 hover:shadow-lg hover:shadow-black/20">
         <div className="relative aspect-video overflow-hidden">
           <div className="absolute top-3 left-3 z-10">
             <Badge
@@ -217,77 +171,18 @@ export function VideoCard({
             </Badge>
           </div>
 
-          {status === "READY" && videoUrl && !loadingUrl && !urlError ? (
-            <div className="relative w-full h-full group/video hover:cursor-pointer">
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                poster={posterUrl || undefined}
-                className="w-full h-full object-cover bg-[#2B2C2D]"
-                preload="metadata"
-                muted={isMuted}
-                onTimeUpdate={handleTimeUpdate}
-                onLoadedMetadata={handleLoadedMetadata}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
+          {status === "READY" ? (
+            posterUrl ? (
+              <img
+                src={posterUrl}
+                alt={filename}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
-
-              <div
-                className={cn(
-                  "absolute inset-0 bg-black/60 transition-all duration-300 flex items-center justify-center",
-                  isHovered ? "opacity-100" : "opacity-0"
-                )}
-              >
-                <button
-                  onClick={handlePlayPause}
-                  className="bg-white/90 hover:bg-white rounded-full p-3 shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer"
-                >
-                  {isPlaying ? (
-                    <Pause className="h-5 w-5 text-black" fill="currentColor" />
-                  ) : (
-                    <Play
-                      className="h-5 w-5 text-black ml-0.5"
-                      fill="currentColor"
-                    />
-                  )}
-                </button>
-
-                <div className="absolute bottom-3 left-3 right-3">
-                  <div className="mb-2">
-                    <div className="w-full h-1 bg-white/20 rounded-full">
-                      <div
-                        className="h-full bg-white rounded-full transition-all duration-150"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={toggleMute}
-                        className="bg-black/40 hover:bg-black/60 rounded-full p-1.5 transition-all duration-200"
-                      >
-                        {isMuted ? (
-                          <VolumeX className="h-3 w-3 text-white" />
-                        ) : (
-                          <Volume2 className="h-3 w-3 text-white" />
-                        )}
-                      </button>
-                      <span className="text-white text-xs font-medium">
-                        {Math.floor(currentTime / 60)}:
-                        {String(Math.floor(currentTime % 60)).padStart(2, "0")}/{" "}
-                        {Math.floor(videoDuration / 60)}:
-                        {String(Math.floor(videoDuration % 60)).padStart(
-                          2,
-                          "0"
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            ) : (
+              <div className="w-full h-full bg-[#2B2C2D] flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-[#8C8C8C]" />
               </div>
-            </div>
+            )
           ) : (
             <div className="w-full h-full bg-[#2B2C2D] flex items-center justify-center">
               {loadingUrl ? (
@@ -327,6 +222,20 @@ export function VideoCard({
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {status === "READY" && videoUrl && !urlError && (
+            <div
+              className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+              onClick={() => setIsModalOpen(true)}
+            >
+              <button className="bg-white/90 hover:bg-white rounded-full p-3 shadow-lg hover:scale-105 transition-all duration-200">
+                <Play
+                  className="h-6 w-6 text-black ml-0.5"
+                  fill="currentColor"
+                />
+              </button>
             </div>
           )}
         </div>
@@ -423,6 +332,13 @@ export function VideoCard({
           </div>
         </div>
       )}
+
+      <VideoPlayerModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        videoUrl={videoUrl}
+        posterUrl={posterUrl}
+      />
     </>
   );
 }
