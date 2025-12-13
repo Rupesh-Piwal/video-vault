@@ -56,6 +56,7 @@ export function VideoPlayer({
             controls
             className="w-full h-full"
             poster={posterUrl || undefined}
+            src={videoUrl || ""}
             preload="metadata"
             aria-label={`Video player for ${filename}`}
           >
