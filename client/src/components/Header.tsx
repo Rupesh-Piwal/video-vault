@@ -57,7 +57,7 @@ export default function Header() {
     return (
       <header
         className="w-full border-b"
-        style={{ backgroundColor: "#18191A", borderColor: "#2B2C2D" }}
+        style={{ backgroundColor: "#111111", borderColor: "#2B2C2D" }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">

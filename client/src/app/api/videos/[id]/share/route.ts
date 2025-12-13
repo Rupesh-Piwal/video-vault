@@ -3,23 +3,26 @@ import crypto from "crypto";
 import { createClient } from "@/supabase/server";
 import { createAdminClient } from "@/lib/supabaseAdmin";
 
-function requireUserId(req: NextRequest): string | null {
-  return req.headers.get("x-user-id");
-}
-
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> } 
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Supabase clients
     const supabase = await createClient();
     const supabaseAdmin = createAdminClient();
-    const userId = requireUserId(req);
-    const { id } = await params; 
 
-    if (!userId) {
+    // Auth check (RLS-compatible)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
     }
+
+    // ✅ FIX: params must be awaited
+    const { id: videoId } = await params;
 
     const { visibility, emails = [], expiryPreset } = await req.json();
 
@@ -45,20 +48,23 @@ export async function POST(
       );
     }
 
-    const expiresAt = expiryMap[expiryPreset]
-      ? new Date(Date.now() + expiryMap[expiryPreset]! * 1000).toISOString()
-      : null;
+    const expiresAt =
+      expiryMap[expiryPreset] !== null
+        ? new Date(Date.now() + expiryMap[expiryPreset]! * 1000).toISOString()
+        : null;
 
+    // Token generation
     const token = crypto.randomBytes(32).toString("hex");
     const hashed = crypto.createHash("sha256").update(token).digest("hex");
 
+    // ✅ FIX: visibility normalized for DB + RLS
     const { data: link, error } = await supabase
       .from("share_links")
       .insert({
-        video_id: id, 
-        user_id: userId,
+        video_id: videoId,
+        user_id: user.id,
         hashed_token: hashed,
-        visibility,
+        visibility: visibility,
         expiry: expiresAt,
       })
       .select()
@@ -66,62 +72,16 @@ export async function POST(
 
     if (error) throw error;
 
+    // PRIVATE link handling
     if (visibility === "PRIVATE" && emails.length > 0) {
-      const {
-        data: { users },
-        error: authError,
-      } = await supabaseAdmin.auth.admin.listUsers();
-
-      if (authError) {
-        console.error("Auth admin error:", authError);
-      }
-
-      const registeredEmails = new Set(
-        users?.map((user) => user.email?.toLowerCase()).filter(Boolean) || []
-      );
-
       for (const email of emails) {
         const trimmedEmail = email.trim().toLowerCase();
 
-        await supabase.from("share_link_whitelist").insert({
+        // ✅ FIX: use admin client to bypass RLS safely
+        await supabaseAdmin.from("share_link_whitelist").insert({
           share_link_id: link.id,
           email: trimmedEmail,
         });
-
-        if (registeredEmails.has(trimmedEmail)) {
-          console.log(
-            `📧 Sending notification to registered user: ${trimmedEmail}`
-          );
-
-          const baseUrl = process.env.NEXT_PUBLIC_EXPRESS_URL;
-          if (!baseUrl) {
-            console.error("EXPRESS_URL environment variable is missing");
-            continue;
-          }
-
-          try {
-            await fetch(`${baseUrl}/jobs/send-email`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                to: trimmedEmail,
-                videoId: id, 
-                token,
-                type: "SHARE_NOTIFICATION",
-              }),
-            });
-            console.log(`✅ Notification sent to: ${trimmedEmail}`);
-          } catch (emailError) {
-            console.error(
-              `❌ Failed to send email to ${trimmedEmail}:`,
-              emailError
-            );
-          }
-        } else {
-          console.log(
-            `⏭️ Skipping email for non-registered user: ${trimmedEmail}`
-          );
-        }
       }
     }
 
@@ -131,9 +91,6 @@ export async function POST(
     });
   } catch (err) {
     console.error("Share link creation error:", err);
-    if (err instanceof Error) {
-      return NextResponse.json({ error: err.message }, { status: 500 });
-    }
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

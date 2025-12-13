@@ -33,7 +33,7 @@ export default function Page() {
   }, [supabase, router]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#0B0D0E" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#111111" }}>
       <Header />
 
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-4">

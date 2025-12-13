@@ -7,6 +7,7 @@ import { LogOut, Upload } from "lucide-react";
 import { createClient } from "@/supabase/client";
 import { useRouter } from "next/navigation";
 import { VideoList } from "./components/video-list";
+import { UploadModal } from "./components/upload-modal";
 
 export default function DashboardPage() {
   const [open, setOpen] = useState(false);
@@ -49,7 +50,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 sm:gap-3">
               <Button
                 onClick={() => setOpen(true)}
-                className="flex-1 sm:flex-none bg-gradient-to-r from-violet-950 cursor-pointer to-violet-900 hover:from-purple-700 hover:to-violet-700 text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-200 rounded-xl px-4 sm:px-6 py-2.5 font-medium border border-purple-500/20 hover:scale-105"
+                className="flex-1 sm:flex-none bg-gradient-to-r from-violet-950 cursor-pointer to-violet-900 hover:from-purple-700 hover:to-violet-700 text-white  hover:shadow-purple-500/40 transition-all duration-200 rounded-xl px-4 sm:px-6 py-2.5 font-medium border border-purple-500/20 hover:scale-105"
               >
                 <Upload className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Upload Video</span>
@@ -72,30 +73,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
         <VideoList />
       </div>
-
-      {/* Upload Modal - placeholder for now */}
-      {open && (
-        <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="bg-gradient-to-br from-neutral-900 to-black border border-purple-900/30 rounded-2xl p-6 max-w-md w-full shadow-2xl shadow-purple-500/10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-2xl font-bold text-white mb-4">Upload Video</h2>
-            <p className="text-neutral-400 mb-6">
-              Upload modal component will be implemented here.
-            </p>
-            <Button
-              onClick={() => setOpen(false)}
-              className="w-full bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white rounded-xl"
-            >
-              Close
-            </Button>
-          </div>
-        </div>
-      )}
+      <UploadModal open={open} onOpenChange={setOpen} />
     </div>
   );
 }

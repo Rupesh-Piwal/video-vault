@@ -30,7 +30,6 @@ export function VideoCard({
   id,
   filename,
   size,
-  uploadDate,
   duration,
   status,
   storage_key,

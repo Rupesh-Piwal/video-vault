@@ -30,10 +30,6 @@ interface Props {
   videoId: string;
 }
 
-interface User {
-  id: string;
-}
-
 interface EmailMultiSelectProps {
   emails: string[];
   onChange: (emails: string[]) => void;
@@ -47,56 +43,20 @@ function EmailMultiSelect({ emails, onChange }: EmailMultiSelectProps) {
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const addEmail = (email: string) => {
-    const trimmedEmail = email.trim().toLowerCase();
-    if (
-      trimmedEmail &&
-      validateEmail(trimmedEmail) &&
-      !emails.includes(trimmedEmail)
-    ) {
-      onChange([...emails, trimmedEmail]);
+    const trimmed = email.trim().toLowerCase();
+    if (trimmed && validateEmail(trimmed) && !emails.includes(trimmed)) {
+      onChange([...emails, trimmed]);
       setInputValue("");
     }
   };
 
-  const removeEmail = (emailToRemove: string) => {
-    onChange(emails.filter((email) => email !== emailToRemove));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      if (inputValue.trim()) addEmail(inputValue);
-    } else if (e.key === "Backspace" && !inputValue && emails.length > 0) {
-      removeEmail(emails[emails.length - 1]);
-    }
-  };
-
-  const handleBlur = () => {
-    if (inputValue.trim()) addEmail(inputValue);
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pastedText = e.clipboardData.getData("text");
-    const emailList = pastedText.split(/[,;\s]+/).filter(Boolean);
-    emailList.forEach(addEmail);
-  };
-
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-[2.5rem] bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+      <div className="flex flex-wrap gap-2 p-2 border rounded-md min-h-[2.5rem] bg-background">
         {emails.map((email) => (
-          <Badge
-            key={email}
-            variant="secondary"
-            className="flex items-center gap-1 px-2 py-1"
-          >
+          <Badge key={email} variant="secondary" className="gap-1">
             {email}
-            <button
-              type="button"
-              onClick={() => removeEmail(email)}
-              className="hover:bg-destructive hover:text-destructive-foreground rounded-full p-0.5 transition-colors"
-            >
+            <button onClick={() => onChange(emails.filter((e) => e !== email))}>
               <X size={12} />
             </button>
           </Badge>
@@ -104,88 +64,75 @@ function EmailMultiSelect({ emails, onChange }: EmailMultiSelectProps) {
         <Input
           ref={inputRef}
           type="email"
-          placeholder={
-            emails.length === 0 ? "Enter email addresses..." : "Add more..."
-          }
           value={inputValue}
+          placeholder="Add emails…"
           onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={handleBlur}
-          onPaste={handlePaste}
-          className="flex-1 min-w-[200px] border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === ",") {
+              e.preventDefault();
+              addEmail(inputValue);
+            }
+          }}
+          className="flex-1 border-none shadow-none focus-visible:ring-0"
         />
       </div>
       <p className="text-xs text-muted-foreground">
-        Type email addresses and press Enter or comma to add. Only these users
-        will be able to open the link.
+        Only these users will be able to open the link.
       </p>
     </div>
   );
 }
 
 export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
-  const [user, setUser] = useState<User | null>(null);
   const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
   const [emails, setEmails] = useState<string[]>([]);
-  const [expiryPreset, setExpiryPreset] = useState<string>("1d");
+  const [expiryPreset, setExpiryPreset] = useState("1d");
   const [loading, setLoading] = useState(false);
 
   const supabase = createClient();
-
-  useEffect(() => {
-    supabase.auth.getUser().then((res) => {
-      if (res.data.user) setUser({ id: res.data.user.id });
-    });
-  }, [supabase]);
 
   useEffect(() => {
     if (visibility === "PUBLIC") setEmails([]);
   }, [visibility]);
 
   const handleCreate = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user) {
-      return toast.error("⚠️ Please log in first");
+      toast.error("Please log in first");
+      return;
     }
 
     if (visibility === "PRIVATE" && emails.length === 0) {
-      return toast.error("⚠️ Please add at least one email for private links");
+      toast.error("Add at least one email");
+      return;
     }
 
     setLoading(true);
     try {
       const res = await fetch(`/api/videos/${videoId}/share`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user.id,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           visibility,
-          emails: visibility === "PRIVATE" ? emails : [],
+          emails,
           expiryPreset,
         }),
       });
 
-      const data: { url?: string; error?: string } = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create link");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
       if (data.url) {
         await navigator.clipboard.writeText(data.url);
-        toast.success("Share link created & copied to clipboard!");
-      } else {
-        toast.success("Share link created!");
+        toast.success("Share link created & copied!");
       }
 
       onOpenChange(false);
-      setEmails([]);
-      setVisibility("PUBLIC");
-      setExpiryPreset("1d");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        toast.error(`❌ ${err.message}`);
-      } else {
-        toast.error("❌ Unknown error");
-      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create link");
     } finally {
       setLoading(false);
     }
@@ -193,7 +140,7 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined} className="max-w-md">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Create Share Link</DialogTitle>
         </DialogHeader>
@@ -203,10 +150,10 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
             <Label>Visibility</Label>
             <Select
               value={visibility}
-              onValueChange={(v) => setVisibility(v as "PUBLIC" | "PRIVATE")}
+              onValueChange={(v) => setVisibility(v as any)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select visibility" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="PUBLIC">🌍 Public</SelectItem>
@@ -226,14 +173,13 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
             <Label>Expiry</Label>
             <Select value={expiryPreset} onValueChange={setExpiryPreset}>
               <SelectTrigger>
-                <SelectValue placeholder="Select expiry" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1h">⏳ 1 hour</SelectItem>
-                <SelectItem value="12h">🕑 12 hours</SelectItem>
-                <SelectItem value="1d">📅 1 day</SelectItem>
-                <SelectItem value="30d">📆 30 days</SelectItem>
-                <SelectItem value="forever">♾️ Forever</SelectItem>
+                <SelectItem value="1h">1 hour</SelectItem>
+                <SelectItem value="1d">1 day</SelectItem>
+                <SelectItem value="30d">30 days</SelectItem>
+                <SelectItem value="forever">Forever</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -243,17 +189,8 @@ export function CreateShareLinkModal({ open, onOpenChange, videoId }: Props) {
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleCreate}
-            disabled={
-              loading || (visibility === "PRIVATE" && emails.length === 0)
-            }
-          >
-            {loading ? (
-              <TextShimmer duration={1.2}>Creating...</TextShimmer>
-            ) : (
-              "Create"
-            )}
+          <Button onClick={handleCreate} disabled={loading}>
+            {loading ? <TextShimmer>Creating…</TextShimmer> : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>

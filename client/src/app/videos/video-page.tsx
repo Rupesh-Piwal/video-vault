@@ -72,7 +72,7 @@ export default function VideoPage({ videoId }: VideoPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-[#2B2C2D] bg-[#18191A]/80 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-purple-900/20 bg-black/40 backdrop-blur-xl sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between space-x-4">
             <Button
@@ -84,7 +84,7 @@ export default function VideoPage({ videoId }: VideoPageProps) {
               Back
             </Button>
             <div className="flex-1">
-              <h1 className="md:text-xl font-semibold text-foreground">
+              <h1 className="md:text-[20px] font-semibold text-foreground">
                 {video.original_filename}
               </h1>
               <p className="text-muted-foreground text-[10px] md:text-sm">
