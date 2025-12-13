@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,15 +8,15 @@ import {
   Clock,
   Loader2,
   XCircle,
-  ExternalLink,
   Play,
   FileVideo,
   Trash2,
   X,
+  ExternalLink,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  formatDateOnly,
   formatDuration,
   formatSize,
   type VideoCardProps,
@@ -25,7 +24,6 @@ import {
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { TextShimmer } from "../../../../components/motion-primitives/text-shimmer";
-import { DownloadButton } from "@/components/download-button";
 import { VideoPlayerModal } from "./video-player-modal";
 
 export function VideoCard({
@@ -155,62 +153,70 @@ export function VideoCard({
 
   const statusConfig = getStatusConfig();
 
+  const handleDownload = async () => {
+    if (!videoUrl) return;
+    try {
+      const response = await fetch(videoUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Download started");
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Failed to download video");
+    }
+  };
+
   return (
     <>
-      <Card className="group relative z-0 overflow-hidden bg-[#18191A] border border-[#2B2C2D] rounded-xl hover:border-[#383838] transition-all duration-300 hover:shadow-lg hover:shadow-black/20">
-        <div className="relative aspect-video overflow-hidden">
-          <div className="absolute top-3 left-3 z-10">
-            <Badge
-              className={cn(
-                "text-xs font-medium px-2.5 py-1 rounded-md border backdrop-blur-sm",
-                statusConfig.className
-              )}
-            >
-              <span className="mr-1.5">{statusConfig.icon}</span>
-              {statusConfig.text}
-            </Badge>
-          </div>
-
+      <div className="group relative z-0 overflow-hidden rounded-3xl bg-gradient-to-br from-neutral-900 to-black border border-neutral-800/50 hover:border-neutral-700 transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/10 hover:scale-[1.02]">
+        {/* Video Image/Poster */}
+        <div className="relative aspect-[4/3] overflow-hidden">
           {status === "READY" ? (
             posterUrl ? (
               <img
-                src={posterUrl}
+                src={posterUrl || "/placeholder.svg"}
                 alt={filename}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
             ) : (
-              <div className="w-full h-full bg-[#2B2C2D] flex items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-[#8C8C8C]" />
+              <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-neutral-600" />
               </div>
             )
           ) : (
-            <div className="w-full h-full bg-[#2B2C2D] flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center">
               {loadingUrl ? (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="bg-[#383838] rounded-full p-4">
-                    <Loader2 className="h-6 w-6 animate-spin text-[#8C8C8C]" />
+                  <div className="bg-neutral-700/50 rounded-full p-4 backdrop-blur-sm">
+                    <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
                   </div>
-
                   <TextShimmer className="font-mono text-sm" duration={1}>
                     Loading...
                   </TextShimmer>
                 </div>
               ) : urlError ? (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="bg-[#383838] rounded-full p-4">
-                    <XCircle className="h-6 w-6 text-red-400" />
+                  <div className="bg-red-500/10 rounded-full p-4 backdrop-blur-sm">
+                    <XCircle className="h-8 w-8 text-red-400" />
                   </div>
-                  <p className="text-sm font-medium text-[#8C8C8C]">
+                  <p className="text-sm font-medium text-neutral-400">
                     Failed to load
                   </p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="bg-[#383838] rounded-full p-4">
+                  <div className="bg-neutral-700/50 rounded-full p-4 backdrop-blur-sm">
                     {status === "PROCESSING" || status === "UPLOADING" ? (
                       statusConfig.icon
                     ) : (
-                      <FileVideo className="h-6 w-6 text-[#8C8C8C]" />
+                      <FileVideo className="h-8 w-8 text-neutral-400" />
                     )}
                   </div>
                   {(status === "PROCESSING" || status === "UPLOADING") && (
@@ -225,101 +231,145 @@ export function VideoCard({
             </div>
           )}
 
-          {status === "READY" && videoUrl && !urlError && (
-            <div
-              className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
-              onClick={() => setIsModalOpen(true)}
+          {/* Status Badge */}
+          <div className="absolute top-4 left-4 z-10">
+            <Badge
+              className={cn(
+                "text-xs font-semibold px-3 py-1.5 rounded-full border backdrop-blur-md",
+                statusConfig.className
+              )}
             >
-              <button className="bg-white/90 hover:bg-white rounded-full p-3 shadow-lg hover:scale-105 transition-all duration-200">
-                <Play
-                  className="h-6 w-6 text-black ml-0.5"
-                  fill="currentColor"
-                />
-              </button>
+              <span className="mr-1.5">{statusConfig.icon}</span>
+              {statusConfig.text}
+            </Badge>
+          </div>
+
+          {/* Gradient Overlay at Bottom */}
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black via-black/80 to-transparent" />
+
+          {/* Bottom Content Overlay - Matching Screenshot Style */}
+          <div className="absolute inset-x-0 bottom-0 p-6">
+            <div className="flex items-end justify-between">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xl font-semibold text-white mb-2 truncate">
+                  {filename}
+                </h3>
+                <div className="flex items-center gap-3 text-sm text-neutral-400">
+                  <span>{formatSize(size)}</span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="text-neutral-100" size={14} />
+                    {formatDuration(duration)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Circular Play Button - Matching Screenshot */}
+              {status === "READY" && videoUrl && !urlError && (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex-shrink-0 w-10 h-10 rounded-full border-2 border-violet-950 flex items-center justify-center bg-violet-950/40 backdrop-blur-sm hover:bg-white/20 hover:border-white hover:scale-110 transition-all duration-300 ml-4"
+                >
+                  <Play className="h-4 w-4 text-white ml-0.5" fill="white" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Hover Actions Overlay */}
+          {status === "READY" && !loadingUrl && (
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center gap-2 px-6 opacity-0 group-hover:opacity-100 transition-all duration-300">
+              <div className="relative flex flex-col items-center justify-center h-full">
+                {/* Center Play Button */}
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-gradient-to-br from-purple-500/30 to-violet-600/30 hover:from-purple-500/50 hover:to-violet-600/50 backdrop-blur-md rounded-full p-3 sm:p-6 shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer pointer-events-auto border border-white/20 hover:border-white/40"
+                  aria-label="Play"
+                >
+                  <Play
+                    className="h-4 w-4 sm:h-10 sm:w-10 text-white ml-1 drop-shadow-lg"
+                    fill="currentColor"
+                  />
+                </button>
+
+                {/* Bottom Action Buttons - Fixed at bottom */}
+                <div className="absolute bottom-0 left-0 right-0 flex flex-row items-center justify-center gap-3 p-4">
+                  {/* Download Button */}
+                  <button
+                    onClick={handleDownload}
+                    className="flex items-center gap-2 px-3 h-8 bg-neutral-800/80 hover:bg-neutral-700 text-neutral-200 font-medium rounded-full border border-neutral-700/50 backdrop-blur-sm hover:scale-105 transition-all duration-200 cursor-pointer "
+                  >
+                    <Download className="h-4 w-4" />
+                    <span className="text-sm">Download</span>
+                  </button>
+
+                  {/* View Button */}
+                  <button
+                    onClick={() => router.push(`/videos/${id}`)}
+                    className="flex items-center gap-2 px-3 h-8 bg-neutral-800/80 hover:bg-neutral-700 text-neutral-200 font-medium rounded-full border border-neutral-700/50 backdrop-blur-sm hover:scale-105 transition-all duration-200 cursor-pointer "
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    <span className="text-sm">View</span>
+                  </button>
+
+                  {/* Delete Button */}
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={isDeleting}
+                    className="flex items-center justify-center p-1.5 cursor-pointer bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-full border border-red-500/30 backdrop-blur-sm hover:scale-105 transition-all duration-200"
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
-        <CardContent className="p-4 space-y-3">
-          <h3 className="font-medium text-white text-sm leading-tight truncate">
-            {filename}
-          </h3>
+      </div>
 
-          <div className="flex items-center justify-between text-xs text-[#8C8C8C]">
-            <span>{formatSize(size)}</span>
-            <span>{formatDuration(duration)}</span>
-            <span>{formatDateOnly(uploadDate)}</span>
-          </div>
-
-          {status === "READY" && !loadingUrl && (
-            <div className="flex items-center gap-2 pt-1">
-              <DownloadButton videoUrl={videoUrl} filename={filename} />
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 bg-[#2B2C2D] hover:bg-[#383838] border-[#383838] text-[#8C8C8C] hover:text-white text-xs h-8 cursor-pointer"
-                onClick={() => router.push(`/videos/${id}`)}
-              >
-                <ExternalLink className="h-3 w-3 mr-1.5" />
-                View
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="px-2 h-8 text-[#8C8C8C] hover:text-white cursor-pointer transition-all duration-200 group/delete"
-                onClick={() => setShowDeleteConfirm(true)}
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <>
-                    <Trash2 className="h-3 w-3 transition-transform duration-200 group-hover/delete:scale-110" />
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover/delete:opacity-100 transition-opacity duration-200"></span>
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
+      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#18191A] border border-[#2B2C2D] rounded-xl p-6 max-w-md w-full">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-neutral-900 to-black border border-neutral-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-white">Delete Video</h3>
+              <h3 className="text-xl font-semibold text-white">Delete Video</h3>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="text-[#8C8C8C] hover:text-white transition-colors"
+                className="text-neutral-400 hover:text-white transition-colors rounded-full hover:bg-neutral-800 p-1"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="text-[#8C8C8C] mb-6">
-              Are you sure you want to delete &quot;{filename}&quot;? This
-              action cannot be undone.
+            <p className="text-neutral-400 mb-6 leading-relaxed">
+              Are you sure you want to delete{" "}
+              <span className="text-white font-medium">
+                &quot;{filename}&quot;
+              </span>
+              ? This action cannot be undone.
             </p>
 
             <div className="flex gap-3 justify-end">
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="border-[#383838] text-[#8C8C8C] hover:text-white cursor-pointer"
+                className="border-neutral-700 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-full px-6"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+                className="bg-red-600 hover:bg-red-700 text-white rounded-full px-6 shadow-lg shadow-red-500/20"
               >
                 {isDeleting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    <TextShimmer className="font-mono text-sm" duration={1}>
-                      Deleting...
-                    </TextShimmer>
+                    Deleting...
                   </>
                 ) : (
                   <>

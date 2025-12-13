@@ -5,8 +5,8 @@ import { createClient } from "@/supabase/client";
 import type { VideoCardProps } from "@/lib/metadata-utils";
 import { FileVideo } from "lucide-react";
 import { VideoCard } from "./video-card";
-import { VideoRow } from "@/types/video";
-import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import type { VideoRow } from "@/types/video";
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 export function VideoList() {
   const [videos, setVideos] = useState<VideoCardProps[]>([]);
@@ -76,20 +76,13 @@ export function VideoList() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {Array.from({ length: 8 }).map((_, i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="bg-[#18191A] rounded-xl border border-[#2B2C2D] overflow-hidden"
+            className="rounded-3xl border border-neutral-800/50 overflow-hidden bg-gradient-to-br from-neutral-900 to-black"
           >
-            <div className="aspect-video bg-[#2B2C2D] animate-pulse" />
-            <div className="p-4 space-y-3">
-              <div className="h-4 bg-[#2B2C2D] rounded animate-pulse" />
-              <div className="flex justify-between">
-                <div className="h-3 bg-[#2B2C2D] rounded w-16 animate-pulse" />
-                <div className="h-3 bg-[#2B2C2D] rounded w-12 animate-pulse" />
-              </div>
-            </div>
+            <div className="aspect-[4/3] bg-gradient-to-br from-neutral-800 to-neutral-900 animate-pulse" />
           </div>
         ))}
       </div>
@@ -99,7 +92,7 @@ export function VideoList() {
   return (
     <div>
       {videos.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {videos.map((video) => (
             <VideoCard
               key={video.id}
@@ -111,12 +104,14 @@ export function VideoList() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="bg-[#18191A] rounded-full p-6 mb-4 border border-[#2B2C2D]">
-            <FileVideo className="h-12 w-12 text-[#606060]" />
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="bg-gradient-to-br from-neutral-900 to-black rounded-full p-8 mb-6 border border-neutral-800/50">
+            <FileVideo className="h-16 w-16 text-neutral-600" />
           </div>
-          <h3 className="text-xl font-medium text-white mb-2">No videos yet</h3>
-          <p className="text-[#8C8C8C] max-w-md">
+          <h3 className="text-2xl font-semibold text-white mb-3">
+            No videos yet
+          </h3>
+          <p className="text-neutral-400 max-w-md text-lg leading-relaxed">
             Upload your first video to get started. Your videos will appear here
             once they&apos;re processed.
           </p>
