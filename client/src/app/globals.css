@@ -1,9 +1,20 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
+  /* VidVault Landing Page Colors */
+  --neon-purple: #A855F7;
+  --deep-purple: #9333EA;
+  --violet-accent: #8B5CF6;
+  --electric-blue: #3B82F6;
+  --bg-black: #000000;
+  --bg-dark-base: #0B0D0E;
+  --bg-card-dark: #18191A;
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --text-gray-light: #D1D5DB;
+  --text-gray-muted: #9CA3AF;
+  
   --background: #0b0d0e;
   --foreground: #ffffff;
   --card: #18191a;
@@ -77,6 +88,20 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  
+  /* Landing page colors */
+  --color-neon-purple: var(--neon-purple);
+  --color-deep-purple: var(--deep-purple);
+  --color-violet-accent: var(--violet-accent);
+  --color-electric-blue: var(--electric-blue);
+  --color-bg-black: var(--bg-black);
+  --color-bg-dark-base: var(--bg-dark-base);
+  --color-bg-card-dark: var(--bg-card-dark);
+  --color-glass-bg: var(--glass-bg);
+  --color-glass-border: var(--glass-border);
+  --color-text-gray-light: var(--text-gray-light);
+  --color-text-gray-muted: var(--text-gray-muted);
+  
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
