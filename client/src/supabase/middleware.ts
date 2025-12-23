@@ -35,7 +35,7 @@ export async function updateSession(request: NextRequest) {
 
   if (
   !user &&
-  request.nextUrl.pathname !== "/" && // 👈 allow landing page
+  request.nextUrl.pathname !== "/" && 
   !request.nextUrl.pathname.startsWith("/sign-in") &&
   !request.nextUrl.pathname.startsWith("/sign-up") &&
   !request.nextUrl.pathname.startsWith("/auth") &&
