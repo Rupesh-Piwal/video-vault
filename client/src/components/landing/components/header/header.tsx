@@ -6,7 +6,7 @@ import { useScroll } from "./hooks/use-scroll";
 import { Logo } from "./logo";
 import { MobileNav } from "./mobile-nav";
 import Link from "next/link";
-import { motion } from "motion/react";
+
 
 export const navLinks = [
   {
@@ -36,7 +36,7 @@ export function Header() {
           }
         )}
       >
-        <Link className="rounded-md p-2 hover:bg-accent" href="#">
+        <Link className="rounded-md p-2" href="/">
           <Logo className="h-4.5" />
         </Link>
         <div className="hidden items-center gap-8 md:flex">

@@ -6,5 +6,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!sign-in|sign-up|auth|error|_next|api|public).*)"],
+  matcher: ["/((?!^/$|sign-in|sign-up|auth|error|_next|api|public).*)"],
 };
