@@ -1,37 +1,25 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
-
-export const dynamic = "force-dynamic";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
-  variable: "--font-space-grotesk",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  display: "swap",
-  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
-  title: "VidVault - Production-Ready Video Platform",
+  title: "VideoVault Create & Share Stunning Thumbnails",
   description:
-    "Upload. Process. Share. At Scale. A production-ready video platform with multipart uploads, background workers, and secure share links.",
+    "VideoVault helps you design, customize, and share eye-catching video thumbnails in seconds. Perfect for creators who want their videos to stand out.",
   keywords: [
-    "video platform",
-    "video upload",
-    "video processing",
-    "video sharing",
-    "multipart upload",
-    "video infrastructure",
-    "video workers",
-    "secure share links",
+    "video thumbnails",
+    "thumbnail maker",
+    "YouTube thumbnails",
+    "share video thumbnails",
+    "video preview images",
+    "content creator tools",
   ],
 };
 
@@ -42,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${inter.variable} font-sans antialiased`}>
+      <body className={`${spaceGrotesk.className}  antialiased`}>
         {children}
         <Toaster
           position="top-right"
@@ -72,7 +60,7 @@ export default function RootLayout({
               },
             },
             loading: {
-              duration: Infinity,
+              duration: Infinity, // Keep until manually dismissed
             },
           }}
         />

@@ -9,6 +9,9 @@ import { ArchitectureSection } from "@/components/landing/architecture-section";
 import { CTASection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
 import ScrollElement from "../../components/uilayouts/scroll-animation";
+import Loader from "@/components/kokonutui/loader";
+import { Header } from "@/components/landing/components/header/header";
+
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +40,7 @@ export default function Page() {
     return (
       <div className="min-h-screen bg-bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full border-4 border-neon-purple border-t-transparent animate-spin" />
+          <Loader />
           <p className="text-text-gray-muted">Loading...</p>
         </div>
       </div>
@@ -45,7 +48,8 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-black">
+    <div className="min-h-screen bg-black">
+      <Header />
       <ScrollElement
         viewport={{ once: true, amount: 0.5, margin: "0px 0px 0px 0px" }}
       >
