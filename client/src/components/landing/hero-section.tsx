@@ -12,7 +12,7 @@ export function HeroSection() {
       <div className="absolute inset-0 z-0">
         <DarkVeil />
       </div>
-      <div className="relative z-20 w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-20 ">
+      <div className="relative z-20 w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-16 lg:py-8 ">
         <div className="mx-auto max-w-7xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

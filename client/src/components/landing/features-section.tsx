@@ -1,141 +1,157 @@
 "use client";
 
-import { motion } from "motion/react";
-import { CloudUpload, Settings, Image, Link2, Mail } from "lucide-react";
-import { ReactNode } from "react";
+import { CloudUpload, Image, Link2, Mail } from "lucide-react";
+import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
+import { Marquee } from "@/components/ui/marquee";
+import { cn } from "@/lib/utils";
 
-interface Feature {
-  icon: any;
-  title: string;
-  description: string;
-  className?: string;
-  background?: ReactNode;
-}
-
-const features: Feature[] = [
+const uploadSteps = [
   {
-    icon: CloudUpload,
-    title: "Multipart Uploads",
+    name: "chunk-1.mp4",
+    status: "Uploading",
+    progress: "45%",
+  },
+  {
+    name: "chunk-2.mp4",
+    status: "Uploading",
+    progress: "78%",
+  },
+  {
+    name: "chunk-3.mp4",
+    status: "Pending",
+    progress: "0%",
+  },
+  {
+    name: "chunk-4.mp4",
+    status: "Complete",
+    progress: "100%",
+  },
+  {
+    name: "video-final.mp4",
+    status: "Merging",
+    progress: "90%",
+  },
+];
+
+const features = [
+  {
+    Icon: CloudUpload,
+    name: "Multipart Uploads",
     description:
       "Resumable & parallel uploads with S3 presigned URLs. Handle large files efficiently with automatic chunking and retry logic.",
-    className: "md:col-span-2 md:row-span-2",
+    href: "#",
+    cta: "Learn more",
+    className: "md:col-span-2 lg:col-span-1",
+    background: (
+      <Marquee
+        pauseOnHover
+        className="absolute top-10 [mask-image:linear-gradient(to_top,transparent_40%,#000_100%)] [--duration:20s]"
+      >
+        {uploadSteps.map((step, idx) => (
+          <figure
+            key={idx}
+            className={cn(
+              "relative w-32 cursor-pointer overflow-hidden rounded-xl border p-4",
+              "border-neon-purple/30 bg-glass-bg backdrop-blur-sm hover:bg-glass-bg/80",
+              "transform-gpu blur-[1px] transition-all duration-300 ease-out hover:blur-none"
+            )}
+          >
+            <div className="flex flex-col gap-2">
+              <figcaption className="text-sm font-medium text-white">
+                {step.name}
+              </figcaption>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-text-gray-muted">{step.status}</span>
+                <span className="text-neon-purple font-semibold">
+                  {step.progress}
+                </span>
+              </div>
+              <div className="h-1 w-full rounded-full bg-bg-card-dark overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-neon-purple to-electric-blue transition-all duration-300"
+                  style={{ width: step.progress }}
+                />
+              </div>
+            </div>
+          </figure>
+        ))}
+      </Marquee>
+    ),
   },
   {
-    icon: Image,
-    title: "Thumbnail Generation",
-    description: "Automatic frame extraction and thumbnail creation",
-    className: "md:col-span-3 md:row-span-2",
+    Icon: Image,
+    name: "Thumbnail Generation",
+    description:
+      "Automatic frame extraction and thumbnail creation for quick video previews",
+    href: "#",
+    cta: "Learn more",
+    className: "md:col-span-3 lg:col-span-2",
+    background: (
+      <div className="absolute top-4 right-0 h-full w-full overflow-hidden">
+        <img
+          src="/thumbnail.png"
+          alt="Thumbnail generation"
+          className="absolute top-10 right-0 w-[90%] object-contain opacity-60 [mask-image:linear-gradient(to_top,transparent_20%,#000_100%)] transition-all duration-300 group-hover:scale-105"
+        />
+      </div>
+    ),
   },
   {
-    icon: Link2,
-    title: "Secure Share Links",
+    Icon: Link2,
+    name: "Secure Share Links",
     description:
       "Public, private, and expiry-based sharing with granular access control",
-    className: "md:col-span-3 md:row-span-2",
+    href: "#",
+    cta: "Learn more",
+    className: "md:col-span-3 lg:col-span-2",
+    background: (
+      <div className="absolute top-4 right-0 h-full w-full overflow-hidden">
+        <img
+          src="/sharelink.png"
+          alt="Secure share links"
+          className="absolute top-10 right-0 w-[90%] object-contain opacity-60 [mask-image:linear-gradient(to_top,transparent_20%,#000_100%)] transition-all duration-300 group-hover:scale-105"
+        />
+      </div>
+    ),
   },
   {
-    icon: Mail,
-    title: "Email Notifications",
+    Icon: Mail,
+    name: "Email Notifications",
     description:
       "Real-time notifications on private link views and video processing status",
-    className: "md:col-span-2 md:row-span-2",
+    href: "#",
+    cta: "Learn more",
+    className: "md:col-span-2 lg:col-span-1",
+    background: (
+      <div className="absolute top-4 right-0 h-full w-full overflow-hidden">
+        <img
+          src="/email.png"
+          alt="Email notifications"
+          className="absolute top-10 right-0 w-[85%] object-contain opacity-60 [mask-image:linear-gradient(to_top,transparent_30%,#000_100%)] transition-all duration-300 group-hover:scale-105"
+        />
+      </div>
+    ),
   },
 ];
 
 export function FeaturesSection() {
   return (
-    <section className="relative py-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
+    <section className="relative py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1200px] mx-auto">
+        <div className="text-center mb-16">
           <h2 className="text-4xl sm:text-5xl font-bold text-white mb-4">
             Production-Ready Features
           </h2>
           <p className="text-lg text-text-gray-muted max-w-2xl mx-auto">
             Everything you need for enterprise-grade video infrastructure
           </p>
-        </motion.div>
-
-        {/* Bento Grid Layout */}
-        <div className="grid md:grid-cols-5 gap-6 auto-rows-[minmax(240px,auto)]">
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -4 }}
-              className={`group relative ${feature.className || ""}`}
-            >
-              {/* Glassmorphism Card */}
-              <div className="relative h-full p-8 rounded-2xl bg-glass-bg backdrop-blur-md border border-glass-border hover:border-neon-purple/50 transition-all duration-300 overflow-hidden">
-                {/* Hover Glow Effect */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-neon-purple/0 to-electric-blue/0 group-hover:from-neon-purple/10 group-hover:to-electric-blue/10 transition-all duration-300" />
-
-                {/* Background Pattern for Large Card */}
-                {index === 0 && (
-                  <div className="absolute inset-0 opacity-5">
-                    <div className="absolute top-10 right-10 w-32 h-32 border-2 border-neon-purple rounded-xl rotate-12" />
-                    <div className="absolute bottom-10 left-10 w-24 h-24 border-2 border-electric-blue rounded-xl -rotate-12" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 border-2 border-violet-accent rounded-full" />
-                  </div>
-                )}
-
-                <div className="relative z-10 h-full flex flex-col">
-                  {/* Icon */}
-                  <div className="w-14 h-14 mb-6 rounded-xl bg-gradient-to-br from-neon-purple to-deep-purple flex items-center justify-center shadow-lg shadow-neon-purple/50 group-hover:shadow-neon-purple/70 transition-shadow">
-                    <feature.icon className="w-7 h-7 text-white" />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1">
-                    <h3
-                      className={`font-semibold text-white mb-3 ${
-                        index === 0 ? "text-2xl" : "text-xl"
-                      }`}
-                    >
-                      {feature.title}
-                    </h3>
-
-                    <p
-                      className={`text-text-gray-muted leading-relaxed ${
-                        index === 0 ? "text-base" : "text-sm"
-                      }`}
-                    >
-                      {feature.description}
-                    </p>
-                  </div>
-
-                  {/* Decorative Arrow for Large Card */}
-                  {index === 0 && (
-                    <div className="mt-6 inline-flex items-center gap-2 text-neon-purple group-hover:text-electric-blue transition-colors text-sm font-medium">
-                      Learn more
-                      <svg
-                        className="w-4 h-4 group-hover:translate-x-1 transition-transform"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          ))}
         </div>
+
+        <BentoGrid className="auto-rows-[22rem]">
+          {features.map((feature) => (
+            <BentoCard key={feature.name} {...feature} />
+          ))}
+        </BentoGrid>
       </div>
     </section>
   );
