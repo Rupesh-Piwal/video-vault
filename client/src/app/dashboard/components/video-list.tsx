@@ -80,9 +80,9 @@ export function VideoList() {
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="rounded-3xl border border-neutral-800/50 overflow-hidden bg-gradient-to-br from-neutral-900 to-black"
+            className="rounded-3xl border border-white/10 overflow-hidden bg-gradient-to-br from-gray-900/90 to-black/90"
           >
-            <div className="aspect-[4/3] bg-gradient-to-br from-neutral-800 to-neutral-900 animate-pulse" />
+            <div className="aspect-[4/3] bg-gradient-to-br from-gray-900 to-black animate-pulse" />
           </div>
         ))}
       </div>
@@ -105,13 +105,13 @@ export function VideoList() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="bg-gradient-to-br from-neutral-900 to-black rounded-full p-8 mb-6 border border-neutral-800/50">
-            <FileVideo className="h-16 w-16 text-neutral-600" />
+          <div className="bg-gradient-to-br from-gray-900/90 to-black/90 rounded-full p-8 mb-6 border border-white/10">
+            <FileVideo className="h-16 w-16 text-slate-200" />
           </div>
           <h3 className="text-2xl font-semibold text-white mb-3">
             No videos yet
           </h3>
-          <p className="text-neutral-400 max-w-md text-lg leading-relaxed">
+          <p className="text-slate-200 max-w-md text-lg leading-relaxed">
             Upload your first video to get started. Your videos will appear here
             once they&apos;re processed.
           </p>

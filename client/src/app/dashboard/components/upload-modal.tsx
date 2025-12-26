@@ -110,15 +110,15 @@ export function UploadModal({
       <DialogOverlay className="fixed inset-0 bg-black/80 backdrop-blur-[8px]" />
       <DialogContent
         aria-describedby={undefined}
-        className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col p-0 bg-gradient-to-b from-gray-900 to-black border border-gray-800 text-white shadow-2xl"
+        className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col p-0 bg-gradient-to-b from-gray-900/90 to-black/90 border border-white/10 text-white shadow-2xl"
       >
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-800 bg-gradient-to-r from-gray-900 via-black to-gray-900">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-white/10 bg-gradient-to-r from-gray-900/90 via-black/90 to-gray-900/90">
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-xl font-semibold bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent">
+              <DialogTitle className="text-xl font-semibold text-white">
                 Upload Videos
               </DialogTitle>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-slate-200 mt-1">
                 Select and upload video files in any format
               </p>
             </div>
@@ -129,8 +129,8 @@ export function UploadModal({
           <div
             className={cn(
               "border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300",
-              "border-gray-700 bg-gradient-to-b from-gray-900/50 to-black/50",
-              "hover:border-violet-500/50 hover:bg-gray-900/70"
+              "border-[#1F0D5D] bg-gradient-to-b from-gray-900/50 to-black/50",
+              "hover:border-[#4E25F4] hover:bg-gray-900/70"
             )}
             onDrop={(e) => {
               e.preventDefault();
@@ -139,21 +139,21 @@ export function UploadModal({
             }}
             onDragOver={(e) => e.preventDefault()}
           >
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center border border-gray-700 shadow-lg">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-900 to-purple-800 flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-gray-900/90 to-black/90 flex items-center justify-center border border-white/10 shadow-lg">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#210E66] to-[#4E25F4] flex items-center justify-center">
                 <CloudUpload className="h-6 w-6 text-white" />
               </div>
             </div>
             <h3 className="text-lg font-medium mb-2 text-white">
               Choose a video or drag & drop it here
             </h3>
-            <p className="text-gray-400 mb-6 max-w-md mx-auto">
+            <p className="text-slate-200 mb-6 max-w-md mx-auto">
               Any video format supported - MP4, MKV, AVI, MOV, HEVC, and more,
               up to 300MB
             </p>
             <Button
               onClick={() => fileInputRef.current?.click()}
-              className="rounded-lg px-6 bg-gradient-to-r from-violet-950 to-purple-800 hover:from-violet-700 hover:to-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+              className="rounded-lg px-6 bg-gradient-to-r from-[#210E66] to-[#4E25F4] hover:from-[#4E25F4] hover:to-[#210E66] text-white font-medium shadow-lg hover:shadow-xl transition-all duration-900 cursor-pointer"
             >
               Browse Files
             </Button>
@@ -169,18 +169,18 @@ export function UploadModal({
 
           {files.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wider">
+              <h4 className="text-sm font-medium text-slate-200 uppercase tracking-wider">
                 Upload Queue ({files.length})
               </h4>
               <div className="space-y-3">
                 {files.map((uploadFile) => (
                   <div
                     key={uploadFile.id}
-                    className="border border-gray-800 rounded-xl p-4 bg-gradient-to-r from-gray-900/80 to-black/80 backdrop-blur-sm shadow-lg hover:border-gray-700 transition-colors"
+                    className="border border-white/10 rounded-xl p-4 bg-gradient-to-r from-gray-900/80 to-black/80 backdrop-blur-sm shadow-lg hover:border-[#4E25F4] transition-colors"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-800 to-black border border-gray-700 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-900/90 to-black/90 border border-white/10 flex items-center justify-center">
                           {getFileIcon(uploadFile.status)}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -188,20 +188,20 @@ export function UploadModal({
                             {uploadFile.file?.name || "Unknown file"}
                           </p>
                           {uploadFile.file && (
-                            <div className="flex items-center gap-3 text-sm text-gray-400 mt-1">
+                            <div className="flex items-center gap-3 text-sm text-slate-200 mt-1">
                               <span>
                                 {formatFileSize(uploadFile.file.size)}
                               </span>
-                              <span className="text-gray-600">•</span>
+                              <span className="text-white/30">•</span>
                               <span
                                 className={cn(
                                   "flex items-center gap-1.5 font-medium",
                                   getStatusColor(uploadFile.status)
                                 )}
                               >
-                                {uploadFile.status === "UPLOADING" && (
-                                  <>
-                                    <span className="inline-block w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
+                                 {uploadFile.status === "UPLOADING" && (
+                                   <>
+                                     <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                                     Uploading...
                                   </>
                                 )}
@@ -232,7 +232,7 @@ export function UploadModal({
                         variant="ghost"
                         size="sm"
                         onClick={() => removeFile(uploadFile.id)}
-                        className="h-8 w-8 p-0 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
+                        className="h-8 w-8 p-0 rounded-full hover:bg-white/5 text-slate-200 hover:text-white transition-colors"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -240,15 +240,15 @@ export function UploadModal({
 
                     {uploadFile.status === "UPLOADING" && (
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+                        <div className="flex items-center justify-between text-xs text-slate-200 mb-1">
                           <span>Uploading</span>
                           <span>{Math.round(uploadFile.progress)}%</span>
                         </div>
                         <Progress
                           value={uploadFile.progress}
-                          className="h-2 bg-gray-800"
+                          className="h-2 bg-white/10"
                         />
-                        <div className="flex justify-between text-xs text-gray-500">
+                        <div className="flex justify-between text-xs text-white/50">
                           <span>
                             {formatFileSize(
                               (uploadFile.progress / 100) *
@@ -264,7 +264,7 @@ export function UploadModal({
 
                     {uploadFile.status === "PROCESSING" && (
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+                        <div className="flex items-center justify-between text-xs text-slate-200 mb-1">
                           <span>Processing video</span>
                           <span>100%</span>
                         </div>
@@ -296,9 +296,9 @@ export function UploadModal({
         </div>
 
         {files.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-800 bg-gradient-to-r from-gray-900 via-black to-gray-900">
+          <div className="px-6 py-4 border-t border-white/10 bg-gradient-to-r from-gray-900/90 via-black/90 to-gray-900/90">
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-slate-200">
                 {files.filter((f) => f.status === "READY").length} of
                 {files.length} completed
               </div>
@@ -306,12 +306,12 @@ export function UploadModal({
                 <Button
                   variant="ghost"
                   onClick={() => setFiles([])}
-                  className="text-gray-400 hover:text-white hover:bg-gray-800"
+                  className="text-slate-200 hover:text-white hover:bg-white/5"
                 >
                   Clear All
                 </Button>
                 <Button
-                  className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white"
+                  className="bg-gradient-to-r from-[#210E66] to-[#4E25F4] hover:from-[#4E25F4] hover:to-[#210E66] text-white"
                   onClick={() => {
                     if (files.every((f) => f.status === "READY")) {
                       onUploadComplete?.(files);

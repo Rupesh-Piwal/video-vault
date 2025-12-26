@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Upload } from "lucide-react";
+import { LogOut, Upload, Video } from "lucide-react";
 
 import { createClient } from "@/supabase/client";
 import { useRouter } from "next/navigation";
 import { VideoList } from "./components/video-list";
 import { UploadModal } from "./components/upload-modal";
+import { TextShimmer } from "../../../components/motion-primitives/text-shimmer";
 
 export default function DashboardPage() {
   const [open, setOpen] = useState(false);
@@ -40,17 +41,21 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-violet-200">
+              <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-violet-200 flex flex-row items-center gap-2">
+                <Video className="text-white" size={28} />
                 My Videos
               </h1>
-              <p className="text-neutral-400 text-sm mt-1.5 hidden sm:block">
-                Manage and organize your video content
-              </p>
+             
+                <TextShimmer>
+ Manage and organize your video content
+                </TextShimmer>
+               
+            
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <Button
                 onClick={() => setOpen(true)}
-                className="flex-1 sm:flex-none bg-gradient-to-r from-violet-950 cursor-pointer to-violet-900 hover:from-purple-700 hover:to-violet-700 text-white  hover:shadow-purple-500/40 transition-all duration-200 rounded-xl px-4 sm:px-6 py-2.5 font-medium border border-purple-500/20 hover:scale-105"
+                className="flex-1 sm:flex-none brounded-lg px-6 bg-gradient-to-r from-[#210E66] to-[#4E25F4] hover:from-[#4E25F4] hover:to-[#210E66] text-white font-medium shadow-lg hover:shadow-xl transition-all duration-900 cursor-pointer"
               >
                 <Upload className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Upload Video</span>

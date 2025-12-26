@@ -174,7 +174,7 @@ export function VideoCard({
 
   return (
     <>
-      <div className="group relative z-0 overflow-hidden rounded-3xl bg-gradient-to-br from-neutral-900 to-black border border-neutral-800/50 hover:border-neutral-700 transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/10 hover:scale-[1.02]">
+      <div className="group relative z-0 overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900/90 to-black/90 border border-white/10 hover:border-[#4E25F4] transition-all duration-500 hover:shadow-2xl hover:shadow-[#4E25F4]/20 hover:scale-[1.02]">
         {/* Video Image/Poster */}
         <div className="relative aspect-[4/3] overflow-hidden">
           {status === "READY" ? (
@@ -185,16 +185,16 @@ export function VideoCard({
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-neutral-600" />
+              <div className="w-full h-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-200" />
               </div>
             )
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
               {loadingUrl ? (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="bg-neutral-700/50 rounded-full p-4 backdrop-blur-sm">
-                    <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+                  <div className="bg-white/5 rounded-full p-4 backdrop-blur-sm">
+                    <Loader2 className="h-8 w-8 animate-spin text-slate-200" />
                   </div>
                   <TextShimmer className="font-mono text-sm" duration={1}>
                     Loading...
@@ -205,17 +205,17 @@ export function VideoCard({
                   <div className="bg-red-500/10 rounded-full p-4 backdrop-blur-sm">
                     <XCircle className="h-8 w-8 text-red-400" />
                   </div>
-                  <p className="text-sm font-medium text-neutral-400">
+                  <p className="text-sm font-medium text-slate-200">
                     Failed to load
                   </p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="bg-neutral-700/50 rounded-full p-4 backdrop-blur-sm">
+                  <div className="bg-white/5 rounded-full p-4 backdrop-blur-sm">
                     {status === "PROCESSING" || status === "UPLOADING" ? (
                       statusConfig.icon
                     ) : (
-                      <FileVideo className="h-8 w-8 text-neutral-400" />
+                      <FileVideo className="h-8 w-8 text-slate-200" />
                     )}
                   </div>
                   {(status === "PROCESSING" || status === "UPLOADING") && (
@@ -253,11 +253,11 @@ export function VideoCard({
                 <h3 className="text-xl font-semibold text-white mb-2 truncate">
                   {filename}
                 </h3>
-                <div className="flex items-center gap-3 text-sm text-neutral-400">
+                <div className="flex items-center gap-3 text-sm text-slate-200">
                   <span>{formatSize(size)}</span>
                   <span>•</span>
                   <span className="flex items-center gap-1">
-                    <Clock className="text-neutral-100" size={14} />
+                    <Clock className="text-white/90" size={14} />
                     {formatDuration(duration)}
                   </span>
                 </div>
@@ -267,7 +267,7 @@ export function VideoCard({
               {status === "READY" && videoUrl && !urlError && (
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="flex-shrink-0 w-10 h-10 rounded-full border-2 border-violet-950 flex items-center justify-center bg-violet-950/40 backdrop-blur-sm hover:bg-white/20 hover:border-white hover:scale-110 transition-all duration-300 ml-4"
+                  className="flex-shrink-0 w-10 h-10 rounded-full border-2 border-[#210E66] flex items-center justify-center bg-[#210E66]/40 backdrop-blur-sm hover:bg-white/20 hover:border-white hover:scale-110 transition-all duration-300 ml-4"
                 >
                   <Play className="h-4 w-4 text-white ml-0.5" fill="white" />
                 </button>
@@ -282,7 +282,7 @@ export function VideoCard({
                 {/* Center Play Button */}
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="bg-gradient-to-br from-purple-500/30 to-violet-600/30 hover:from-purple-500/50 hover:to-violet-600/50 backdrop-blur-md rounded-full p-3 sm:p-6 shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer pointer-events-auto border border-white/20 hover:border-white/40"
+                  className="bg-gradient-to-br from-[#210E66]/30 to-[#4E25F4]/30 hover:from-[#210E66]/50 hover:to-[#4E25F4]/50 backdrop-blur-md rounded-full p-3 sm:p-6 shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer pointer-events-auto border border-white/20 hover:border-white/40"
                   aria-label="Play"
                 >
                   <Play
@@ -296,7 +296,7 @@ export function VideoCard({
                   {/* Download Button */}
                   <button
                     onClick={handleDownload}
-                    className="flex items-center gap-2 px-3 h-8 bg-neutral-800/80 hover:bg-neutral-700 text-neutral-200 font-medium rounded-full border border-neutral-700/50 backdrop-blur-sm hover:scale-105 transition-all duration-200 cursor-pointer "
+                    className="flex items-center gap-2 px-3 h-8 bg-gray-900/80 hover:bg-white/10 text-white/90 font-medium rounded-full border border-white/10 backdrop-blur-sm hover:scale-105 transition-all duration-200 cursor-pointer "
                   >
                     <Download className="h-4 w-4" />
                     <span className="text-sm">Download</span>
@@ -305,7 +305,7 @@ export function VideoCard({
                   {/* View Button */}
                   <button
                     onClick={() => router.push(`/videos/${id}`)}
-                    className="flex items-center gap-2 px-3 h-8 bg-neutral-800/80 hover:bg-neutral-700 text-neutral-200 font-medium rounded-full border border-neutral-700/50 backdrop-blur-sm hover:scale-105 transition-all duration-200 cursor-pointer "
+                    className="flex items-center gap-2 px-3 h-8 bg-gray-900/80 hover:bg-white/10 text-white/90 font-medium rounded-full border border-white/10 backdrop-blur-sm hover:scale-105 transition-all duration-200 cursor-pointer "
                   >
                     <ExternalLink className="h-4 w-4" />
                     <span className="text-sm">View</span>
@@ -333,18 +333,18 @@ export function VideoCard({
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-neutral-900 to-black border border-neutral-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+          <div className="bg-gradient-to-br from-gray-900/90 to-black/90 border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold text-white">Delete Video</h3>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="text-neutral-400 hover:text-white transition-colors rounded-full hover:bg-neutral-800 p-1"
+                className="text-slate-200 hover:text-white transition-colors rounded-full hover:bg-white/5 p-1"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="text-neutral-400 mb-6 leading-relaxed">
+            <p className="text-slate-200 mb-6 leading-relaxed">
               Are you sure you want to delete{" "}
               <span className="text-white font-medium">
                 &quot;{filename}&quot;
@@ -356,7 +356,7 @@ export function VideoCard({
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="border-neutral-700 text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-full px-6"
+                className="border-white/10 text-white/90 hover:text-white hover:bg-white/5 rounded-full px-6"
               >
                 Cancel
               </Button>
