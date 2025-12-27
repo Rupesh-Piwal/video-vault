@@ -1,3 +1,5 @@
+import { GitHubLogoIcon } from "@radix-ui/react-icons";
+
 export function Footer() {
   return (
     <footer className="relative border-t border-glass-border bg-bg-dark-base py-8 px-4 sm:px-6 lg:px-8">
@@ -6,26 +8,12 @@ export function Footer() {
           {/* Links */}
           <div className="flex flex-wrap justify-center md:justify-start gap-6 text-sm">
             <a
-              href="https://github.com/rupeshpiwal"
+              href="https://github.com/Rupesh-Piwal/video-vault/blob/main/README.md"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-text-gray-muted hover:text-neon-purple transition-colors"
+              className="text-text-gray-muted transition-colors"
             >
-              GitHub
-            </a>
-            <a
-              href="/dashboard"
-              className="text-text-gray-muted hover:text-neon-purple transition-colors"
-            >
-              Live Demo
-            </a>
-            <a
-              href="https://github.com/rupeshpiwal"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-gray-muted hover:text-neon-purple transition-colors"
-            >
-              Portfolio
+              <GitHubLogoIcon fontSize={28} />
             </a>
           </div>
 
@@ -33,10 +21,10 @@ export function Footer() {
           <div className="text-sm text-text-gray-muted">
             Built by{" "}
             <a
-              href="https://github.com/rupeshpiwal"
+              href="https://rpiwal.vercel.app//github.com/rupeshpiwal"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-neon-purple hover:text-electric-blue transition-colors font-medium"
+              className="text-white hover:text-slate-300 transition-colors font-medium text-underline"
             >
               Rupesh Piwal
             </a>

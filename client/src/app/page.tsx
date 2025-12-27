@@ -17,21 +17,13 @@ export default function Page() {
         <HeroSection />
       </ScrollElement>
 
-      <ScrollElement viewport={{ once: true, amount: 0.5 }}>
-        <FeaturesSection />
-      </ScrollElement>
+      <FeaturesSection />
 
-      <ScrollElement viewport={{ once: true, amount: 0.5 }}>
-        <ArchitectureSection />
-      </ScrollElement>
+      <ArchitectureSection />
 
-      <ScrollElement viewport={{ once: true, amount: 0.5 }}>
-        <CTASection />
-      </ScrollElement>
+      <CTASection />
 
-      <ScrollElement viewport={{ once: true, amount: 0.5 }}>
-        <Footer />
-      </ScrollElement>
+      <Footer />
     </div>
   );
 }

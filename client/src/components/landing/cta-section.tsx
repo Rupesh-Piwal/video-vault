@@ -7,8 +7,8 @@ export function CTASection() {
   return (
     <section className="relative py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
       {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-deep-purple via-neon-purple to-electric-blue opacity-20" />
-      
+      <div className="absolute inset-0 gradient-to-b from-bg-black to-bg-dark-base opacity-20" />
+
       {/* Animated Glow Orbs */}
       <motion.div
         className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-neon-purple/30 blur-3xl"
@@ -49,16 +49,17 @@ export function CTASection() {
               video workloads.
             </span>
           </h2>
-          
+
           <p className="text-lg sm:text-xl text-text-gray-light mb-12 max-w-2xl mx-auto">
-            Start processing videos at scale with enterprise-grade infrastructure
+            Start processing videos at scale with enterprise-grade
+            infrastructure
           </p>
 
           <Link href="/sign-up">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-12 py-5 rounded-xl bg-white text-deep-purple font-bold text-lg shadow-2xl shadow-neon-purple/50 hover:shadow-neon-purple/70 transition-shadow"
+              className="px-12 py-5 rounded-xl bg-white text-deep-purple font-bold text-lg shadow-2xl shadow-neon-purple/50 hover:shadow-neon-purple/70 transition-shadow cursor-pointer"
             >
               Launch VidVault
             </motion.button>
