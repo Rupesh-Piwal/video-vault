@@ -10,7 +10,6 @@
 
 #### VIDEO DEMO 👉🏻 [Click to see VIDEO-DEMO](https://drive.google.com/file/d/1kIBYPanK2UbRBiyZ2eSNtfw8VyOU9VNg/view?usp=sharing)
 
-
 #### LIVE DEMO 👉🏻 [Click to visit VidVault](https://vidsvault.vercel.app/)
 
 #### GITHUB REPO 👉🏻 [Click to visit Codebase](https://github.com/Rupesh-Piwal/video-vault)
@@ -62,7 +61,9 @@
 
 ## 📸 ScreenShots
 
-![Dashboard](./client//public//dashboard.png)
+### Generated Thumbnails
+![Dashboard](./client//public//dashboard1.png)
+### Create Video-links & Share
 ![Sharelink](./client//public//sharelink.png)
 
 ---
