@@ -13,7 +13,7 @@ const architectureNodes = [
   {
     icon: Image,
     label: "Generate Thumbnails",
-    description: "AI-powered thumbnail creation",
+    description: "Thumbnail creation",
     color: "from-violet-500 to-indigo-600",
   },
   {

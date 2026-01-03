@@ -14,7 +14,7 @@ const features = [
     background: (
       <div className="absolute top-4 right-4 h-full w-full overflow-hidden">
         <img
-          src="/multi-part-upload.png"
+          src="/upload1.png"
           alt="Thumbnail generation"
           className="absolute top-0 right-0 w-[90%] object-contain opacity-60 [mask-image:linear-gradient(to_top,transparent_20%,#000_100%)] transition-all duration-300 group-hover:scale-105"
         />
@@ -32,9 +32,9 @@ const features = [
     background: (
       <div className="absolute top-4 right-0 h-full w-full overflow-hidden">
         <img
-          src="/thumbnail.png"
+          src="/Thumbnail2.png"
           alt="Thumbnail generation"
-          className="absolute top-2 right-4 w-[90%] object-contain opacity-60 [mask-image:linear-gradient(to_top,transparent_20%,#000_100%)] transition-all duration-300 group-hover:scale-105"
+          className="absolute top-0 right-4 w-[90%] object-contain opacity-60 [mask-image:linear-gradient(to_top,transparent_20%,#000_100%)] transition-all duration-300 group-hover:scale-105"
         />
       </div>
     ),
@@ -67,9 +67,9 @@ const features = [
     background: (
       <div className="absolute top-0 right-4 h-full w-full overflow-hidden">
         <img
-          src="/email.png"
+          src="/Email2.png"
           alt="Email notifications"
-          className="absolute top-10 right-0 w-[85%] object-contain opacity-60 [mask-image:linear-gradient(to_top,transparent_30%,#000_100%)] transition-all duration-300 group-hover:scale-105"
+          className="absolute top-0 right-0 w-[85%] object-contain opacity-60 [mask-image:linear-gradient(to_top,transparent_30%,#000_100%)] transition-all duration-300 group-hover:scale-105"
         />
       </div>
     ),

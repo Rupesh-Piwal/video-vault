@@ -13,7 +13,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="text-text-gray-muted transition-colors"
             >
-              <GitHubLogoIcon fontSize={28} />
+              <GitHubLogoIcon fontSize={36} />
             </a>
           </div>
 
