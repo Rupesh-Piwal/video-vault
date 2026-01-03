@@ -124,30 +124,38 @@ export function VideoCard({
     }
   };
 
+  // useEffect(() => {
+  //   if (status !== "READY") return;
+  //   let isMounted = true;
+
+  //   async function fetchThumbnails() {
+  //     try {
+  //       const res = await fetch(`/api/thumbnail-url/${id}`);
+  //       if (!res.ok) throw new Error("Failed to fetch thumbnails");
+  //       const data = await res.json();
+
+  //       if (isMounted && data.urls?.length) {
+  //         const midIndex = Math.floor(data.urls.length / 2);
+  //         setPosterUrl(data.urls[midIndex]);
+  //       }
+  //     } catch (err) {
+  //       console.error("Failed to fetch thumbnails", err);
+  //     }
+  //   }
+
+  //   fetchThumbnails();
+
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, [id, status]);
+
   useEffect(() => {
     if (status !== "READY") return;
-    let isMounted = true;
 
-    async function fetchThumbnails() {
-      try {
-        const res = await fetch(`/api/thumbnail-url/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch thumbnails");
-        const data = await res.json();
+    const base = "https://video-vault-rp.s3.ap-south-1.amazonaws.com";
 
-        if (isMounted && data.urls?.length) {
-          const midIndex = Math.floor(data.urls.length / 2);
-          setPosterUrl(data.urls[midIndex]);
-        }
-      } catch (err) {
-        console.error("Failed to fetch thumbnails", err);
-      }
-    }
-
-    fetchThumbnails();
-
-    return () => {
-      isMounted = false;
-    };
+    setPosterUrl(`${base}/thumbnails/${id}/thumb-3.jpg`);
   }, [id, status]);
 
   const statusConfig = getStatusConfig();
@@ -180,7 +188,7 @@ export function VideoCard({
           {status === "READY" ? (
             posterUrl ? (
               <img
-                src={posterUrl || "/placeholder.svg"}
+                src={posterUrl || "/fallback-thumbnail.png"}
                 alt={filename}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
