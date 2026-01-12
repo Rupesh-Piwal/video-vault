@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Upload, Video } from "lucide-react";
+import { LogOut, Upload } from "lucide-react";
 
 import { createClient } from "@/supabase/client";
 import { useRouter } from "next/navigation";
 import { VideoList } from "./components/video-list";
 import { UploadModal } from "./components/upload-modal";
 import { TextShimmer } from "../../../components/motion-primitives/text-shimmer";
+import VideoIcon from "./components/ui/video-icon";
 
 export default function DashboardPage() {
   const [open, setOpen] = useState(false);
@@ -42,15 +43,11 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div className="flex-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-violet-200 flex flex-row items-center gap-2">
-                <Video className="text-white" size={28} />
+                <VideoIcon />
                 My Videos
               </h1>
-             
-                <TextShimmer>
- Manage and organize your video content
-                </TextShimmer>
-               
-            
+
+              <TextShimmer>Manage and organize your video content</TextShimmer>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <Button
