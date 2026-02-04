@@ -7,42 +7,37 @@ import { Logo } from "./logo";
 import { MobileNav } from "./mobile-nav";
 import Link from "next/link";
 
-
 export const navLinks = [
   {
-    label: "Videos",
-    href: "/dashboard",
+    label: "Solution",
+    href: "#solution",
+  },
+  {
+    label: "Case Studies",
+    href: "#case-studies",
   },
 ];
 
 export function Header() {
-  const scrolled = useScroll(10);
+  const scrolled = useScroll(50);
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-50 mx-auto w-full max-w-4xl border-transparent border-b md:rounded-md md:border md:transition-all md:ease-out",
-        {
-          "border-border bg-background/95 backdrop-blur-lg supports-backdrop-filter:bg-background/50 md:top-2 md:max-w-3xl md:shadow":
-            scrolled,
-        }
-      )}
-    >
+    <header className="sticky top-4 z-50 mx-auto w-full px-4 transition-all duration-300 ease-out md:top-6 md:px-6">
       <nav
         className={cn(
-          "flex h-14 w-full items-center justify-between px-4 md:h-12 md:transition-all md:ease-out",
+          "mx-auto flex h-16 w-full max-w-7xl items-center justify-between rounded-lg border border-gray-400/20 bg-black/50 px-6 backdrop-blur-md transition-all duration-300 ease-out md:px-8",
           {
-            "md:px-2": scrolled,
-          }
+            "h-14": scrolled,
+          },
         )}
       >
-        <Link className="rounded-md p-2" href="/">
-          <Logo className="h-4.5" />
+        <Link className="flex items-center" href="/">
+          <Logo />
         </Link>
         <div className="hidden items-center gap-8 md:flex">
           {navLinks.map((link, i) => (
             <Link
-              className={buttonVariants({ variant: "ghost" })}
+              className="text-sm font-normal text-gray-300 transition-colors hover:text-white"
               href={link.href}
               key={i}
             >
@@ -50,13 +45,10 @@ export function Header() {
             </Link>
           ))}
           <Link
-            className="bg-white text-black font-semibold text-[14px] px-2.5 py-1 rounded
-             transition-all duration-300 ease-in-out
-             hover:bg-gray-300 hover:scale-105 hover:shadow-md
-             active:scale-95"
+            className="rounded-md bg-white px-6 py-2 text-sm font-semibold text-black transition-all duration-200 ease-in-out hover:bg-gray-100 hover:shadow-lg active:scale-95"
             href="/sign-in"
           >
-            Sign In
+            Get Started
           </Link>
         </div>
         <MobileNav />

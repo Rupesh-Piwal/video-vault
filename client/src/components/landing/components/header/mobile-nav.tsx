@@ -73,12 +73,12 @@ export function MobileNav() {
               </div>
               <div className="mt-12 flex flex-col gap-2">
                 <Link
-                  className="bg-white text-black font-semibold text-[14px] px-2.5 py-1.5 rounded text-center flex flex-row gap-4 justify-content-center items-center"
+                  className="bg-white text-black font-semibold text-sm px-4 py-2.5 rounded-md text-center flex flex-row gap-2 justify-center items-center"
                   href="/sign-in"
                 >
-                  Sign In
+                  Get Started
                   <span>
-                    <ArrowRight size={12} />
+                    <ArrowRight size={16} />
                   </span>
                 </Link>
               </div>

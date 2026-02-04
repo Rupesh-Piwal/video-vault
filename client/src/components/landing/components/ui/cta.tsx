@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRightIcon, PlusIcon, Upload } from "lucide-react";
+import { PlusIcon, Upload } from "lucide-react";
 
 export function CallToAction() {
   return (
