@@ -1,6 +1,5 @@
 "use client";
 
-import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useScroll } from "./hooks/use-scroll";
 import { Logo } from "./logo";
@@ -8,10 +7,6 @@ import { MobileNav } from "./mobile-nav";
 import Link from "next/link";
 
 export const navLinks = [
-  {
-    label: "Solution",
-    href: "#solution",
-  },
   {
     label: "Case Studies",
     href: "#case-studies",
@@ -45,7 +40,7 @@ export function Header() {
             </Link>
           ))}
           <Link
-            className="rounded-md bg-white px-6 py-2 text-sm font-semibold text-black transition-all duration-200 ease-in-out hover:bg-gray-100 hover:shadow-lg active:scale-95"
+            className="rounded-md bg-white px-6 py-2 text-sm font-thin text-black transition-all duration-200 ease-in-out hover:bg-gray-100 hover:shadow-lg active:scale-95"
             href="/sign-in"
           >
             Get Started

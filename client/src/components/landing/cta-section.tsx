@@ -5,65 +5,31 @@ import { motion } from "motion/react";
 
 export function CTASection() {
   return (
-    <section className="relative py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Gradient Background */}
-      <div className="absolute inset-0 gradient-to-b from-bg-black to-bg-dark-base opacity-20" />
-
-      {/* Animated Glow Orbs */}
-      <motion.div
-        className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-neon-purple/30 blur-3xl"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-      <motion.div
-        className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-electric-blue/30 blur-3xl"
-        animate={{
-          scale: [1.2, 1, 1.2],
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-
-      <div className="relative z-10 max-w-4xl mx-auto text-center">
+    <section className="relative my-4 py-4 md:py-8 px-4 lg:px-8 overflow-hidden bg-[#151414] border border-[#282929] max-w-[310px] md:max-w-3xl mx-auto rounded-lg">
+      <div className="relative z-10 max-w-3xl mx-auto text-center">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
-            Built for real-world
-            <br />
-            <span className="bg-gradient-to-r from-neon-purple to-electric-blue bg-clip-text text-transparent">
-              video workloads.
-            </span>
+          <h2 className="text-xl md:text-3xl font-bold md:font-semibold text-white mb-4">
+            Generate Thumbnails
+            <span> and share Videos</span>
           </h2>
 
-          <p className="text-lg sm:text-xl text-text-gray-light mb-12 max-w-2xl mx-auto">
-            Start processing videos at scale with enterprise-grade
-            infrastructure
+          <p className="text-base sm:text-lg text-text-gray-muted mb-10 max-w-2xl mx-auto">
+            Upload videos, generate thumbnails, and share public or private
+            links.
           </p>
 
-          <Link href="/sign-up">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-12 py-5 rounded-xl bg-white text-deep-purple font-bold text-lg shadow-2xl shadow-neon-purple/50 hover:shadow-neon-purple/70 transition-shadow cursor-pointer"
-            >
-              Launch VidVault
-            </motion.button>
-          </Link>
+          <div className="flex items-center justify-center gap-3">
+            <Link href="/dashboard">
+              <button className="px-6 py-3 rounded-lg bg-white text-bg-black text-sm sm:text-base font-medium hover:bg-white/90 transition cursor-pointer">
+                Generate
+              </button>
+            </Link>
+          </div>
         </motion.div>
       </div>
     </section>
