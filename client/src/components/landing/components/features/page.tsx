@@ -32,7 +32,7 @@ const data = [
 
 export default function Testimonals02Page() {
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+    <div id="features" className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-full">
         <div className="text-center mb-16">
           <p className="text-[#4E4F4E] font-thin text-[28px] md:text-[40px] tracking-widest mb-8">

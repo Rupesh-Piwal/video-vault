@@ -1,3 +1,5 @@
+"use client";
+
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowRight, MenuIcon, XIcon } from "lucide-react";
@@ -58,18 +60,34 @@ export function MobileNav() {
               data-slot={open ? "open" : "closed"}
             >
               <div className="grid gap-y-2">
-                {navLinks.map((link) => (
-                  <Link
-                    className={buttonVariants({
-                      variant: "ghost",
-                      className: "justify-start",
-                    })}
-                    href={link.href}
-                    key={link.label}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+                {navLinks.map((link) => {
+                  const isAnchor = link.href.startsWith("#");
+
+                  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                    if (isAnchor) {
+                      e.preventDefault();
+                      setOpen(false);
+                      const element = document.querySelector(link.href);
+                      if (element) {
+                        element.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }
+                  };
+
+                  return (
+                    <Link
+                      className={buttonVariants({
+                        variant: "ghost",
+                        className: "justify-start",
+                      })}
+                      href={link.href}
+                      key={link.label}
+                      onClick={isAnchor ? handleClick : undefined}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
               </div>
               <div className="mt-12 flex flex-col gap-2">
                 <Link

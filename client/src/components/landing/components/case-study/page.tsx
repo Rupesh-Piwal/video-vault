@@ -30,7 +30,7 @@ const caseStudies = [
 
 const CaseStudy = () => {
   return (
-    <section className="py-24 bg-black text-white overflow-hidden">
+    <section id="case-studies" className="py-24 bg-black text-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-20">

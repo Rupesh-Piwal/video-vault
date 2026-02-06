@@ -8,6 +8,10 @@ import Link from "next/link";
 
 export const navLinks = [
   {
+    label: "Features",
+    href: "#features",
+  },
+  {
     label: "Case Studies",
     href: "#case-studies",
   },
@@ -30,15 +34,30 @@ export function Header() {
           <Logo />
         </Link>
         <div className="hidden items-center gap-8 md:flex">
-          {navLinks.map((link, i) => (
-            <Link
-              className="text-sm font-normal text-gray-300 transition-colors hover:text-white"
-              href={link.href}
-              key={i}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link, i) => {
+            const isAnchor = link.href.startsWith("#");
+
+            const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+              if (isAnchor) {
+                e.preventDefault();
+                const element = document.querySelector(link.href);
+                if (element) {
+                  element.scrollIntoView({ behavior: "smooth" });
+                }
+              }
+            };
+
+            return (
+              <Link
+                className="text-sm font-normal text-gray-300 transition-colors hover:text-white"
+                href={link.href}
+                key={i}
+                onClick={isAnchor ? handleClick : undefined}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
           <Link
             className="rounded-md bg-white px-6 py-2 text-sm font-thin text-black transition-all duration-200 ease-in-out hover:bg-gray-100 hover:shadow-lg active:scale-95"
             href="/sign-in"
