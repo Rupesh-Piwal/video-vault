@@ -71,23 +71,24 @@ export default function VideoPage({ videoId }: VideoPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-purple-900/20 bg-black/40 backdrop-blur-xl sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-bg-black via-bg-dark-base to-bg-black">
+      {/* Premium glassmorphic header */}
+      <header className="border-b border-glass-border/10 bg-gradient-to-r from-black/60 via-bg-dark-base/50 to-black/60 backdrop-blur-2xl sticky top-0 z-10 shadow-lg shadow-black/20">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between space-x-4">
             <Button
               variant="ghost"
               onClick={() => router.push("/dashboard")}
-              className="rounded-xl cursor-pointer border"
+              className="rounded-xl cursor-pointer border border-glass-border/20 bg-glass-bg/50 backdrop-blur-sm hover:bg-glass-bg/80 hover:border-violet-accent/30 transition-all duration-300"
             >
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
             <div className="flex-1">
-              <h1 className="md:text-[20px] font-semibold text-foreground">
+              <h1 className="md:text-[20px] font-semibold text-foreground tracking-tight">
                 {video.original_filename}
               </h1>
-              <p className="text-muted-foreground text-[10px] md:text-sm">
+              <p className="text-text-gray-muted text-[10px] md:text-sm font-medium">
                 Video Viewer
               </p>
             </div>
@@ -101,16 +102,18 @@ export default function VideoPage({ videoId }: VideoPageProps) {
             )}
           </div>
         </div>
+        {/* Subtle bottom glow */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-accent/20 to-transparent" />
       </header>
 
       <div className="max-w-8xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-7 gap-8">
           <div className="lg:col-span-4 space-y-6">
             {loadingUrl && (
-              <div className="flex items-center justify-center min-h-[16rem] md:min-h-[20rem] bg-muted rounded-lg w-full">
+              <div className="flex items-center justify-center min-h-[16rem] md:min-h-[20rem] bg-gradient-to-br from-bg-card-dark/60 to-bg-dark-base/80 rounded-2xl backdrop-blur-xl border border-glass-border/10 w-full shadow-xl shadow-black/30">
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <TextShimmer className="font-mono text-sm" duration={1}>
+                  <Loader2 className="h-5 w-5 animate-spin text-violet-accent" />
+                  <TextShimmer className="font-mono text-sm text-text-gray-light" duration={1}>
                     Loading video...
                   </TextShimmer>
                 </div>
@@ -118,8 +121,8 @@ export default function VideoPage({ videoId }: VideoPageProps) {
             )}
 
             {urlError && (
-              <div className="flex items-center justify-center min-h-[16rem] md:min-h-[20rem] bg-muted rounded-lg w-full">
-                <p className="text-red-500 text-center">
+              <div className="flex items-center justify-center min-h-[16rem] md:min-h-[20rem] bg-gradient-to-br from-bg-card-dark/60 to-bg-dark-base/80 rounded-2xl backdrop-blur-xl border border-glass-border/10 w-full shadow-xl shadow-black/30">
+                <p className="text-red-500 text-center font-medium">
                   Failed to load video.
                 </p>
               </div>
@@ -141,7 +144,7 @@ export default function VideoPage({ videoId }: VideoPageProps) {
             />
           </div>
 
-          <div className="lg:col-span-3 space-y-6 ">
+          <div className="lg:col-span-3 space-y-6">
             <VideoThumbnails thumbnails={thumbnails} />
 
             <VideoMetadata

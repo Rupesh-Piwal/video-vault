@@ -202,7 +202,7 @@ export function VideoCard({
   return (
     <>
       <div
-        className="group relative overflow-hidden rounded-lg bg-[#18191A] border border-gray-400/20 hover:border-gray-300/40 transition-all duration-300 hover:shadow-xl hover:shadow-black/50 cursor-pointer"
+        className="group relative overflow-hidden rounded-lg bg-[#000000] border border-gray-400/20 hover:border-gray-800/40 transition-all duration-300 hover:shadow-xl hover:shadow-black/50 cursor-pointer"
         onMouseEnter={() => !isTouchDevice && setIsHovering(true)}
         onMouseLeave={() => !isTouchDevice && setIsHovering(false)}
         onClick={handleCardClick}
