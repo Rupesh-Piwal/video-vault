@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,12 +8,9 @@ import {
   Clock,
   Loader2,
   XCircle,
-  Play,
   FileVideo,
   Trash2,
   X,
-  ExternalLink,
-  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -23,8 +20,8 @@ import {
 } from "@/lib/metadata-utils";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { TextShimmer } from "../../../../components/motion-primitives/text-shimmer";
-import { VideoPlayerModal } from "./video-player-modal";
+
+let currentlyPlayingVideo: HTMLVideoElement | null = null;
 
 export function VideoCard({
   id,
@@ -41,9 +38,19 @@ export function VideoCard({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
 
   const router = useRouter();
+
+  // Detect touch device
+  useEffect(() => {
+    setIsTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  }, []);
 
   useEffect(() => {
     if (status === "READY") {
@@ -64,6 +71,66 @@ export function VideoCard({
         });
     }
   }, [status, storage_key]);
+
+  useEffect(() => {
+    if (status !== "READY") return;
+    const base = "https://video-vault-rp.s3.ap-south-1.amazonaws.com";
+    setPosterUrl(`${base}/thumbnails/${id}/thumb-3.jpg`);
+  }, [id, status]);
+
+  // Handle hover preview
+  useEffect(() => {
+    if (!videoUrl || isTouchDevice || status !== "READY") return;
+
+    const video = videoPreviewRef.current;
+    if (!video) return;
+
+    if (isHovering) {
+      // Start 200ms delay before playing
+      hoverTimeoutRef.current = setTimeout(() => {
+        setShowPreview(true);
+        
+        // Pause any other playing video
+        if (currentlyPlayingVideo && currentlyPlayingVideo !== video) {
+          currentlyPlayingVideo.pause();
+          currentlyPlayingVideo.currentTime = 0;
+        }
+
+        // Play this video
+        video.currentTime = 0;
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              currentlyPlayingVideo = video;
+            })
+            .catch((error) => {
+              console.log("Autoplay prevented:", error);
+            });
+        }
+      }, 200);
+    } else {
+      // Clear timeout if hover ends before 200ms
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+      
+      // Pause and reset video
+      setShowPreview(false);
+      video.pause();
+      video.currentTime = 0;
+      if (currentlyPlayingVideo === video) {
+        currentlyPlayingVideo = null;
+      }
+    }
+
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, [isHovering, videoUrl, isTouchDevice, status]);
 
   const handleDelete = async () => {
     if (!onDelete) return;
@@ -118,120 +185,80 @@ export function VideoCard({
       default:
         return {
           text: "UNKNOWN",
-          className: "bg-[#606060]/20 text-[#8C8C8C] border-[#606060]/30",
+          className: "bg-gray-500/20 text-gray-400 border-gray-500/30",
           icon: <Clock className="h-3 w-3" />,
         };
     }
   };
 
-  // useEffect(() => {
-  //   if (status !== "READY") return;
-  //   let isMounted = true;
-
-  //   async function fetchThumbnails() {
-  //     try {
-  //       const res = await fetch(`/api/thumbnail-url/${id}`);
-  //       if (!res.ok) throw new Error("Failed to fetch thumbnails");
-  //       const data = await res.json();
-
-  //       if (isMounted && data.urls?.length) {
-  //         const midIndex = Math.floor(data.urls.length / 2);
-  //         setPosterUrl(data.urls[midIndex]);
-  //       }
-  //     } catch (err) {
-  //       console.error("Failed to fetch thumbnails", err);
-  //     }
-  //   }
-
-  //   fetchThumbnails();
-
-  //   return () => {
-  //     isMounted = false;
-  //   };
-  // }, [id, status]);
-
-  useEffect(() => {
-    if (status !== "READY") return;
-
-    const base = "https://video-vault-rp.s3.ap-south-1.amazonaws.com";
-
-    setPosterUrl(`${base}/thumbnails/${id}/thumb-3.jpg`);
-  }, [id, status]);
-
   const statusConfig = getStatusConfig();
 
-  const handleDownload = async () => {
-    if (!videoUrl) return;
-    try {
-      const response = await fetch(videoUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success("Download started");
-    } catch (error) {
-      console.error("Download failed:", error);
-      toast.error("Failed to download video");
+  const handleCardClick = () => {
+    if (status === "READY" && !loadingUrl && !urlError) {
+      router.push(`/videos/${id}`);
     }
   };
 
   return (
     <>
-      <div className="group relative z-0 overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900/90 to-black/90 border border-white/10 hover:border-[#4E25F4] transition-all duration-500 hover:shadow-2xl hover:shadow-[#4E25F4]/20 hover:scale-[1.02]">
-        {/* Video Image/Poster */}
-        <div className="relative aspect-[4/3] overflow-hidden">
-          {status === "READY" ? (
-            posterUrl ? (
-              <img
-                src={posterUrl || "/fallback-thumbnail.png"}
-                alt={filename}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-slate-200" />
-              </div>
-            )
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+      <div 
+        className="group relative overflow-hidden rounded-lg bg-[#18191A] border border-gray-400/20 hover:border-gray-300/40 transition-all duration-300 hover:shadow-xl hover:shadow-black/50 cursor-pointer"
+        onMouseEnter={() => !isTouchDevice && setIsHovering(true)}
+        onMouseLeave={() => !isTouchDevice && setIsHovering(false)}
+        onClick={handleCardClick}
+      >
+        {/* Video Container - 16:9 aspect ratio */}
+        <div className="relative aspect-video overflow-hidden bg-black">
+          {/* Thumbnail/Poster */}
+          {status === "READY" && posterUrl && (
+            <img
+              src={posterUrl}
+              alt={filename}
+              className={cn(
+                "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+                showPreview ? "opacity-0" : "opacity-100"
+              )}
+            />
+          )}
+
+          {/* Hover Preview Video */}
+          {status === "READY" && videoUrl && !isTouchDevice && (
+            <video
+              ref={videoPreviewRef}
+              src={videoUrl}
+              muted
+              preload="metadata"
+              className={cn(
+                "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+                showPreview ? "opacity-100" : "opacity-0"
+              )}
+            />
+          )}
+
+          {/* Loading/Processing States */}
+          {status !== "READY" && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black">
               {loadingUrl ? (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="bg-white/5 rounded-full p-4 backdrop-blur-sm">
-                    <Loader2 className="h-8 w-8 animate-spin text-slate-200" />
-                  </div>
-                  <TextShimmer className="font-mono text-sm" duration={1}>
-                    Loading...
-                  </TextShimmer>
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-300" />
+                  <p className="text-sm text-gray-400">Loading...</p>
                 </div>
               ) : urlError ? (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="bg-red-500/10 rounded-full p-4 backdrop-blur-sm">
-                    <XCircle className="h-8 w-8 text-red-400" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-200">
-                    Failed to load
-                  </p>
+                  <XCircle className="h-8 w-8 text-red-400" />
+                  <p className="text-sm text-gray-400">Failed to load</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="bg-white/5 rounded-full p-4 backdrop-blur-sm">
-                    {status === "PROCESSING" || status === "UPLOADING" ? (
-                      statusConfig.icon
-                    ) : (
-                      <FileVideo className="h-8 w-8 text-slate-200" />
-                    )}
-                  </div>
-                  {(status === "PROCESSING" || status === "UPLOADING") && (
-                    <TextShimmer className="font-mono text-sm" duration={1}>
-                      {status === "UPLOADING"
-                        ? "Uploading..."
-                        : "Processing..."}
-                    </TextShimmer>
+                  {status === "PROCESSING" || status === "UPLOADING" ? (
+                    <>
+                      <Loader2 className="h-8 w-8 animate-spin text-gray-300" />
+                      <p className="text-sm text-gray-400">
+                        {status === "UPLOADING" ? "Uploading..." : "Processing..."}
+                      </p>
+                    </>
+                  ) : (
+                    <FileVideo className="h-8 w-8 text-gray-400" />
                   )}
                 </div>
               )}
@@ -239,10 +266,10 @@ export function VideoCard({
           )}
 
           {/* Status Badge */}
-          <div className="absolute top-4 left-4 z-10">
+          <div className="absolute top-3 left-3 z-10">
             <Badge
               className={cn(
-                "text-xs font-semibold px-3 py-1.5 rounded-full border backdrop-blur-md",
+                "text-xs font-semibold px-3 py-1 rounded-md border backdrop-blur-md",
                 statusConfig.className
               )}
             >
@@ -251,108 +278,80 @@ export function VideoCard({
             </Badge>
           </div>
 
-          {/* Gradient Overlay at Bottom */}
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black via-black/80 to-transparent" />
-
-          {/* Bottom Content Overlay - Matching Screenshot Style */}
-          <div className="absolute inset-x-0 bottom-0 p-6">
-            <div className="flex items-end justify-between">
-              <div className="flex-1 min-w-0">
-                <h3 className="text-xl font-semibold text-white mb-2 truncate">
-                  {filename}
-                </h3>
-                <div className="flex items-center gap-3 text-sm text-slate-200">
-                  <span>{formatSize(size)}</span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="text-white/90" size={14} />
-                    {formatDuration(duration)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Circular Play Button - Matching Screenshot */}
-              {status === "READY" && videoUrl && !urlError && (
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="flex-shrink-0 w-10 h-10 rounded-full border-2 border-[#210E66] flex items-center justify-center bg-[#210E66]/40 backdrop-blur-sm hover:bg-white/20 hover:border-white hover:scale-110 transition-all duration-300 ml-4"
-                >
-                  <Play className="h-4 w-4 text-white ml-0.5" fill="white" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Hover Actions Overlay */}
-          {status === "READY" && !loadingUrl && (
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center gap-2 px-6 opacity-0 group-hover:opacity-100 transition-all duration-300">
-              <div className="relative flex flex-col items-center justify-center h-full">
-                {/* Center Play Button */}
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="bg-gradient-to-br from-[#210E66]/30 to-[#4E25F4]/30 hover:from-[#210E66]/50 hover:to-[#4E25F4]/50 backdrop-blur-md rounded-full p-3 sm:p-6 shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer pointer-events-auto border border-white/20 hover:border-white/40"
-                  aria-label="Play"
-                >
-                  <Play
-                    className="h-4 w-4 sm:h-10 sm:w-10 text-white ml-1 drop-shadow-lg"
-                    fill="currentColor"
-                  />
-                </button>
-
-                {/* Bottom Action Buttons - Fixed at bottom */}
-                <div className="absolute bottom-0 left-0 right-0 flex flex-row items-center justify-center gap-3 p-4">
-                  {/* Download Button */}
-                  <button
-                    onClick={handleDownload}
-                    className="flex items-center gap-2 px-3 h-8 bg-gray-900/80 hover:bg-white/10 text-white/90 font-medium rounded-full border border-white/10 backdrop-blur-sm hover:scale-105 transition-all duration-200 cursor-pointer "
-                  >
-                    <Download className="h-4 w-4" />
-                    <span className="text-sm">Download</span>
-                  </button>
-
-                  {/* View Button */}
-                  <button
-                    onClick={() => router.push(`/videos/${id}`)}
-                    className="flex items-center gap-2 px-3 h-8 bg-gray-900/80 hover:bg-white/10 text-white/90 font-medium rounded-full border border-white/10 backdrop-blur-sm hover:scale-105 transition-all duration-200 cursor-pointer "
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    <span className="text-sm">View</span>
-                  </button>
-
-                  {/* Delete Button */}
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    disabled={isDeleting}
-                    className="flex items-center justify-center p-1.5 cursor-pointer bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-full border border-red-500/30 backdrop-blur-sm hover:scale-105 transition-all duration-200"
-                  >
-                    {isDeleting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
+          {/* Duration Badge */}
+          {status === "READY" && duration && (
+            <div className="absolute top-3 right-3 z-10">
+              <Badge className="bg-black/80 text-white border-0 backdrop-blur-md text-xs px-2 py-1">
+                {formatDuration(duration)}
+              </Badge>
             </div>
           )}
+
+          {/* Delete Button - Bottom Right */}
+          {status === "READY" && !loadingUrl && (
+            <div className="absolute bottom-3 right-3 z-10">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDeleteConfirm(true);
+                }}
+                disabled={isDeleting}
+                className="p-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-md border border-red-500/30 backdrop-blur-md hover:scale-105 transition-all duration-200 opacity-0 group-hover:opacity-100"
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Card Footer - Title and Info */}
+        <div className="p-4 bg-[#18191A]">
+          <h3 className="text-base font-semibold text-white mb-2 truncate">
+            {filename}
+          </h3>
+          <div className="flex items-center gap-3 text-sm text-gray-400">
+            <span>{formatSize(size)}</span>
+            {duration && (
+              <>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  {formatDuration(duration)}
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900/90 to-black/90 border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDeleteConfirm(false);
+          }}
+        >
+          <div 
+            className="bg-[#18191A] border border-gray-400/20 rounded-lg p-6 max-w-md w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold text-white">Delete Video</h3>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="text-slate-200 hover:text-white transition-colors rounded-full hover:bg-white/5 p-1"
+                className="text-gray-400 hover:text-white transition-colors rounded-md hover:bg-gray-800 p-1"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="text-slate-200 mb-6 leading-relaxed">
+            <p className="text-gray-300 mb-6 leading-relaxed">
               Are you sure you want to delete{" "}
               <span className="text-white font-medium">
                 &quot;{filename}&quot;
@@ -364,14 +363,14 @@ export function VideoCard({
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="border-white/10 text-white/90 hover:text-white hover:bg-white/5 rounded-full px-6"
+                className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800 rounded-md px-6"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="bg-red-600 hover:bg-red-700 text-white rounded-full px-6 shadow-lg shadow-red-500/20"
+                className="bg-red-600 hover:bg-red-700 text-white rounded-md px-6"
               >
                 {isDeleting ? (
                   <>
@@ -389,13 +388,6 @@ export function VideoCard({
           </div>
         </div>
       )}
-
-      <VideoPlayerModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        videoUrl={videoUrl}
-        posterUrl={posterUrl}
-      />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Highlighter } from "@/components/ui/highlighter";
 import { PlusIcon, Upload } from "lucide-react";
+import Link from "next/link";
 
 export function CallToAction() {
   return (
@@ -38,10 +39,13 @@ export function CallToAction() {
       </p>
 
       <div className="flex items-center justify-center gap-2">
-        <Button className="cursor-pointer bg-white text-black px-6 py-3 md:px-8 md:py-4 text-sm md:text-lg font-thin rounded-md inline-flex items-center gap-2 hover:bg-gray-200 transition">
-          <Upload height={5} width={5} />
+        <Link
+          href="/dashboard"
+          className="cursor-pointer bg-white text-black px-6 py-1.5 md:px-8 md:py-1.5 text-sm md:text-lg font-thin rounded-md inline-flex items-center gap-2 hover:bg-gray-200 transition"
+        >
+          <Upload height={17} width={17} />
           Upload Video
-        </Button>
+        </Link>
       </div>
     </div>
   );
