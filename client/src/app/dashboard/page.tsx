@@ -73,7 +73,7 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
-        <VideoList />
+        <VideoList onUploadClick={() => setOpen(true)} />
       </div>
       <UploadModal open={open} onOpenChange={setOpen} />
     </div>
