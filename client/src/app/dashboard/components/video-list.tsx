@@ -121,8 +121,7 @@ export function VideoList({ onUploadClick }: VideoListProps) {
             No videos yet
           </h3>
           <p className="text-gray-400 max-w-md text-lg leading-relaxed mb-6">
-            Upload your first video to get started. Your videos will appear here
-            once they&apos;re processed.
+            Upload your first video to get started
           </p>
           {onUploadClick && (
             <Button

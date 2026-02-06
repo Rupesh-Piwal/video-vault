@@ -7,7 +7,7 @@ const data = [
     title: "1. Multipart Uploads",
     content: "Parallel uploads with S3 presigned URLs.",
     image:
-      "https://pub-b3533f2e1c954842824758490b95c9d5.r2.dev/block-preview-dark.png",
+      "./multipart-uploads.gif",
     icon: <CloudUpload className="text-primary size-6" />,
   },
   {
@@ -16,7 +16,7 @@ const data = [
     content:
       "Automatic frame extraction and thumbnail creation for quick video previews.",
     image:
-      "https://pub-b3533f2e1c954842824758490b95c9d5.r2.dev/block-preview-dark.png",
+      "./thumbnail-generation.gif",
     icon: <Image className="text-primary size-6" />,
   },
   {
@@ -25,7 +25,7 @@ const data = [
     content:
       "Public, private, and expiry-based sharing with granular access control.",
     image:
-      "https://pub-b3533f2e1c954842824758490b95c9d5.r2.dev/block-preview-dark.png",
+      "./share-links.png",
     icon: <Link2 className="text-primary size-6" />,
   },
 ];

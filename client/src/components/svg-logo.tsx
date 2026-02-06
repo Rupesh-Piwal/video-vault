@@ -1,6 +1,6 @@
 export const SVGLogo = () => (
   <svg
-    className="w-8 h-8"
+    className="w-16 h-16"
     viewBox="0 0 100 100"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"

@@ -32,26 +32,20 @@ export function Login({ mode = "signin" }: { mode?: "signin" | "signup" }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-bg-black relative overflow-hidden">
-      {/* Animated Gradient Background Orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-neon-purple/20 blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-electric-blue/20 blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-deep-purple/10 blur-3xl" />
-      </div>
+
 
       {/* Main Content */}
       <div className="relative w-full max-w-md">
         {/* Glassmorphism Card */}
         <div className="relative rounded-3xl p-10 bg-glass-bg backdrop-blur-md border border-glass-border shadow-2xl">
           {/* Purple Glow Effect */}
-          <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-neon-purple/5 to-electric-blue/5 pointer-events-none" />
-          
+          <div className="absolute inset-0 rounded-3xl pointer-events-none" />
+
           <div className="relative z-10">
             {/* Logo */}
-            <div className="flex justify-center mb-10">
+            <div className="flex justify-center mb-2">
               <div className="relative">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-neon-purple to-deep-purple blur-lg opacity-50" />
-                <div className="relative p-4 rounded-2xl bg-gradient-to-br from-neon-purple to-deep-purple shadow-lg shadow-neon-purple/50">
+                <div className="relative p-4 rounded-2xl">
                   <SVGLogo />
                 </div>
               </div>
@@ -62,7 +56,7 @@ export function Login({ mode = "signin" }: { mode?: "signin" | "signup" }) {
               <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-text-gray-light bg-clip-text text-transparent">
                 {mode === "signin" ? "Welcome back" : "Get started"}
               </h1>
-              <p className="text-text-gray-muted text-base">
+              <p className="text-text-gray-muted text-slate-400">
                 {mode === "signin"
                   ? "Sign in to continue to VidVault"
                   : "Create your account and start uploading"}
@@ -98,7 +92,7 @@ export function Login({ mode = "signin" }: { mode?: "signin" | "signup" }) {
                   {loading ? "Connecting..." : "Continue with Google"}
                 </span>
               </div>
-              
+
               {loading && (
                 <div className="absolute inset-0 rounded-xl flex items-center justify-center bg-white/90 backdrop-blur-sm">
                   <div className="w-5 h-5 border-3 border-gray-300 border-t-neon-purple rounded-full animate-spin" />
@@ -111,21 +105,15 @@ export function Login({ mode = "signin" }: { mode?: "signin" | "signup" }) {
               <p className="text-sm text-text-gray-muted">
                 {mode === "signin" ? "New to VidVault? " : "Already have an account? "}
                 <Link
-                  href={`${mode === "signin" ? "/sign-up" : "/sign-in"}${
-                    redirect ? `?redirect=${redirect}` : ""
-                  }${priceId ? `&priceId=${priceId}` : ""}`}
-                  className="font-semibold text-neon-purple hover:text-electric-blue transition-colors duration-200"
+                  href={`${mode === "signin" ? "/sign-up" : "/sign-in"}${redirect ? `?redirect=${redirect}` : ""
+                    }${priceId ? `&priceId=${priceId}` : ""}`}
+                  className="font-semibold text-slate-100 hover:text-slate-300 transition-colors duration-200 tracking-wider"
                 >
                   {mode === "signin" ? "Create account" : "Sign in"}
                 </Link>
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Bottom Accent Line */}
-        <div className="mt-6 flex justify-center">
-          <div className="h-1 w-32 rounded-full bg-gradient-to-r from-neon-purple to-electric-blue shadow-lg shadow-neon-purple/50" />
         </div>
       </div>
     </div>
