@@ -41,7 +41,7 @@ export function VideoCard({
   const [isHovering, setIsHovering] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  
+
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
 
@@ -89,7 +89,7 @@ export function VideoCard({
       // Start 200ms delay before playing
       hoverTimeoutRef.current = setTimeout(() => {
         setShowPreview(true);
-        
+
         // Pause any other playing video
         if (currentlyPlayingVideo && currentlyPlayingVideo !== video) {
           currentlyPlayingVideo.pause();
@@ -115,7 +115,7 @@ export function VideoCard({
         clearTimeout(hoverTimeoutRef.current);
         hoverTimeoutRef.current = null;
       }
-      
+
       // Pause and reset video
       setShowPreview(false);
       video.pause();
@@ -201,7 +201,7 @@ export function VideoCard({
 
   return (
     <>
-      <div 
+      <div
         className="group relative overflow-hidden rounded-lg bg-[#18191A] border border-gray-400/20 hover:border-gray-300/40 transition-all duration-300 hover:shadow-xl hover:shadow-black/50 cursor-pointer"
         onMouseEnter={() => !isTouchDevice && setIsHovering(true)}
         onMouseLeave={() => !isTouchDevice && setIsHovering(false)}
@@ -216,7 +216,7 @@ export function VideoCard({
               alt={filename}
               className={cn(
                 "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
-                showPreview ? "opacity-0" : "opacity-100"
+                showPreview ? "opacity-0" : "opacity-100",
               )}
             />
           )}
@@ -230,7 +230,7 @@ export function VideoCard({
               preload="metadata"
               className={cn(
                 "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
-                showPreview ? "opacity-100" : "opacity-0"
+                showPreview ? "opacity-100" : "opacity-0",
               )}
             />
           )}
@@ -254,7 +254,9 @@ export function VideoCard({
                     <>
                       <Loader2 className="h-8 w-8 animate-spin text-gray-300" />
                       <p className="text-sm text-gray-400">
-                        {status === "UPLOADING" ? "Uploading..." : "Processing..."}
+                        {status === "UPLOADING"
+                          ? "Uploading..."
+                          : "Processing..."}
                       </p>
                     </>
                   ) : (
@@ -270,7 +272,7 @@ export function VideoCard({
             <Badge
               className={cn(
                 "text-xs font-semibold px-3 py-1 rounded-md border backdrop-blur-md",
-                statusConfig.className
+                statusConfig.className,
               )}
             >
               <span className="mr-1.5">{statusConfig.icon}</span>
@@ -284,26 +286,6 @@ export function VideoCard({
               <Badge className="bg-black/80 text-white border-0 backdrop-blur-md text-xs px-2 py-1">
                 {formatDuration(duration)}
               </Badge>
-            </div>
-          )}
-
-          {/* Delete Button - Bottom Right */}
-          {status === "READY" && !loadingUrl && (
-            <div className="absolute bottom-3 right-3 z-10">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDeleteConfirm(true);
-                }}
-                disabled={isDeleting}
-                className="p-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-md border border-red-500/30 backdrop-blur-md hover:scale-105 transition-all duration-200 opacity-0 group-hover:opacity-100"
-              >
-                {isDeleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                )}
-              </button>
             </div>
           )}
         </div>
@@ -324,20 +306,39 @@ export function VideoCard({
                 </span>
               </>
             )}
+            {/* Delete Button - Bottom Right */}
+            {status === "READY" && !loadingUrl && (
+              <div className="absolute bottom-3 right-3 z-10">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteConfirm(true);
+                  }}
+                  disabled={isDeleting}
+                  className="p-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-md border border-red-500/30 backdrop-blur-md hover:scale-105 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4"
           onClick={(e) => {
             e.stopPropagation();
             setShowDeleteConfirm(false);
           }}
         >
-          <div 
+          <div
             className="bg-[#18191A] border border-gray-400/20 rounded-lg p-6 max-w-md w-full shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
