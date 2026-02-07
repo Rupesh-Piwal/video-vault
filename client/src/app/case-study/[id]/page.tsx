@@ -4,6 +4,7 @@ import Image from "next/image";
 import { MoveLeft, ArrowUpRight } from "lucide-react";
 import { caseStudies } from "@/data/case-studies";
 import { notFound } from "next/navigation";
+import { Footer } from "@/components/landing/footer";
 
 interface CaseStudyDetailPageProps {
   params: Promise<{ id: string }>;
@@ -27,7 +28,7 @@ const CaseStudyDetailPage = ({ params }: CaseStudyDetailPageProps) => {
             className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-medium group"
           >
             <MoveLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            Back to Case Studies
+            Back
           </Link>
           <div className="text-sm font-medium text-white/50">
             {study.title}
@@ -65,9 +66,10 @@ const CaseStudyDetailPage = ({ params }: CaseStudyDetailPageProps) => {
               src={study.heroImage}
               alt={study.title}
               fill
-              className="object-cover"
+              className="object-contain"
               priority
             />
+
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
           </div>
 
@@ -143,26 +145,27 @@ const CaseStudyDetailPage = ({ params }: CaseStudyDetailPageProps) => {
                           </pre>
                         </div>
                       )}
+
+                      {sub.type === "image" && sub.image && (
+                        <div className="mt-8 relative aspect-video w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-indigo-500/5">
+                          <Image
+                            src={sub.image}
+                            alt={sub.title || "Architecture Diagram"}
+                            fill
+                            className="object-contain"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </section>
             ))}
           </div>
-
-          {/* Footer CTA */}
-          <div className="mt-32 pt-12 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
-            <p className="text-zinc-500">Interested in the full technical audit?</p>
-            <a
-              href="mailto:contact@example.com"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-semibold hover:bg-zinc-200 transition-colors"
-            >
-              Request Full Audit
-              <ArrowUpRight className="w-4 h-4" />
-            </a>
-          </div>
         </article>
       </main>
+      <Footer />
     </div>
   );
 };

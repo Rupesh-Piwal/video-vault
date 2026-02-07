@@ -10,7 +10,7 @@ const caseStudies = [
     id: "multipart-video-upload",
     title: "Multipart Upload",
     description: "Parallel uploads with S3 presigned URLs.",
-    image: "/Multi-Part Upload.png",
+    image: "/Multipart Upload_cs.png",
     metrics: [
       { label: "FASTER", value: "240x" },
       { label: "BETTER FLOW", value: "40%" },
@@ -20,7 +20,7 @@ const caseStudies = [
     id: "thumbnail-generation",
     title: "Worker Queues",
     description: "Asynchronous video processing with Redis & FFmpeg.",
-    image: "/Thumbnail-System.png",
+    image: "/Async Video Thumbnail Generation.png",
     metrics: [
       { label: "LATENCY", value: "0ms" },
       { label: "SCALE", value: "10k+" },
@@ -44,7 +44,7 @@ const CaseStudy = () => {
             Case Studies
           </h2>
           <p className="text-[#A1A1A1] text-lg max-w-2xl mx-auto">
-            Real-world deployments with measurable impact.
+            Engineering case studies.
           </p>
         </div>
 
@@ -62,7 +62,7 @@ const CaseStudy = () => {
                   src={study.image}
                   alt={study.title}
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="object-contain transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F0F] via-transparent to-transparent opacity-60" />
               </div>
