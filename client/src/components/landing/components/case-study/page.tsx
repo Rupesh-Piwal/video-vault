@@ -7,36 +7,39 @@ import { MoveRight } from "lucide-react";
 
 const caseStudies = [
   {
-    id: "hvac-optimization",
-    title: "HVAC Vent Optimization",
-    description: "AI-optimized vent placement improving air circulation and reducing stagnant zones.",
-    image: "/hvac-optimization.png",
+    id: "multipart-video-upload",
+    title: "Multipart Upload",
+    description: "Parallel uploads with S3 presigned URLs.",
+    image: "/Multi-Part Upload.png",
     metrics: [
       { label: "FASTER", value: "240x" },
       { label: "BETTER FLOW", value: "40%" },
     ],
   },
   {
-    id: "coastal-infrastructure",
-    title: "Coastal Infrastructure",
-    description: "Optimized sea wall design validated across 150+ iterations.",
-    image: "/coastal-infrastructure.png",
+    id: "thumbnail-generation",
+    title: "Worker Queues",
+    description: "Asynchronous video processing with Redis & FFmpeg.",
+    image: "/Thumbnail-System.png",
     metrics: [
-      { label: "ITERATIONS", value: "150+" },
-      { label: "LESS STRESS", value: "13%" },
+      { label: "LATENCY", value: "0ms" },
+      { label: "SCALE", value: "10k+" },
     ],
   },
 ];
 
 const CaseStudy = () => {
   return (
-    <section id="case-studies" className="py-24 bg-black text-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section
+      id="case-studies"
+      className="py-24 bg-black text-white overflow-hidden"
+    >
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-20">
-          <h3 className="text-sm font-semibold tracking-widest text-[#4A4A4A] uppercase mb-4">
+          <p className="text-[#4E4F4E] font-thin text-[28px] md:text-[40px] tracking-widest mb-8">
             RESULTS
-          </h3>
+          </p>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-[#A1A1A1]">
             Case Studies
           </h2>
@@ -72,18 +75,6 @@ const CaseStudy = () => {
                 <p className="text-[#A1A1A1] mb-8 leading-relaxed">
                   {study.description}
                 </p>
-
-                {/* Metrics */}
-                <div className="flex gap-12">
-                  {study.metrics.map((metric) => (
-                    <div key={metric.label}>
-                      <div className="text-2xl font-bold mb-1">{metric.value}</div>
-                      <div className="text-[10px] font-bold tracking-widest text-[#4A4A4A] uppercase">
-                        {metric.label}
-                      </div>
-                    </div>
-                  ))}
-                </div>
 
                 {/* Hover CTA */}
                 <div className="mt-8 flex items-center gap-2 text-sm font-medium text-[#A1A1A1] group-hover:text-white transition-colors">
