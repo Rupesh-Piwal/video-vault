@@ -26,63 +26,27 @@ export async function POST(
 
     const { visibility, emails = [], expiryPreset } = await req.json();
 
-    if (!["PUBLIC", "PRIVATE"].includes(visibility)) {
-      return NextResponse.json(
-        { error: "Invalid visibility" },
-        { status: 400 }
-      );
+    const validationError = validateShareLinkInput(visibility, expiryPreset);
+    if (validationError) {
+      return validationError;
     }
 
-    const expiryMap: Record<string, number | null> = {
-      "1h": 3600,
-      "12h": 43200,
-      "1d": 86400,
-      "30d": 2592000,
-      forever: null,
-    };
+    const expiresAt = calculateExpiry(expiryPreset);
 
-    if (!(expiryPreset in expiryMap)) {
-      return NextResponse.json(
-        { error: "Invalid expiry preset" },
-        { status: 400 }
-      );
-    }
+    const { token, hashed } = generateShareToken();
 
-    const expiresAt =
-      expiryMap[expiryPreset] !== null
-        ? new Date(Date.now() + expiryMap[expiryPreset]! * 1000).toISOString()
-        : null;
-
-    // Token generation
-    const token = crypto.randomBytes(32).toString("hex");
-    const hashed = crypto.createHash("sha256").update(token).digest("hex");
-
-    // ✅ FIX: visibility normalized for DB + RLS
-    const { data: link, error } = await supabase
-      .from("share_links")
-      .insert({
-        video_id: videoId,
-        user_id: user.id,
-        hashed_token: hashed,
-        visibility: visibility,
-        expiry: expiresAt,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
+    const link = await createShareLinkInDb(
+      supabase,
+      videoId,
+      user.id,
+      hashed,
+      visibility,
+      expiresAt
+    );
 
     // PRIVATE link handling
     if (visibility === "PRIVATE" && emails.length > 0) {
-      for (const email of emails) {
-        const trimmedEmail = email.trim().toLowerCase();
-
-        // ✅ FIX: use admin client to bypass RLS safely
-        await supabaseAdmin.from("share_link_whitelist").insert({
-          share_link_id: link.id,
-          email: trimmedEmail,
-        });
-      }
+      await whitelistEmailsForPrivateLink(supabaseAdmin, link.id, emails);
     }
 
     return NextResponse.json({
@@ -95,5 +59,85 @@ export async function POST(
       { error: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+function validateShareLinkInput(
+  visibility: string,
+  expiryPreset: string
+): NextResponse | null {
+  if (!["PUBLIC", "PRIVATE"].includes(visibility)) {
+    return NextResponse.json(
+      { error: "Invalid visibility" },
+      { status: 400 }
+    );
+  }
+
+  const validExpiryPresets = ["1h", "12h", "1d", "30d", "forever"];
+  if (!validExpiryPresets.includes(expiryPreset)) {
+    return NextResponse.json(
+      { error: "Invalid expiry preset" },
+      { status: 400 }
+    );
+  }
+
+  return null;
+}
+
+function calculateExpiry(expiryPreset: string): string | null {
+  const expiryMap: Record<string, number | null> = {
+    "1h": 3600,
+    "12h": 43200,
+    "1d": 86400,
+    "30d": 2592000,
+    forever: null,
+  };
+
+  return expiryMap[expiryPreset] !== null
+    ? new Date(Date.now() + expiryMap[expiryPreset]! * 1000).toISOString()
+    : null;
+}
+
+function generateShareToken(): { token: string; hashed: string } {
+  const token = crypto.randomBytes(32).toString("hex");
+  const hashed = crypto.createHash("sha256").update(token).digest("hex");
+  return { token, hashed };
+}
+
+async function createShareLinkInDb(
+  supabase: any, // TODO: Replace 'any' with proper SupabaseClient type
+  videoId: string,
+  userId: string,
+  hashedToken: string,
+  visibility: string,
+  expiresAt: string | null
+) {
+  const { data: link, error } = await supabase
+    .from("share_links")
+    .insert({
+      video_id: videoId,
+      user_id: userId,
+      hashed_token: hashedToken,
+      visibility: visibility,
+      expiry: expiresAt,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return link;
+}
+
+async function whitelistEmailsForPrivateLink(
+  supabaseAdmin: any, // TODO: Replace 'any' with proper SupabaseClient type
+  shareLinkId: string,
+  emails: string[]
+) {
+  for (const email of emails) {
+    const trimmedEmail = email.trim().toLowerCase();
+    await supabaseAdmin.from("share_link_whitelist").insert({
+      share_link_id: shareLinkId,
+      email: trimmedEmail,
+    });
   }
 }

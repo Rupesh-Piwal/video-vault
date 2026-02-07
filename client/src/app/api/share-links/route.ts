@@ -30,24 +30,28 @@ export async function GET(req: NextRequest) {
 
     if (error) throw error;
 
-    const rows = ((data as ShareLinkRow[]) ?? []).map((r) => ({
-      id: r.id,
-      video_id: r.video_id,
-      url: buildShareUrl(r.hashed_token),
-      visibility: r.visibility,
-      expiry: r.expiry,
-      status: r.revoked
-        ? "Revoked"
-        : isExpired(r.expiry)
-        ? "Expired"
-        : "Active",
-      last_viewed_at: r.last_viewed_at,
-      created_at: r.created_at,
-    }));
+    const rows = ((data as ShareLinkRow[]) ?? []).map(mapShareLinkRowToResponse);
 
     return NextResponse.json(rows);
   } catch (err: unknown) {
     console.error("Share links fetch error:", err);
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
   }
+}
+
+function mapShareLinkRowToResponse(r: ShareLinkRow) {
+  return {
+    id: r.id,
+    video_id: r.video_id,
+    url: buildShareUrl(r.hashed_token),
+    visibility: r.visibility,
+    expiry: r.expiry,
+    status: r.revoked
+      ? "Revoked"
+      : isExpired(r.expiry)
+      ? "Expired"
+      : "Active",
+    last_viewed_at: r.last_viewed_at,
+    created_at: r.created_at,
+  };
 }

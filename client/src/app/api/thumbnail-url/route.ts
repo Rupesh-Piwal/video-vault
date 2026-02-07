@@ -17,12 +17,7 @@ export async function GET(req: Request) {
     if (!key)
       return NextResponse.json({ error: "Missing key" }, { status: 400 });
 
-    const command = new GetObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME!,
-      Key: key,
-    });
-
-    const url = await getSignedUrl(s3, command, { expiresIn: 900 });
+    const url = await getSignedThumbnailUrl(s3, key);
     return NextResponse.json({ url });
   } catch (err) {
     console.error("Thumbnail signed URL error:", err);
@@ -31,4 +26,13 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
+}
+
+async function getSignedThumbnailUrl(s3Client: S3Client, key: string): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME!,
+    Key: key,
+  });
+
+  return await getSignedUrl(s3Client, command, { expiresIn: 900 });
 }

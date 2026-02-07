@@ -13,18 +13,22 @@ export async function POST(
     const supabase = await createClient();
     const { id } = await params;
 
-    const { error } = await supabase
-      .from("share_links")
-      .update({
-        revoked: true,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id);
-
-    if (error) throw error;
+    await disableShareLinkInDb(supabase, id);
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 400 });
   }
+}
+
+async function disableShareLinkInDb(supabase: any, id: string) {
+  const { error } = await supabase
+    .from("share_links")
+    .update({
+      revoked: true,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) throw error;
 }
