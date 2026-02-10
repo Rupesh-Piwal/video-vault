@@ -60,7 +60,7 @@ export function VideoList({ onUploadClick }: VideoListProps) {
 
             if (payload.eventType === "UPDATE" && payload.new) {
               return prev.map((v) =>
-                v.id === payload.new!.id ? mapVideoRow(payload.new!) : v
+                v.id === payload.new!.id ? mapVideoRow(payload.new!) : v,
               );
             }
 
@@ -70,7 +70,7 @@ export function VideoList({ onUploadClick }: VideoListProps) {
 
             return prev;
           });
-        }
+        },
       )
       .subscribe();
 
@@ -101,7 +101,7 @@ export function VideoList({ onUploadClick }: VideoListProps) {
   return (
     <div>
       {videos.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 bg-black">
           {videos.map((video) => (
             <VideoCard
               key={video.id}
