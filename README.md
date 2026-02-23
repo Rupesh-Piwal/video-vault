@@ -14,7 +14,7 @@
 
 #### GITHUB REPO 👉🏻 [Click to visit Codebase](https://github.com/Rupesh-Piwal/video-vault)
 
-#### PORTFOLIO 👉🏻 [View My Portfolio](https://rupesh-piwal-portfolio.vercel.app)
+#### PORTFOLIO 👉🏻 [View My Portfolio](https://rpdev21.vercel.app/)
 
 ---
 
