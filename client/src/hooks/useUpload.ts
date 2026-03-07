@@ -4,10 +4,10 @@ import toast from "react-hot-toast";
 import { createClient } from "@/supabase/client";
 import { UploadFile } from "@/types/upload";
 import { validateFile } from "@/lib/upload.utils";
-import pLimit from "p-limit";
 
-const CHUNK_SIZE = 5 * 1024 * 1024;
+const CHUNK_SIZE = 10 * 1024 * 1024; // 8MB (better than 5MB)
 const MAX_RETRIES = 3;
+const CONCURRENCY = Math.min(6, navigator.hardwareConcurrency || 4);
 
 export function useUpload() {
   const [files, setFiles] = useState<UploadFile[]>([]);
@@ -15,7 +15,7 @@ export function useUpload() {
   const uploadedBytesRef = useRef<Record<string, number>>({});
   const progressRef = useRef<Record<string, number>>({});
 
-  const supabase = createClient();
+  const supabase = useRef(createClient()).current;
 
   const retry = async <T>(
     fn: () => Promise<T>,
@@ -27,22 +27,9 @@ export function useUpload() {
       try {
         return await fn();
       } catch (err: unknown) {
-        let errorMessage = "Unknown error";
-
-        if (err instanceof Error) errorMessage = err.message;
-
         if (!navigator.onLine) {
           toast.error("No internet connection. Please check your network.");
           throw new Error("Network offline");
-        }
-
-        if (
-          typeof err === "object" &&
-          err !== null &&
-          "response" in err &&
-          (err as { response?: { status?: number } }).response?.status === 0
-        ) {
-          toast.error("Network error: unable to reach server.");
         }
 
         if (attempt >= retries) throw err;
@@ -54,6 +41,36 @@ export function useUpload() {
       }
     }
   };
+
+  /**
+   Worker pool uploader
+   Keeps N uploads active simultaneously
+   */
+  async function uploadPool<T>(
+    tasks: (() => Promise<T | null>)[],
+    limit: number,
+  ): Promise<T[]> {
+    const results: Promise<T | null>[] = [];
+    const executing = new Set<Promise<T | null>>();
+
+    for (const task of tasks) {
+      const p = task().then((res) => {
+        executing.delete(p);
+        return res;
+      });
+
+      results.push(p);
+      executing.add(p);
+
+      if (executing.size >= limit) {
+        await Promise.race(executing);
+      }
+    }
+
+    const finished = await Promise.all(results);
+
+    return finished.filter(Boolean) as T[];
+  }
 
   const uploadMultipart = async (uploadFile: UploadFile) => {
     try {
@@ -83,72 +100,91 @@ export function useUpload() {
 
       const totalParts = Math.ceil(file.size / CHUNK_SIZE);
 
-      const limit = pLimit(Math.min(5, navigator.hardwareConcurrency || 4));
+      /**
+       Generate part numbers on CLIENT
+       */
+      const partNumbers = Array.from({ length: totalParts }, (_, i) => i + 1);
 
-      const uploadTasks = Array.from({ length: totalParts }, (_, i) =>
-        limit(async () => {
-          const partNumber = i + 1;
-
-          const start = i * CHUNK_SIZE;
-          const end = Math.min(start + CHUNK_SIZE, file.size);
-          const chunk = file.slice(start, end);
-
-          const { data } = await retry(() =>
-            axios.post<{ url: string }>("/api/upload-url", {
-              action: "signPart",
-              key,
-              uploadId,
-              partNumber,
-            }),
-          );
-
-          const uploadRes = await retry(() =>
-            axios.put(data.url, chunk, {
-              headers: {
-                "Content-Type": "application/octet-stream",
-              },
-            }),
-          );
-
-          const ETag = uploadRes.headers["etag"];
-
-          if (!ETag) throw new Error(`Missing ETag for part ${partNumber}`);
-
-          // Track uploaded bytes
-          uploadedBytesRef.current[uploadFile.id] += chunk.size;
-
-          const calculatedProgress =
-            (uploadedBytesRef.current[uploadFile.id] / file.size) * 100;
-
-          const nextProgress = Math.min(99, calculatedProgress);
-
-          // Ensure progress never goes backwards
-          progressRef.current[uploadFile.id] = Math.max(
-            progressRef.current[uploadFile.id],
-            nextProgress,
-          );
-
-          const safeProgress = Number(
-            progressRef.current[uploadFile.id].toFixed(2),
-          );
-
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === uploadFile.id ? { ...f, progress: safeProgress } : f,
-            ),
-          );
-
-          return {
-            ETag: ETag.replace(/^"|"$/g, ""),
-            PartNumber: partNumber,
-          };
+      /**
+       Request signed URLs
+       */
+      const { data: signed } = await retry(() =>
+        axios.post("/api/upload-url", {
+          action: "signParts",
+          key,
+          uploadId,
+          parts: partNumbers,
         }),
       );
 
-      const uploadedParts = await Promise.all(uploadTasks);
+      const signedUrls: { partNumber: number; url: string }[] = signed.urls;
+
+      /**
+       Create upload tasks
+       */
+      const tasks = signedUrls.map(({ partNumber, url }) => async () => {
+        const start = (partNumber - 1) * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunk = file.slice(start, end);
+
+        /**
+         Prevent empty chunks
+         */
+        if (chunk.size === 0) return null;
+
+        const uploadRes = await retry(() =>
+          axios.put(url, chunk, {
+            headers: {
+              "Content-Type": "application/octet-stream",
+            },
+          }),
+        );
+
+        const ETag = uploadRes.headers["etag"];
+
+        if (!ETag) throw new Error(`Missing ETag for part ${partNumber}`);
+
+        /**
+         Progress tracking
+         */
+        uploadedBytesRef.current[uploadFile.id] += chunk.size;
+
+        const calculatedProgress =
+          (uploadedBytesRef.current[uploadFile.id] / file.size) * 100;
+
+        const nextProgress = Math.min(99, calculatedProgress);
+
+        progressRef.current[uploadFile.id] = Math.max(
+          progressRef.current[uploadFile.id],
+          nextProgress,
+        );
+
+        const safeProgress = Number(
+          progressRef.current[uploadFile.id].toFixed(2),
+        );
+
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadFile.id ? { ...f, progress: safeProgress } : f,
+          ),
+        );
+
+        return {
+          ETag: ETag.replace(/^"|"$/g, ""),
+          PartNumber: partNumber,
+        };
+      });
+
+      /**
+       Upload chunks
+       */
+      const uploadedParts = await uploadPool(tasks, CONCURRENCY);
 
       uploadedParts.sort((a, b) => a.PartNumber - b.PartNumber);
 
+      /**
+       Complete upload
+       */
       await retry(() =>
         axios.post("/api/upload-url", {
           action: "complete",
