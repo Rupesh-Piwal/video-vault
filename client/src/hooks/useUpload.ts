@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import axios, { AxiosResponse } from "axios";
 import toast from "react-hot-toast";
 import { createClient } from "@/supabase/client";
@@ -11,6 +11,7 @@ const MAX_RETRIES = 3;
 
 export function useUpload() {
   const [files, setFiles] = useState<UploadFile[]>([]);
+  const uploadedBytesRef = useRef<Record<string, number>>({});
   const supabase = createClient();
 
   const retry = async <T>(
@@ -70,6 +71,7 @@ export function useUpload() {
       );
 
       const file = uploadFile.file!;
+      uploadedBytesRef.current[uploadFile.id] = 0;
       const totalParts = Math.ceil(file.size / CHUNK_SIZE);
       const parts: { ETag: string; PartNumber: number }[] = [];
 
@@ -104,12 +106,15 @@ export function useUpload() {
           const ETag = uploadRes.headers["etag"];
           if (!ETag) throw new Error(`Missing ETag for part ${partNumber}`);
 
-          const uploadedSoFar = (partNumber / totalParts) * 100;
+          uploadedBytesRef.current[uploadFile.id] += chunk.size;
+
+          const progress =
+            (uploadedBytesRef.current[uploadFile.id] / file.size) * 100;
 
           setFiles((prev) =>
             prev.map((f) =>
               f.id === uploadFile.id
-                ? { ...f, progress: Math.min(99, uploadedSoFar) }
+                ? { ...f, progress: Math.min(99, progress) }
                 : f,
             ),
           );
