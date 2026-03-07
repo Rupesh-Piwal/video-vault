@@ -58,12 +58,12 @@ export function UploadModal({
               return prev.map((f) =>
                 f.videoId === payload.new.id
                   ? { ...f, status: payload.new.status as VideoStatus }
-                  : f
+                  : f,
               );
             }
             return prev;
           });
-        }
+        },
       )
       .subscribe();
 
@@ -130,7 +130,7 @@ export function UploadModal({
             className={cn(
               "border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300",
               "border-gray-600 bg-black/50",
-              "hover:border-gray-500 hover:bg-gray-900/50"
+              "hover:border-gray-500 hover:bg-gray-900/50",
             )}
             onDrop={(e) => {
               e.preventDefault();
@@ -196,7 +196,7 @@ export function UploadModal({
                               <span
                                 className={cn(
                                   "flex items-center gap-1.5 font-medium",
-                                  getStatusColor(uploadFile.status)
+                                  getStatusColor(uploadFile.status),
                                 )}
                               >
                                 {uploadFile.status === "UPLOADING" && (
@@ -252,7 +252,7 @@ export function UploadModal({
                           <span>
                             {formatFileSize(
                               (uploadFile.progress / 100) *
-                                (uploadFile.file?.size || 0)
+                                (uploadFile.file?.size || 0),
                             )}
                           </span>
                           <span>
@@ -268,10 +268,7 @@ export function UploadModal({
                           <span>Processing video</span>
                           <span>100%</span>
                         </div>
-                        <Progress
-                          value={100}
-                          className="h-2 bg-amber-500/20"
-                        />
+                        <Progress value={100} className="h-2 bg-amber-500/20" />
                       </div>
                     )}
 

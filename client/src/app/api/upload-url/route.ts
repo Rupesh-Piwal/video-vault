@@ -30,7 +30,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Read the request body once and store it
     const body = await req.json();
     const {
       action,
@@ -44,18 +43,16 @@ export async function POST(req: Request) {
     } = body;
     console.log(body);
 
-    // ----- Start Multipart Upload -----
     if (action === "start") {
       if (!fileType.startsWith("video/")) {
         return NextResponse.json(
           { error: "Only video uploads allowed" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
       const objectKey = `uploads/${user.id}/${Date.now()}-${fileName}`;
 
-      // Create DB record
       const { data: video, error: insertError } = await supabase
         .from("videos")
         .insert([
@@ -75,7 +72,7 @@ export async function POST(req: Request) {
         console.error("Supabase insert error:", insertError);
         return NextResponse.json(
           { error: "Failed to create video record" },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
@@ -99,7 +96,7 @@ export async function POST(req: Request) {
       if (!partNumber || !key || !uploadId) {
         return NextResponse.json(
           { error: "partNumber, key, and uploadId are required" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -111,8 +108,45 @@ export async function POST(req: Request) {
       });
 
       const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+      console.log(url);
 
       return NextResponse.json({ url });
+    }
+
+    if (action === "signParts") {
+      if (!key || !uploadId || !fileSize) {
+        return NextResponse.json(
+          { error: "key, uploadId, and fileSize are required" },
+          { status: 400 },
+        );
+      }
+
+      const CHUNK_SIZE = 5 * 1024 * 1024;
+      const totalParts = Math.ceil(fileSize / CHUNK_SIZE);
+
+      const urls = await Promise.all(
+        Array.from({ length: totalParts }, async (_, i) => {
+          const partNumber = i + 1;
+
+          const command = new UploadPartCommand({
+            Bucket: process.env.AWS_BUCKET_NAME!,
+            Key: key,
+            UploadId: uploadId,
+            PartNumber: partNumber,
+          });
+
+          const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+
+          console.log(url);
+
+          return {
+            partNumber,
+            url,
+          };
+        }),
+      );
+
+      return NextResponse.json({ urls });
     }
 
     // ----- Complete Multipart Upload -----
@@ -120,7 +154,7 @@ export async function POST(req: Request) {
       if (!key || !uploadId || !parts) {
         return NextResponse.json(
           { error: "key, uploadId, and parts are required" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -158,7 +192,7 @@ export async function POST(req: Request) {
       if (!key || !uploadId) {
         return NextResponse.json(
           { error: "key and uploadId are required" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -184,7 +218,7 @@ export async function POST(req: Request) {
     console.error("Multipart upload error:", err);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

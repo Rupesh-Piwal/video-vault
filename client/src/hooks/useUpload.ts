@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { createClient } from "@/supabase/client";
 import { UploadFile } from "@/types/upload";
 import { validateFile } from "@/lib/upload.utils";
+import pLimit from "p-limit";
 
 const CHUNK_SIZE = 5 * 1024 * 1024;
 const MAX_RETRIES = 3;
@@ -14,7 +15,7 @@ export function useUpload() {
 
   const retry = async <T>(
     fn: () => Promise<T>,
-    retries = MAX_RETRIES
+    retries = MAX_RETRIES,
   ): Promise<T> => {
     let attempt = 0;
     while (true) {
@@ -59,72 +60,90 @@ export function useUpload() {
           fileName: uploadFile.file?.name,
           fileType: uploadFile.file?.type,
           fileSize: uploadFile.file?.size,
-        })
+        }),
       );
 
       const { uploadId, key, videoId } = startRes.data;
 
       setFiles((prev) =>
-        prev.map((f) => (f.id === uploadFile.id ? { ...f, videoId } : f))
+        prev.map((f) => (f.id === uploadFile.id ? { ...f, videoId } : f)),
       );
 
       const file = uploadFile.file!;
       const totalParts = Math.ceil(file.size / CHUNK_SIZE);
       const parts: { ETag: string; PartNumber: number }[] = [];
 
-      for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
-        const start = (partNumber - 1) * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, file.size);
-        const chunk = file.slice(start, end);
+      // const limit = pLimit(5);
 
-        const { data } = await retry(() =>
-          axios.post<{ url: string }>("/api/upload-url", {
-            action: "signPart",
-            key,
-            uploadId,
-            partNumber,
-          })
-        );
+      // FIX the slower devices over-load...
+      const limit = pLimit(Math.min(5, navigator.hardwareConcurrency || 4));
 
-        const uploadRes = await retry(() =>
-          axios.put(data.url, chunk, {
-            headers: { "Content-Type": "application/octet-stream" },
-          })
-        );
+      const uploadTasks = Array.from({ length: totalParts }, (_, i) =>
+        limit(async () => {
+          const partNumber = i + 1;
 
-        const ETag = uploadRes.headers["etag"];
-        if (!ETag) throw new Error(`Missing ETag for part ${partNumber}`);
+          const start = i * CHUNK_SIZE;
+          const end = Math.min(start + CHUNK_SIZE, file.size);
+          const chunk = file.slice(start, end);
 
-        parts.push({
-          ETag: ETag.replace(/^"|"$/g, ""),
-          PartNumber: partNumber,
-        });
+          const { data } = await retry(() =>
+            axios.post<{ url: string }>("/api/upload-url", {
+              action: "signPart",
+              key,
+              uploadId,
+              partNumber,
+            }),
+          );
 
-        const uploadedSoFar = (partNumber / totalParts) * 100;
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === uploadFile.id
-              ? { ...f, progress: Math.min(99, uploadedSoFar) }
-              : f
-          )
-        );
-      }
+          const uploadRes = await retry(() =>
+            axios.put(data.url, chunk, {
+              headers: { "Content-Type": "application/octet-stream" },
+            }),
+          );
 
+          const ETag = uploadRes.headers["etag"];
+          if (!ETag) throw new Error(`Missing ETag for part ${partNumber}`);
+
+          const uploadedSoFar = (partNumber / totalParts) * 100;
+
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === uploadFile.id
+                ? { ...f, progress: Math.min(99, uploadedSoFar) }
+                : f,
+            ),
+          );
+
+          return {
+            ETag: ETag.replace(/^"|"$/g, ""),
+            PartNumber: partNumber,
+          };
+        }),
+      );
+
+      // This waits for all chunk uploads to finish.
+      const uploadedParts = await Promise.all(uploadTasks);
+
+      uploadedParts.sort((a, b) => a.PartNumber - b.PartNumber);
+
+      parts.push(...uploadedParts);
+
+      // -----------------------------------------------------
       await retry(() =>
         axios.post("/api/upload-url", {
           action: "complete",
           key,
           uploadId,
           parts,
-        })
+        }),
       );
 
       setFiles((prev) =>
         prev.map((f) =>
           f.id === uploadFile.id
             ? { ...f, status: "PROCESSING", progress: 100 }
-            : f
-        )
+            : f,
+        ),
       );
 
       toast.success(`${file.name} uploaded successfully!`);
@@ -141,7 +160,7 @@ export function useUpload() {
         {
           videoId,
           s3Key: key,
-        }
+        },
       );
     } catch (err: unknown) {
       let errorMessage = "Unknown error";
@@ -153,8 +172,8 @@ export function useUpload() {
         prev.map((f) =>
           f.id === uploadFile.id
             ? { ...f, status: "FAILED", error: errorMessage }
-            : f
-        )
+            : f,
+        ),
       );
       toast.error(`${uploadFile.file?.name} failed to upload.`);
     }
@@ -181,13 +200,3 @@ export function useUpload() {
 
   return { files, setFiles, handleFiles, removeFile, uploadMultipart };
 }
-
-
-
-
-
-
-
-
-
-
