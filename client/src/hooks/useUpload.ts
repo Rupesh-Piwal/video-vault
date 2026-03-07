@@ -11,7 +11,10 @@ const MAX_RETRIES = 3;
 
 export function useUpload() {
   const [files, setFiles] = useState<UploadFile[]>([]);
+
   const uploadedBytesRef = useRef<Record<string, number>>({});
+  const progressRef = useRef<Record<string, number>>({});
+
   const supabase = createClient();
 
   const retry = async <T>(
@@ -19,6 +22,7 @@ export function useUpload() {
     retries = MAX_RETRIES,
   ): Promise<T> => {
     let attempt = 0;
+
     while (true) {
       try {
         return await fn();
@@ -42,7 +46,9 @@ export function useUpload() {
         }
 
         if (attempt >= retries) throw err;
+
         attempt++;
+
         const delay = Math.pow(2, attempt) * 500;
         await new Promise((res) => setTimeout(res, delay));
       }
@@ -71,13 +77,12 @@ export function useUpload() {
       );
 
       const file = uploadFile.file!;
+
       uploadedBytesRef.current[uploadFile.id] = 0;
+      progressRef.current[uploadFile.id] = 0;
+
       const totalParts = Math.ceil(file.size / CHUNK_SIZE);
-      const parts: { ETag: string; PartNumber: number }[] = [];
 
-      // const limit = pLimit(5);
-
-      // FIX the slower devices over-load...
       const limit = pLimit(Math.min(5, navigator.hardwareConcurrency || 4));
 
       const uploadTasks = Array.from({ length: totalParts }, (_, i) =>
@@ -99,23 +104,37 @@ export function useUpload() {
 
           const uploadRes = await retry(() =>
             axios.put(data.url, chunk, {
-              headers: { "Content-Type": "application/octet-stream" },
+              headers: {
+                "Content-Type": "application/octet-stream",
+              },
             }),
           );
 
           const ETag = uploadRes.headers["etag"];
+
           if (!ETag) throw new Error(`Missing ETag for part ${partNumber}`);
 
+          // Track uploaded bytes
           uploadedBytesRef.current[uploadFile.id] += chunk.size;
 
-          const progress =
+          const calculatedProgress =
             (uploadedBytesRef.current[uploadFile.id] / file.size) * 100;
+
+          const nextProgress = Math.min(99, calculatedProgress);
+
+          // Ensure progress never goes backwards
+          progressRef.current[uploadFile.id] = Math.max(
+            progressRef.current[uploadFile.id],
+            nextProgress,
+          );
+
+          const safeProgress = Number(
+            progressRef.current[uploadFile.id].toFixed(2),
+          );
 
           setFiles((prev) =>
             prev.map((f) =>
-              f.id === uploadFile.id
-                ? { ...f, progress: Math.min(99, progress) }
-                : f,
+              f.id === uploadFile.id ? { ...f, progress: safeProgress } : f,
             ),
           );
 
@@ -126,20 +145,16 @@ export function useUpload() {
         }),
       );
 
-      // This waits for all chunk uploads to finish.
       const uploadedParts = await Promise.all(uploadTasks);
 
       uploadedParts.sort((a, b) => a.PartNumber - b.PartNumber);
 
-      parts.push(...uploadedParts);
-
-      // -----------------------------------------------------
       await retry(() =>
         axios.post("/api/upload-url", {
           action: "complete",
           key,
           uploadId,
-          parts,
+          parts: uploadedParts,
         }),
       );
 
@@ -152,6 +167,9 @@ export function useUpload() {
       );
 
       toast.success(`${file.name} uploaded successfully!`);
+
+      delete uploadedBytesRef.current[uploadFile.id];
+      delete progressRef.current[uploadFile.id];
 
       if (videoId) {
         await supabase
@@ -169,9 +187,13 @@ export function useUpload() {
       );
     } catch (err: unknown) {
       let errorMessage = "Unknown error";
+
       if (err instanceof Error) errorMessage = err.message;
 
       console.error("Multipart upload error:", errorMessage);
+
+      delete uploadedBytesRef.current[uploadFile.id];
+      delete progressRef.current[uploadFile.id];
 
       setFiles((prev) =>
         prev.map((f) =>
@@ -180,6 +202,7 @@ export function useUpload() {
             : f,
         ),
       );
+
       toast.error(`${uploadFile.file?.name} failed to upload.`);
     }
   };
@@ -187,6 +210,7 @@ export function useUpload() {
   const handleFiles = (newFiles: FileList | File[]) => {
     Array.from(newFiles).forEach((file) => {
       const error = validateFile(file);
+
       const uploadFile: UploadFile = {
         id: crypto.randomUUID(),
         file,
@@ -194,7 +218,9 @@ export function useUpload() {
         status: error ? "FAILED" : "UPLOADING",
         error,
       };
+
       setFiles((prev) => [...prev, uploadFile]);
+
       if (!error) uploadMultipart(uploadFile);
     });
   };
