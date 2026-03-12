@@ -12,8 +12,8 @@ const s3 = new S3Client({
 
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const key = searchParams.get("key");
+    const { searchParams } = new URL(req.url); // Extract query parameters from the request URL
+    const key = searchParams.get("key"); // Get the 'key' parameter which specifies the S3 object path
     if (!key)
       return NextResponse.json({ error: "Missing key" }, { status: 400 });
 
@@ -22,7 +22,8 @@ export async function GET(req: Request) {
       Key: key,
     });
 
-    const url = await getSignedUrl(s3, command, { expiresIn: 900 }); 
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+     
     return NextResponse.json({ url });
   } catch (err) {
     console.error("Video signed URL error:", err);
