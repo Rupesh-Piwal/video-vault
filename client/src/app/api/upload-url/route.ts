@@ -21,6 +21,7 @@ const s3 = new S3Client({
 export async function POST(req: Request) {
   try {
     const supabase = await createClient();
+
     const {
       data: { user },
       error,
@@ -30,32 +31,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Read the request body once and store it
     const body = await req.json();
-    const {
-      action,
-      fileName,
-      fileType,
-      fileSize,
-      key,
-      uploadId,
-      parts,
-      partNumber,
-    } = body;
-    console.log(body);
 
-    // ----- Start Multipart Upload -----
+    const { action, fileName, fileType, fileSize, key, uploadId, parts } = body;
+
+    console.log("UPLOAD ACTION:", action);
+
+    /**
+     * START MULTIPART UPLOAD
+     */
     if (action === "start") {
-      if (!fileType.startsWith("video/")) {
+      if (!fileType?.startsWith("video/")) {
         return NextResponse.json(
           { error: "Only video uploads allowed" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
       const objectKey = `uploads/${user.id}/${Date.now()}-${fileName}`;
 
-      // Create DB record
       const { data: video, error: insertError } = await supabase
         .from("videos")
         .insert([
@@ -75,7 +69,7 @@ export async function POST(req: Request) {
         console.error("Supabase insert error:", insertError);
         return NextResponse.json(
           { error: "Failed to create video record" },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
@@ -94,33 +88,46 @@ export async function POST(req: Request) {
       });
     }
 
-    // ----- Generate Presigned URL for Part -----
-    if (action === "signPart") {
-      if (!partNumber || !key || !uploadId) {
+    /**
+     * SIGN MULTIPLE PARTS
+     */
+    if (action === "signParts") {
+      if (!key || !uploadId || !Array.isArray(parts)) {
         return NextResponse.json(
-          { error: "partNumber, key, and uploadId are required" },
-          { status: 400 }
+          { error: "key, uploadId, and parts[] are required" },
+          { status: 400 },
         );
       }
 
-      const command = new UploadPartCommand({
-        Bucket: process.env.AWS_BUCKET_NAME!,
-        Key: key,
-        UploadId: uploadId,
-        PartNumber: partNumber,
-      });
+      const urls = await Promise.all(
+        parts.map(async (partNumber: number) => {
+          const command = new UploadPartCommand({
+            Bucket: process.env.AWS_BUCKET_NAME!,
+            Key: key,
+            UploadId: uploadId,
+            PartNumber: partNumber,
+          });
 
-      const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+          const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
 
-      return NextResponse.json({ url });
+          return {
+            partNumber,
+            url,
+          };
+        }),
+      );
+
+      return NextResponse.json({ urls });
     }
 
-    // ----- Complete Multipart Upload -----
+    /**
+     * COMPLETE MULTIPART UPLOAD
+     */
     if (action === "complete") {
       if (!key || !uploadId || !parts) {
         return NextResponse.json(
           { error: "key, uploadId, and parts are required" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -139,9 +146,9 @@ export async function POST(req: Request) {
       });
 
       const result = await s3.send(command);
-      console.log(result);
 
-      // Update DB
+      console.log("UPLOAD COMPLETE:", result.Location);
+
       await supabase
         .from("videos")
         .update({ status: "UPLOADED" })
@@ -153,12 +160,14 @@ export async function POST(req: Request) {
       });
     }
 
-    // ----- Abort Multipart Upload -----
+    /**
+     * ABORT UPLOAD
+     */
     if (action === "abort") {
       if (!key || !uploadId) {
         return NextResponse.json(
           { error: "key and uploadId are required" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -170,7 +179,6 @@ export async function POST(req: Request) {
 
       await s3.send(command);
 
-      // Update DB
       await supabase
         .from("videos")
         .update({ status: "FAILED" })
@@ -182,9 +190,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (err) {
     console.error("Multipart upload error:", err);
+
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

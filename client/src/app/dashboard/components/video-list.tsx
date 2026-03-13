@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/supabase/client";
 import type { VideoCardProps } from "@/lib/metadata-utils";
 import { FileVideo, Upload } from "lucide-react";
@@ -15,22 +15,42 @@ interface VideoListProps {
 
 export function VideoList({ onUploadClick }: VideoListProps) {
   const [videos, setVideos] = useState<VideoCardProps[]>([]);
+  const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+
   const supabase = createClient();
 
-  function mapVideoRow(row: VideoRow): VideoCardProps {
-    return {
-      id: row.id,
-      filename: row.original_filename || row.filename || "Unknown",
-      type: row.mime_type || row.type || "unknown",
-      size: row.size_bytes ?? 0,
-      duration: row.duration_seconds ?? null,
-      uploadDate: row.created_at,
-      readyDate: row.ready_at ?? null,
-      status: row.status,
-      storage_key: row.storage_key,
-    };
-  }
+  const mapVideoRow = (row: VideoRow): VideoCardProps => ({
+    id: row.id,
+    filename: row.original_filename || row.filename || "Unknown",
+    type: row.mime_type || row.type || "unknown",
+    size: row.size_bytes ?? 0,
+    duration: row.duration_seconds ?? null,
+    uploadDate: row.created_at,
+    readyDate: row.ready_at ?? null,
+    status: row.status,
+    storage_key: row.storage_key,
+  });
+
+  const fetchVideoUrls = useCallback(async (videos: VideoRow[]) => {
+    const readyKeys = videos
+      .filter((v) => v.status === "READY")
+      .map((v) => v.storage_key);
+
+    if (!readyKeys.length) return;
+
+    const res = await fetch("/api/video-url/batch", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ keys: readyKeys }),
+    });
+
+    const { urls } = await res.json();
+
+    setVideoUrls((prev) => ({ ...prev, ...urls }));
+  }, []);
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -41,7 +61,9 @@ export function VideoList({ onUploadClick }: VideoListProps) {
 
       if (!error && data) {
         setVideos(data.map(mapVideoRow));
+        await fetchVideoUrls(data);
       }
+
       setLoading(false);
     };
 
@@ -52,15 +74,17 @@ export function VideoList({ onUploadClick }: VideoListProps) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "videos" },
-        (payload: RealtimePostgresChangesPayload<VideoRow>) => {
+        async (payload: RealtimePostgresChangesPayload<VideoRow>) => {
           setVideos((prev) => {
             if (payload.eventType === "INSERT" && payload.new) {
+              fetchVideoUrls([payload.new]);
               return [...prev, mapVideoRow(payload.new)];
             }
 
             if (payload.eventType === "UPDATE" && payload.new) {
+              fetchVideoUrls([payload.new]);
               return prev.map((v) =>
-                v.id === payload.new!.id ? mapVideoRow(payload.new!) : v,
+                v.id === payload.new!.id ? mapVideoRow(payload.new!) : v
               );
             }
 
@@ -70,14 +94,14 @@ export function VideoList({ onUploadClick }: VideoListProps) {
 
             return prev;
           });
-        },
+        }
       )
       .subscribe();
 
     return () => {
       channel.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, fetchVideoUrls]);
 
   if (loading) {
     return (
@@ -106,6 +130,7 @@ export function VideoList({ onUploadClick }: VideoListProps) {
             <VideoCard
               key={video.id}
               {...video}
+              videoUrl={videoUrls[video.storage_key]}
               onDelete={(id) =>
                 setVideos((prev) => prev.filter((v) => v.id !== id))
               }
@@ -123,6 +148,7 @@ export function VideoList({ onUploadClick }: VideoListProps) {
           <p className="text-gray-400 max-w-md text-lg leading-relaxed mb-6">
             Upload your first video to get started
           </p>
+
           {onUploadClick && (
             <Button
               onClick={onUploadClick}
