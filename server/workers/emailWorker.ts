@@ -10,10 +10,18 @@ const connection = new Redis(process.env.REDIS_URL!, {
 new Worker(
   "send-email",
   async (job) => {
+
+
     try {
       console.log("👷 [EMAIL_WORKER] Picked up job:", job.id, job.data);
 
       const { to, token } = job.data;
+
+      // If Resend isn't configured, log the email and return success
+      if (!process.env.RESEND_API_KEY) {
+        console.log("📧 Email notification skipped (no API key configured)", { to, token });
+        return { delivered: false, reason: "no_api_key" };
+      }
 
       const appUrl = process.env.NEXT_PUBLIC_APP_URL;
       if (!appUrl) {
@@ -21,7 +29,7 @@ new Worker(
       }
 
       const result = await resend.emails.send({
-        from: "onboarding@resend.dev", 
+        from: "onboarding@resend.dev",
         to,
         subject: "📹 You've been granted access to a video",
         html: `
@@ -40,7 +48,7 @@ new Worker(
       return { delivered: true };
     } catch (error) {
       console.error("❌ [EMAIL_WORKER] Failed to send email:", error);
-      throw error; 
+      throw error;
     }
   },
   {
