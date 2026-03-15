@@ -17,7 +17,6 @@ new Worker(
 
       const { to, token } = job.data;
 
-      // If Resend isn't configured, log the email and return success
       if (!process.env.RESEND_API_KEY) {
         console.log("📧 Email notification skipped (no API key configured)", { to, token });
         return { delivered: false, reason: "no_api_key" };
