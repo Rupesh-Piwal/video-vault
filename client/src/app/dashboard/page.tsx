@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Upload } from "lucide-react";
+import { LogOut, Upload, Search } from "lucide-react";
 
 import { createClient } from "@/supabase/client";
 import { useRouter } from "next/navigation";
@@ -10,12 +10,24 @@ import { VideoList } from "./components/video-list";
 import { UploadModal } from "./components/upload-modal";
 import { TextShimmer } from "../../../components/motion-primitives/text-shimmer";
 import VideoIcon from "./components/ui/video-icon";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function DashboardPage() {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
+  const [input, setInput] = useState("");
 
+  const router = useRouter();
   const supabase = createClient();
+
+  const debouncedInput = useDebounce({
+    input,
+    delay: 300,
+  });
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    console.log(e.target.value);
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -37,31 +49,73 @@ export default function DashboardPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-[#000000]">
-      <div className="sticky top-0 z-40 border-b border-purple-900/20 bg-black/40 backdrop-blur-xl">
+    <div className="min-h-screen bg-black">
+      {/* HEADER */}
+      <header className="sticky top-0 z-40 border-b border-purple-900/20 bg-black/40 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-violet-200 flex flex-row items-center gap-3 tracking-widest">
-                <VideoIcon />
-                My Videos
-              </h1>
+          <div className="flex gap-5 items-center">
+            {/* LEFT */}
+            <div className="flex justify-between flex-1 items-center">
+              {/* TITLE */}
+              <div className="flex flex-col justify-center-center">
+                <div className="flex md:hidden items-center gap-2 text-2xl text-white">
+                  <VideoIcon />
+                </div>
 
-              <TextShimmer>Manage and organize your video content</TextShimmer>
+                <h1 className="hidden md:text-3xl font-bold text-white md:flex items-center gap-3 tracking-wide mb-3">
+                  <VideoIcon />
+                  My Videos
+                </h1>
+                <div className="hidden md:block">
+                  <TextShimmer>Manage & organize your videos</TextShimmer>
+                </div>
+              </div>
+
+              {/* SEARCH BAR */}
+              <div className="relative max-w-md">
+                <div className="relative w-full max-w-md group">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 transition-colors group-focus-within:text-grey-400" />
+
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={handleSearch}
+                    placeholder="Search videos..."
+                    className="
+      w-full
+      md:min-w-[400px]
+      pl-10 pr-4 py-2.5
+      rounded-xl
+      bg-transparent
+      border border-gray-700
+      text-sm text-white
+      placeholder:text-gray-500
+      outline-none
+      transition-all duration-200
+      hover:border-gray-500
+      focus:border-gray-500
+      focus:ring-2 focus:ring-gray-800/30
+      focus:bg-gray-900
+    "
+                  />
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-1 sm:gap-3">
+
+            {/* RIGHT ACTIONS */}
+            <div className="flex items-center gap-3">
               <Button
                 onClick={() => setOpen(true)}
-                className="flex-1 sm:flex-none brounded-lg px-6 bg-[#E5E5E8] text-[#0E0E10] font-medium shadow-lg hover:shadow-xl transition-all duration-900 cursor-pointer tracking-wider"
+                className="rounded-xl px-6 bg-[#E5E5E8] text-[#0E0E10] font-medium shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer tracking-wide"
               >
-                <Upload className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Upload Video</span>
-                <span className="sm:hidden">Upload</span>
+                <span className="hidden sm:inline"> Upload Video</span>
+                <Upload className="h-4 w-4 sm:ml-2" />
               </Button>
+
               <Button
                 onClick={handleLogout}
                 variant="outline"
-                className="flex-1 sm:flex-none bg-neutral-900/50 hover:bg-neutral-800/80 text-white border-neutral-700/50 hover:border-neutral-600 hover:text-white backdrop-blur-sm transition-all duration-200 rounded-xl px-4 sm:px-6 py-2.5 font-medium hover:scale-105 cursor-pointer"
+                className="bg-neutral-900/50 hover:bg-neutral-800/80 text-white border-neutral-700/50 hover:border-neutral-600 backdrop-blur-sm transition-all rounded-xl px-5 py-2.5 font-medium hover:scale-105 cursor-pointer"
               >
                 <span className="hidden sm:inline">Sign Out</span>
                 <LogOut className="h-4 w-4 sm:ml-2" />
@@ -69,12 +123,13 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+      </header>
+
+      {/* MAIN CONTENT */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <VideoList input={debouncedInput} onUploadClick={() => setOpen(true)} />
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
-        <VideoList onUploadClick={() => setOpen(true)} />
-      </div>
       <UploadModal open={open} onOpenChange={setOpen} />
     </div>
   );
