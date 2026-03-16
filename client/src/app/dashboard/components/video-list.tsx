@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { createClient } from "@/supabase/client";
+import { useEffect, useState, useCallback, useRef } from "react";
 import type { VideoCardProps } from "@/lib/metadata-utils";
 import { FileVideo, Upload, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VideoCard } from "./video-card";
 import type { VideoRow } from "@/types/video";
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 interface VideoListProps {
   onUploadClick?: () => void;
@@ -18,8 +16,10 @@ export function VideoList({ onUploadClick, input }: VideoListProps) {
   const [videos, setVideos] = useState<VideoCardProps[]>([]);
   const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
-  const supabase = createClient();
+  const observer = useRef<IntersectionObserver | null>(null);
 
   const mapVideoRow = (row: VideoRow): VideoCardProps => ({
     id: row.id,
@@ -42,9 +42,7 @@ export function VideoList({ onUploadClick, input }: VideoListProps) {
 
     const res = await fetch("/api/video-url/batch", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ keys: readyKeys }),
     });
 
@@ -53,68 +51,63 @@ export function VideoList({ onUploadClick, input }: VideoListProps) {
     setVideoUrls((prev) => ({ ...prev, ...urls }));
   }, []);
 
-  useEffect(() => {
-    const fetchVideos = async () => {
-      setLoading(true);
+  const loadVideos = useCallback(
+    async (reset = false) => {
+      if (!hasMore && !reset) return;
 
       const search = input.trim();
+      const params = new URLSearchParams();
 
-      let query = supabase
-        .from("videos")
-        .select("*")
-        .order("created_at", { ascending: false });
+      if (search) params.append("search", search);
+      if (cursor && !reset) params.append("cursor", cursor);
 
-      if (search) {
-        query = query.ilike("original_filename", `%${search}%`);
-      }
+      params.append("limit", "10");
 
-      const { data, error } = await query;
+      const res = await fetch(`/api/pagination?${params.toString()}`);
+      const { videos: data, nextCursor } = await res.json();
 
-      if (!error && data) {
+      if (reset) {
         setVideos(data.map(mapVideoRow));
-        await fetchVideoUrls(data);
+      } else {
+        setVideos((prev) => [...prev, ...data.map(mapVideoRow)]);
       }
 
+      await fetchVideoUrls(data);
+
+      setCursor(nextCursor);
+      setHasMore(Boolean(nextCursor));
       setLoading(false);
-    };
+    },
+    [cursor, input, hasMore, fetchVideoUrls],
+  );
 
-    fetchVideos();
 
-    const channel = supabase
-      .channel("video-list")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "videos" },
-        async (payload: RealtimePostgresChangesPayload<VideoRow>) => {
-          setVideos((prev) => {
-            if (payload.eventType === "INSERT" && payload.new) {
-              fetchVideoUrls([payload.new]);
-              return [...prev, mapVideoRow(payload.new)];
-            }
+  useEffect(() => {
+    setLoading(true);
+    setCursor(null);
+    setHasMore(true);
+    loadVideos(true);
+  }, [input]);
 
-            if (payload.eventType === "UPDATE" && payload.new) {
-              fetchVideoUrls([payload.new]);
-              return prev.map((v) =>
-                v.id === payload.new!.id ? mapVideoRow(payload.new!) : v,
-              );
-            }
 
-            if (payload.eventType === "DELETE" && payload.old) {
-              return prev.filter((v) => v.id !== payload.old.id);
-            }
+  const lastVideoRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (loading) return;
 
-            return prev;
-          });
-        },
-      )
-      .subscribe();
+      if (observer.current) observer.current.disconnect();
 
-    return () => {
-      channel.unsubscribe();
-    };
-  }, [input, fetchVideoUrls]);
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          loadVideos();
+        }
+      });
 
-  if (loading) {
+      if (node) observer.current.observe(node);
+    },
+    [loading, hasMore, loadVideos],
+  );
+
+  if (loading && videos.length === 0) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -177,16 +170,32 @@ export function VideoList({ onUploadClick, input }: VideoListProps) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 bg-black">
-      {videos.map((video) => (
-        <VideoCard
-          key={video.id}
-          {...video}
-          videoUrl={videoUrls[video.storage_key]}
-          onDelete={(id) =>
-            setVideos((prev) => prev.filter((v) => v.id !== id))
-          }
-        />
-      ))}
+      {videos.map((video, index) => {
+        if (videos.length === index + 1) {
+          return (
+            <div ref={lastVideoRef} key={video.id}>
+              <VideoCard
+                {...video}
+                videoUrl={videoUrls[video.storage_key]}
+                onDelete={(id) =>
+                  setVideos((prev) => prev.filter((v) => v.id !== id))
+                }
+              />
+            </div>
+          );
+        }
+
+        return (
+          <VideoCard
+            key={video.id}
+            {...video}
+            videoUrl={videoUrls[video.storage_key]}
+            onDelete={(id) =>
+              setVideos((prev) => prev.filter((v) => v.id !== id))
+            }
+          />
+        );
+      })}
     </div>
   );
 }
