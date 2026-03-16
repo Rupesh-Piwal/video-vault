@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LogOut, Upload, Search } from "lucide-react";
-
 import { createClient } from "@/supabase/client";
 import { useRouter } from "next/navigation";
 import { VideoList } from "./components/video-list";
@@ -17,7 +16,6 @@ export default function DashboardPage() {
   const [input, setInput] = useState("");
 
   const router = useRouter();
-  const supabase = createClient();
 
   const debouncedInput = useDebounce({
     input,
@@ -26,10 +24,10 @@ export default function DashboardPage() {
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
-    console.log(e.target.value);
   };
 
   const handleLogout = async () => {
+    const supabase = createClient();
     await supabase.auth.signOut();
     router.refresh();
     router.push("/sign-in");
@@ -72,7 +70,7 @@ export default function DashboardPage() {
               </div>
 
               {/* SEARCH BAR */}
-              <div className="relative max-w-md">
+              <div className="relative max-w-[420px] w-full">
                 <div className="relative w-full max-w-md group">
                   <Search className="pointer-events-none absolute left-8 md:left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 transition-colors group-focus-within:text-grey-400" />
 
