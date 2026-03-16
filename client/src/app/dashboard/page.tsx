@@ -74,7 +74,7 @@ export default function DashboardPage() {
               {/* SEARCH BAR */}
               <div className="relative max-w-md">
                 <div className="relative w-full max-w-md group">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 transition-colors group-focus-within:text-grey-400" />
+                  <Search className="pointer-events-none absolute left-8 md:left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 transition-colors group-focus-within:text-grey-400" />
 
                   <input
                     type="text"
@@ -84,7 +84,7 @@ export default function DashboardPage() {
                     className="
       w-full
       md:min-w-[400px]
-      pl-10 pr-4 py-2.5
+      pl-10 mx-2 pr-4 py-2.5
       rounded-xl
       bg-transparent
       border border-gray-700

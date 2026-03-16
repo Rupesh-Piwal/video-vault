@@ -29,7 +29,6 @@ export const VideoCard = React.memo(function VideoCard({
   size,
   duration,
   status,
-  storage_key,
   videoUrl,
   onDelete,
 }: VideoCardProps & { videoUrl?: string; onDelete?: (id: string) => void }) {
@@ -80,7 +79,7 @@ export const VideoCard = React.memo(function VideoCard({
             .then(() => {
               currentlyPlayingVideo = video;
             })
-            .catch(() => { });
+            .catch(() => {});
         }
       }, 200);
     } else {
@@ -176,7 +175,7 @@ export const VideoCard = React.memo(function VideoCard({
               alt={filename}
               className={cn(
                 "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
-                showPreview ? "opacity-0" : "opacity-100"
+                showPreview ? "opacity-0" : "opacity-100",
               )}
             />
           )}
@@ -189,7 +188,7 @@ export const VideoCard = React.memo(function VideoCard({
               preload="metadata"
               className={cn(
                 "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
-                showPreview ? "opacity-100" : "opacity-0"
+                showPreview ? "opacity-100" : "opacity-0",
               )}
             />
           )}
@@ -217,7 +216,7 @@ export const VideoCard = React.memo(function VideoCard({
             <Badge
               className={cn(
                 "text-xs font-semibold px-3 py-1 rounded-md border backdrop-blur-md",
-                statusConfig.className
+                statusConfig.className,
               )}
             >
               <span className="mr-1.5">{statusConfig.icon}</span>
@@ -226,17 +225,33 @@ export const VideoCard = React.memo(function VideoCard({
           </div>
         </div>
 
-        <div className="p-4 bg-black">
-          <h3 className="text-base font-semibold text-white mb-2 truncate">
-            {filename}
-          </h3>
+        <div className="p-4 flex flex-col gap-3 bg-black/80 backdrop-blur-md">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-sm sm:text-base font-semibold text-white truncate">
+              {filename}
+            </h3>
 
-          <div className="flex items-center gap-3 text-sm text-gray-400">
-            <span>{formatSize(size)}</span>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-500/10 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDeleteConfirm(true);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex items-center text-xs sm:text-sm text-gray-400 gap-3 flex-wrap">
+            <span className="font-medium text-gray-300">
+              {formatSize(size)}
+            </span>
 
             {duration && (
               <>
-                <span>•</span>
+                <span className="text-gray-600">•</span>
                 <span className="flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
                   {formatDuration(duration)}
