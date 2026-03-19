@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 async function fetchVideos(
   search: string,
-  cursor: string | null,
+  cursor: { created_at: string; id: string } | null,
   limit: number,
 ) {
   const supabase = await createClient();
@@ -15,12 +15,15 @@ async function fetchVideos(
   }
 
   if (cursor) {
-    query = query.lt("created_at", cursor);
+    query = query.or(
+      `created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`,
+    );
   }
 
-  query = query.order("created_at", { ascending: false });
-
-  query = query.limit(limit);
+  query = query
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(limit);
 
   const { data, error } = await query;
 
@@ -30,7 +33,12 @@ async function fetchVideos(
   }
 
   const nextCursor =
-    data.length === limit ? data[data.length - 1].created_at : null;
+    data.length === limit
+      ? {
+          created_at: data[data.length - 1].created_at,
+          id: data[data.length - 1].id,
+        }
+      : null;
 
   return {
     videos: data,
@@ -42,14 +50,21 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
 
   const search = searchParams.get("search") || "";
-  const cursor = searchParams.get("cursor");
+  const cursorParam = searchParams.get("cursor");
+
+  let cursor = null;
+  try {
+    cursor = cursorParam ? JSON.parse(cursorParam) : null;
+  } catch {
+    cursor = null;
+  }
+
   const limit = Number(searchParams.get("limit") || 10);
 
   try {
     const result = await fetchVideos(search, cursor, limit);
-
     return NextResponse.json(result);
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch videos" },
       { status: 500 },

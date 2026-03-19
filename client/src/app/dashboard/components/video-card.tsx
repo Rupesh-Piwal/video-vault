@@ -11,6 +11,7 @@ import {
   FileVideo,
   Trash2,
   X,
+  Play,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -137,7 +138,7 @@ export const VideoCard = React.memo(function VideoCard({
     READY: {
       text: "READY",
       className: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-      icon: <CheckCircle className="h-3 w-3" />,
+      icon: <CheckCircle className="h-2 w-2" />,
     },
     PROCESSING: {
       text: "PROCESSING",
@@ -163,36 +164,48 @@ export const VideoCard = React.memo(function VideoCard({
   return (
     <>
       <div
-        className="group relative overflow-hidden rounded-lg bg-black border border-[#1c1c1c] hover:border-gray-800/40 transition-all duration-300 hover:shadow-xl cursor-pointer"
+        className={cn(
+          "group relative overflow-hidden aspect-video rounded-lg bg-black border border-[#1c1c1c]",
+          "hover:border-gray-800/40 hover:shadow-xl cursor-pointer",
+          "transition-all duration-300 hover:-translate-y-1",
+        )}
         onMouseEnter={() => !isTouchDevice && setIsHovering(true)}
         onMouseLeave={() => !isTouchDevice && setIsHovering(false)}
         onClick={handleCardClick}
       >
+        {/* VIDEO / IMAGE */}
         <div className="relative aspect-video overflow-hidden bg-black">
+          {/* Poster */}
           {status === "READY" && posterUrl && (
             <img
               src={posterUrl}
               alt={filename}
               className={cn(
-                "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+                "absolute inset-0 w-full h-full object-cover",
+                "transition-opacity duration-300",
                 showPreview ? "opacity-0" : "opacity-100",
               )}
             />
           )}
 
+          {/* Video Preview */}
           {status === "READY" && videoUrl && !isTouchDevice && (
             <video
               ref={videoPreviewRef}
               src={videoUrl}
               muted
+              loop
+              playsInline
               preload="metadata"
               className={cn(
-                "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+                "absolute inset-0 w-full h-full object-cover",
+                "transition-opacity duration-300",
                 showPreview ? "opacity-100" : "opacity-0",
               )}
             />
           )}
 
+          {/* PROCESSING / UPLOADING */}
           {status !== "READY" && (
             <div className="absolute inset-0 flex items-center justify-center bg-black">
               <div className="flex flex-col items-center gap-3">
@@ -212,10 +225,14 @@ export const VideoCard = React.memo(function VideoCard({
             </div>
           )}
 
-          <div className="absolute top-3 left-3 z-10">
+          {/* TOP GRADIENT */}
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/70 to-transparent z-10" />
+
+          {/* STATUS BADGE */}
+          <div className="absolute top-3 left-3 z-20">
             <Badge
               className={cn(
-                "text-xs font-semibold px-3 py-1 rounded-md border backdrop-blur-md",
+                "text-[8px] font-semibold px-1.5 py-1 rounded-lg border backdrop-blur-md",
                 statusConfig.className,
               )}
             >
@@ -223,9 +240,43 @@ export const VideoCard = React.memo(function VideoCard({
               {statusConfig.text}
             </Badge>
           </div>
+
+          {/* PLAY BUTTON (center) */}
+          {status === "READY" && (
+            <div
+              className={cn(
+                "absolute inset-0 flex items-center justify-center z-20",
+                "transition-opacity duration-300",
+                "opacity-0 group-hover:opacity-100",
+              )}
+            >
+              <div className="bg-black/60 backdrop-blur-md p-3 rounded-full">
+                <Play className="h-6 w-6 text-white fill-white" />
+              </div>
+            </div>
+          )}
+
+          {/* DURATION BADGE */}
+          {duration && status === "READY" && (
+            <div className="absolute bottom-3 right-3 z-20 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
+              {formatDuration(duration)}
+            </div>
+          )}
         </div>
 
-        <div className="p-4 flex flex-col gap-3 bg-black/80 backdrop-blur-md">
+        {/* 🔥 HOVER REVEAL PANEL */}
+        <div
+          className={cn(
+            "absolute bottom-0 w-full p-3 flex flex-col gap-2 z-20",
+            "bg-gradient-to-t from-black/90 via-black/70 to-transparent",
+            "backdrop-blur-md",
+            "transform transition-all duration-300 ease-out",
+            "translate-y-full opacity-0",
+            "group-hover:translate-y-0 group-hover:opacity-100 group-hover:delay-75",
+            isTouchDevice && "translate-y-0 opacity-100",
+          )}
+        >
+          {/* Title + Delete */}
           <div className="flex items-start justify-between gap-2">
             <h3 className="text-sm sm:text-base font-semibold text-white truncate">
               {filename}
@@ -234,7 +285,7 @@ export const VideoCard = React.memo(function VideoCard({
             <Button
               size="icon"
               variant="ghost"
-              className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-500/10 cursor-pointer"
+              className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowDeleteConfirm(true);
@@ -244,16 +295,15 @@ export const VideoCard = React.memo(function VideoCard({
             </Button>
           </div>
 
-          <div className="flex items-center text-xs sm:text-sm text-gray-400 gap-3 flex-wrap">
-            <span className="font-medium text-gray-300">
-              {formatSize(size)}
-            </span>
+          {/* Meta Info */}
+          <div className="flex items-center text-xs sm:text-sm text-gray-300 gap-3 flex-wrap">
+            <span className="text-[12px] font-medium">{formatSize(size)}</span>
 
             {duration && (
               <>
-                <span className="text-gray-600">•</span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" />
+                <span className="text-gray-500">•</span>
+                <span className="text-[12px] flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
                   {formatDuration(duration)}
                 </span>
               </>
@@ -261,7 +311,6 @@ export const VideoCard = React.memo(function VideoCard({
           </div>
         </div>
       </div>
-
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
           <div className="bg-[#18191A] rounded-lg p-6 max-w-md w-full">
