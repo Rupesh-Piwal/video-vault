@@ -12,11 +12,16 @@ interface VideoListProps {
   input: string;
 }
 
+interface Cursor {
+  created_at: string;
+  id: string;
+}
+
 export function VideoList({ onUploadClick, input }: VideoListProps) {
   const [videos, setVideos] = useState<VideoCardProps[]>([]);
   const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [cursor, setCursor] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<Cursor | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
   const observer = useRef<IntersectionObserver | null>(null);
@@ -54,33 +59,54 @@ export function VideoList({ onUploadClick, input }: VideoListProps) {
   const loadVideos = useCallback(
     async (reset = false) => {
       if (!hasMore && !reset) return;
+      if (loading && !reset) return;
 
-      const search = input.trim();
-      const params = new URLSearchParams();
+      try {
+        setLoading(true);
 
-      if (search) params.append("search", search);
-      if (cursor && !reset) params.append("cursor", cursor);
+        const search = input.trim();
+        const params = new URLSearchParams();
 
-      params.append("limit", "10");
+        if (search) params.append("search", search);
+        if (cursor && !reset) {
+          params.append("cursor", JSON.stringify(cursor));
+        }
+        params.append("limit", "10");
 
-      const res = await fetch(`/api/pagination?${params.toString()}`);
-      const { videos: data, nextCursor } = await res.json();
+        const res = await fetch(`/api/pagination?${params.toString()}`);
 
-      if (reset) {
-        setVideos(data.map(mapVideoRow));
-      } else {
-        setVideos((prev) => [...prev, ...data.map(mapVideoRow)]);
+        if (!res.ok) {
+          throw new Error("Failed to fetch videos");
+        }
+
+        const { videos: data, nextCursor } = await res.json();
+
+        if (reset) {
+          setVideos(data.map(mapVideoRow));
+        } else {
+          setVideos((prev) => {
+            const map = new Map<string, VideoCardProps>();
+
+            [...prev, ...data.map(mapVideoRow)].forEach((v) => {
+              map.set(v.id, v);
+            });
+
+            return Array.from(map.values());
+          });
+        }
+
+        await fetchVideoUrls(data);
+
+        setCursor(nextCursor ?? null);
+        setHasMore(Boolean(nextCursor));
+      } catch (error) {
+        console.error("Error loading videos:", error);
+      } finally {
+        setLoading(false);
       }
-
-      await fetchVideoUrls(data);
-
-      setCursor(nextCursor);
-      setHasMore(Boolean(nextCursor));
-      setLoading(false);
     },
-    [cursor, input, hasMore, fetchVideoUrls],
+    [cursor, input, hasMore, fetchVideoUrls, loading],
   );
-
 
   useEffect(() => {
     setLoading(true);
@@ -89,18 +115,20 @@ export function VideoList({ onUploadClick, input }: VideoListProps) {
     loadVideos(true);
   }, [input]);
 
-
   const lastVideoRef = useCallback(
     (node: HTMLDivElement | null) => {
       if (loading) return;
 
       if (observer.current) observer.current.disconnect();
 
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          loadVideos();
-        }
-      });
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore) {
+            loadVideos();
+          }
+        },
+        { threshold: 1 },
+      );
 
       if (node) observer.current.observe(node);
     },
@@ -156,10 +184,7 @@ export function VideoList({ onUploadClick, input }: VideoListProps) {
         </p>
 
         {onUploadClick && (
-          <Button
-            onClick={onUploadClick}
-            className="rounded-lg px-8 py-3 bg-[#E5E5E8] text-[#0E0E10] font-medium shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer tracking-wider hover:scale-105"
-          >
+          <Button onClick={onUploadClick}>
             <Upload className="h-5 w-5 mr-2" />
             Upload Video
           </Button>
