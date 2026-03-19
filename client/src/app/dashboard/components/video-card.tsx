@@ -165,16 +165,19 @@ export const VideoCard = React.memo(function VideoCard({
     <>
       <div
         className={cn(
-          "group relative overflow-hidden aspect-video rounded-lg bg-black border border-[#1c1c1c]",
-          "hover:border-gray-800/40 hover:shadow-xl cursor-pointer",
-          "transition-all duration-300 hover:-translate-y-1",
+          "group relative overflow-hidden aspect-video rounded-2xl",
+          "bg-gradient-to-b from-[#0f0f11] to-[#09090b]",
+          "border border-white/5",
+          "transition-all duration-300 ease-out",
+          "hover:-translate-y-1 hover:shadow-[0_10px_40px_rgba(0,0,0,0.6)]",
+          "hover:border-white/10 cursor-pointer",
         )}
         onMouseEnter={() => !isTouchDevice && setIsHovering(true)}
         onMouseLeave={() => !isTouchDevice && setIsHovering(false)}
         onClick={handleCardClick}
       >
-        {/* VIDEO / IMAGE */}
-        <div className="relative aspect-video overflow-hidden bg-black">
+        {/* MEDIA */}
+        <div className="relative w-full h-full overflow-hidden rounded-2xl">
           {/* Poster */}
           {status === "READY" && posterUrl && (
             <img
@@ -182,13 +185,13 @@ export const VideoCard = React.memo(function VideoCard({
               alt={filename}
               className={cn(
                 "absolute inset-0 w-full h-full object-cover",
-                "transition-opacity duration-300",
-                showPreview ? "opacity-0" : "opacity-100",
+                "transition-all duration-500 ease-out",
+                showPreview ? "opacity-0 scale-105" : "opacity-100 scale-100",
               )}
             />
           )}
 
-          {/* Video Preview */}
+          {/* Video */}
           {status === "READY" && videoUrl && !isTouchDevice && (
             <video
               ref={videoPreviewRef}
@@ -199,93 +202,71 @@ export const VideoCard = React.memo(function VideoCard({
               preload="metadata"
               className={cn(
                 "absolute inset-0 w-full h-full object-cover",
-                "transition-opacity duration-300",
-                showPreview ? "opacity-100" : "opacity-0",
+                "transition-all duration-500 ease-out",
+                showPreview ? "opacity-100 scale-100" : "opacity-0 scale-105",
               )}
             />
           )}
 
-          {/* PROCESSING / UPLOADING */}
-          {status !== "READY" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black">
-              <div className="flex flex-col items-center gap-3">
-                {status === "PROCESSING" || status === "UPLOADING" ? (
-                  <>
-                    <Loader2 className="h-8 w-8 animate-spin text-gray-300" />
-                    <p className="text-sm text-gray-400">
-                      {status === "UPLOADING"
-                        ? "Uploading..."
-                        : "Processing..."}
-                    </p>
-                  </>
-                ) : (
-                  <FileVideo className="h-8 w-8 text-gray-400" />
-                )}
-              </div>
-            </div>
-          )}
+          {/* Overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-90" />
 
-          {/* TOP GRADIENT */}
-          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/70 to-transparent z-10" />
-
-          {/* STATUS BADGE */}
+          {/* Status */}
           <div className="absolute top-3 left-3 z-20">
             <Badge
               className={cn(
-                "text-[8px] font-semibold px-1.5 py-1 rounded-lg border backdrop-blur-md",
+                "text-[10px] font-medium px-2 py-1 rounded-full backdrop-blur-xl border",
                 statusConfig.className,
               )}
             >
-              <span className="mr-1.5">{statusConfig.icon}</span>
               {statusConfig.text}
             </Badge>
           </div>
 
-          {/* PLAY BUTTON (center) */}
+          {/* Play Button */}
           {status === "READY" && (
-            <div
-              className={cn(
-                "absolute inset-0 flex items-center justify-center z-20",
-                "transition-opacity duration-300",
-                "opacity-0 group-hover:opacity-100",
-              )}
-            >
-              <div className="bg-black/60 backdrop-blur-md p-3 rounded-full">
-                <Play className="h-6 w-6 text-white fill-white" />
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <div
+                className={cn(
+                  "transition-all duration-300",
+                  "opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100",
+                )}
+              >
+                <div className="bg-white/10 backdrop-blur-xl p-4 rounded-full border border-white/20">
+                  <Play className="h-6 w-6 text-white fill-white" />
+                </div>
               </div>
             </div>
           )}
 
-          {/* DURATION BADGE */}
+          {/* Duration */}
           {duration && status === "READY" && (
-            <div className="absolute bottom-3 right-3 z-20 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
+            <div className="absolute bottom-3 right-3 z-20 text-[11px] bg-black/60 backdrop-blur px-2 py-0.5 rounded-md text-white">
               {formatDuration(duration)}
             </div>
           )}
         </div>
 
-        {/* 🔥 HOVER REVEAL PANEL */}
+        {/* HOVER PANEL */}
         <div
           className={cn(
-            "absolute bottom-0 w-full p-3 flex flex-col gap-2 z-20",
+            "absolute bottom-0 w-full px-4 pb-4 pt-8 z-20",
             "bg-gradient-to-t from-black/90 via-black/70 to-transparent",
-            "backdrop-blur-md",
-            "transform transition-all duration-300 ease-out",
+            "transition-all duration-300 ease-out",
             "translate-y-full opacity-0",
-            "group-hover:translate-y-0 group-hover:opacity-100 group-hover:delay-75",
+            "group-hover:translate-y-0 group-hover:opacity-100",
             isTouchDevice && "translate-y-0 opacity-100",
           )}
         >
-          {/* Title + Delete */}
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="text-sm sm:text-base font-semibold text-white truncate">
+          <div className="flex justify-between items-start gap-2">
+            <h3 className="text-sm font-semibold text-white truncate">
               {filename}
             </h3>
 
             <Button
               size="icon"
               variant="ghost"
-              className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+              className="h-7 w-7 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-full"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowDeleteConfirm(true);
@@ -295,14 +276,13 @@ export const VideoCard = React.memo(function VideoCard({
             </Button>
           </div>
 
-          {/* Meta Info */}
-          <div className="flex items-center text-xs sm:text-sm text-gray-300 gap-3 flex-wrap">
-            <span className="text-[12px] font-medium">{formatSize(size)}</span>
+          <div className="flex items-center text-xs text-gray-400 mt-1 gap-2">
+            <span>{formatSize(size)}</span>
 
             {duration && (
               <>
-                <span className="text-gray-500">•</span>
-                <span className="text-[12px] flex items-center gap-1">
+                <span className="opacity-40">•</span>
+                <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {formatDuration(duration)}
                 </span>
@@ -311,37 +291,38 @@ export const VideoCard = React.memo(function VideoCard({
           </div>
         </div>
       </div>
+
+      {/* MODAL */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-[#18191A] rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-semibold text-white mb-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-[#0f0f11] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-lg font-semibold text-white mb-2">
               Delete Video
             </h3>
 
-            <p className="text-gray-300 mb-6">
-              Are you sure you want to delete "{filename}"?
+            <p className="text-sm text-gray-400 mb-6">
+              Are you sure you want to delete{" "}
+              <span className="text-white font-medium">{filename}</span>?
             </p>
 
-            <div className="flex gap-3 justify-end">
-              <Button onClick={() => setShowDeleteConfirm(false)}>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="text-gray-300 hover:bg-white/5"
+              >
                 Cancel
               </Button>
 
               <Button
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-red-600 hover:bg-red-700 rounded-lg"
               >
                 {isDeleting ? (
-                  <>
-                    <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                    Deleting...
-                  </>
+                  <Loader2 className="animate-spin h-4 w-4" />
                 ) : (
-                  <>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </>
+                  "Delete"
                 )}
               </Button>
             </div>
