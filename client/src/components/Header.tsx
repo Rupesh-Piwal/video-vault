@@ -21,7 +21,6 @@ export default function Header() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Ensure this only runs on client
     if (typeof window === "undefined") return;
 
     const fetchUser = async () => {
@@ -130,11 +129,11 @@ export default function Header() {
                           user_metadata: {
                             ...prev.user_metadata,
                             avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                              user.user_metadata?.full_name || "User"
+                              user.user_metadata?.full_name || "User",
                             )}&background=2B2C2D&color=ffffff&size=32`,
                           },
                         }
-                      : prev
+                      : prev,
                   );
                 }}
               />

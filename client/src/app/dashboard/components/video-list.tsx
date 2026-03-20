@@ -1,24 +1,30 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { createClient } from "@/supabase/client";
+import { useEffect, useState, useCallback, useRef } from "react";
 import type { VideoCardProps } from "@/lib/metadata-utils";
-import { FileVideo, Upload } from "lucide-react";
+import { FileVideo, Upload, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VideoCard } from "./video-card";
 import type { VideoRow } from "@/types/video";
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 interface VideoListProps {
   onUploadClick?: () => void;
+  input: string;
 }
 
-export function VideoList({ onUploadClick }: VideoListProps) {
+interface Cursor {
+  created_at: string;
+  id: string;
+}
+
+export function VideoList({ onUploadClick, input }: VideoListProps) {
   const [videos, setVideos] = useState<VideoCardProps[]>([]);
   const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [cursor, setCursor] = useState<Cursor | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
-  const supabase = createClient();
+  const observer = useRef<IntersectionObserver | null>(null);
 
   const mapVideoRow = (row: VideoRow): VideoCardProps => ({
     id: row.id,
@@ -41,9 +47,7 @@ export function VideoList({ onUploadClick }: VideoListProps) {
 
     const res = await fetch("/api/video-url/batch", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ keys: readyKeys }),
     });
 
@@ -52,58 +56,86 @@ export function VideoList({ onUploadClick }: VideoListProps) {
     setVideoUrls((prev) => ({ ...prev, ...urls }));
   }, []);
 
-  useEffect(() => {
-    const fetchVideos = async () => {
-      const { data, error } = await supabase
-        .from("videos")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const loadVideos = useCallback(
+    async (reset = false) => {
+      if (!hasMore && !reset) return;
+      if (loading && !reset) return;
 
-      if (!error && data) {
-        setVideos(data.map(mapVideoRow));
-        await fetchVideoUrls(data);
-      }
+      try {
+        setLoading(true);
 
-      setLoading(false);
-    };
+        const search = input.trim();
+        const params = new URLSearchParams();
 
-    fetchVideos();
+        if (search) params.append("search", search);
+        if (cursor && !reset) {
+          params.append("cursor", JSON.stringify(cursor));
+        }
+        params.append("limit", "10");
 
-    const channel = supabase
-      .channel("video-list")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "videos" },
-        async (payload: RealtimePostgresChangesPayload<VideoRow>) => {
+        const res = await fetch(`/api/pagination?${params.toString()}`);
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch videos");
+        }
+
+        const { videos: data, nextCursor } = await res.json();
+
+        if (reset) {
+          setVideos(data.map(mapVideoRow));
+        } else {
           setVideos((prev) => {
-            if (payload.eventType === "INSERT" && payload.new) {
-              fetchVideoUrls([payload.new]);
-              return [...prev, mapVideoRow(payload.new)];
-            }
+            const map = new Map<string, VideoCardProps>();
 
-            if (payload.eventType === "UPDATE" && payload.new) {
-              fetchVideoUrls([payload.new]);
-              return prev.map((v) =>
-                v.id === payload.new!.id ? mapVideoRow(payload.new!) : v
-              );
-            }
+            [...prev, ...data.map(mapVideoRow)].forEach((v) => {
+              map.set(v.id, v);
+            });
 
-            if (payload.eventType === "DELETE" && payload.old) {
-              return prev.filter((v) => v.id !== payload.old.id);
-            }
-
-            return prev;
+            return Array.from(map.values());
           });
         }
-      )
-      .subscribe();
 
-    return () => {
-      channel.unsubscribe();
-    };
-  }, [supabase, fetchVideoUrls]);
+        await fetchVideoUrls(data);
 
-  if (loading) {
+        setCursor(nextCursor ?? null);
+        setHasMore(Boolean(nextCursor));
+      } catch (error) {
+        console.error("Error loading videos:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [cursor, input, hasMore, fetchVideoUrls, loading],
+  );
+
+  useEffect(() => {
+    setLoading(true);
+    setCursor(null);
+    setHasMore(true);
+    loadVideos(true);
+  }, [input]);
+
+  const lastVideoRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (loading) return;
+
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore) {
+            loadVideos();
+          }
+        },
+        { threshold: 1 },
+      );
+
+      if (node) observer.current.observe(node);
+    },
+    [loading, hasMore, loadVideos],
+  );
+
+  if (loading && videos.length === 0) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -122,44 +154,73 @@ export function VideoList({ onUploadClick }: VideoListProps) {
     );
   }
 
-  return (
-    <div>
-      {videos.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 bg-black">
-          {videos.map((video) => (
-            <VideoCard
-              key={video.id}
-              {...video}
-              videoUrl={videoUrls[video.storage_key]}
-              onDelete={(id) =>
-                setVideos((prev) => prev.filter((v) => v.id !== id))
-              }
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="bg-[#18191A] rounded-full p-8 mb-6 border border-gray-400/20">
-            <FileVideo className="h-16 w-16 text-gray-400" />
-          </div>
-          <h3 className="text-2xl font-semibold text-white mb-3">
-            No videos yet
-          </h3>
-          <p className="text-gray-400 max-w-md text-lg leading-relaxed mb-6">
-            Upload your first video to get started
-          </p>
+  if (videos.length === 0 && input.trim()) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <Search className="h-16 w-16 text-gray-500 mb-6" />
+        <h3 className="text-2xl font-semibold text-white mb-3">
+          No results found
+        </h3>
+        <p className="text-gray-400 text-lg">
+          No videos match "<span className="text-white">{input}</span>"
+        </p>
+      </div>
+    );
+  }
 
-          {onUploadClick && (
-            <Button
-              onClick={onUploadClick}
-              className="rounded-lg px-8 py-3 bg-[#E5E5E8] text-[#0E0E10] font-medium shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer tracking-wider hover:scale-105"
-            >
-              <Upload className="h-5 w-5 mr-2" />
-              Upload Video
-            </Button>
-          )}
+  if (videos.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="bg-[#18191A] rounded-full p-8 mb-6 border border-gray-400/20">
+          <FileVideo className="h-16 w-16 text-gray-400" />
         </div>
-      )}
+
+        <h3 className="text-2xl font-semibold text-white mb-3">
+          No videos yet
+        </h3>
+
+        <p className="text-gray-400 max-w-md text-lg leading-relaxed mb-6">
+          Upload your first video to get started
+        </p>
+
+        {onUploadClick && (
+          <Button onClick={onUploadClick}>
+            <Upload className="h-5 w-5 mr-2" />
+            Upload Video
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 bg-black">
+      {videos.map((video, index) => {
+        if (videos.length === index + 1) {
+          return (
+            <div ref={lastVideoRef} key={video.id}>
+              <VideoCard
+                {...video}
+                videoUrl={videoUrls[video.storage_key]}
+                onDelete={(id) =>
+                  setVideos((prev) => prev.filter((v) => v.id !== id))
+                }
+              />
+            </div>
+          );
+        }
+
+        return (
+          <VideoCard
+            key={video.id}
+            {...video}
+            videoUrl={videoUrls[video.storage_key]}
+            onDelete={(id) =>
+              setVideos((prev) => prev.filter((v) => v.id !== id))
+            }
+          />
+        );
+      })}
     </div>
   );
 }
