@@ -1,27 +1,19 @@
-import { getSignedS3Url, s3 } from "@/lib/s3";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { getSignedS3Url } from "@/lib/s3";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
     const { keys } = await req.json();
-    console.log(keys);
 
-    if (!Array.isArray(keys) || keys.length === 0) {
+    if (!Array.isArray(keys) || keys.length === 0 || keys.length > 50) {
       return NextResponse.json(
-        { error: "keys array required" },
+        { error: "keys must be a non-empty array of max 50 items" },
         { status: 400 },
       );
     }
 
     const entries = await Promise.all(
       keys.map(async (key: string) => {
-        const command = new GetObjectCommand({
-          Bucket: process.env.AWS_BUCKET_NAME!,
-          Key: key,
-        });
-
         const signedUrl = await getSignedS3Url(key);
 
         return [key, signedUrl];
@@ -33,7 +25,6 @@ export async function POST(req: Request) {
     // No limit on batch keys array — vulnerable to abuse
     // Promise.all fails entirely if one key fails — Promise.allSettled would be better
     // No caching — Redis TTL cache would eliminate redundant URL generation
-    // S3Client duplicated in both files — should be a shared singleton in a lib file
 
     const urls = Object.fromEntries(entries);
     console.log("URLS", urls);
