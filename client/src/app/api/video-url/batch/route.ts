@@ -12,22 +12,23 @@ export async function POST(req: Request) {
       );
     }
 
-    const entries = await Promise.all(
+    const entries = await Promise.allSettled(
       keys.map(async (key: string) => {
         const signedUrl = await getSignedS3Url(key);
-
         return [key, signedUrl];
-
-        // urls[key] = signedUrl;
       }),
     );
-    // No auth check on single route — any key can be requested
-    // No limit on batch keys array — vulnerable to abuse
-    // Promise.all fails entirely if one key fails — Promise.allSettled would be better
-    // No caching — Redis TTL cache would eliminate redundant URL generation
+    
+    //TODO: No caching — Redis TTL cache would eliminate redundant URL generation
 
-    const urls = Object.fromEntries(entries);
-    console.log("URLS", urls);
+    const urls = Object.fromEntries(
+      entries
+        .filter((result) => result.status === "fulfilled")
+        .map(
+          (result) =>
+            (result as PromiseFulfilledResult<[string, string]>).value,
+        ),
+    );
 
     return NextResponse.json({ urls });
   } catch (err) {
