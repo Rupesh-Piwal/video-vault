@@ -1,20 +1,18 @@
 "use client";
 
-import { HeroSection } from "@/components/landing/hero-section";
-import { CTASection } from "@/components/landing/cta-section";
+import { Header } from "@/components/landing/header";
+import { Hero } from "@/components/landing/hero";
+import { Features } from "@/components/landing/features";
+import { HowItWorks } from "@/components/landing/how-it-works";
 import { Footer } from "@/components/landing/footer";
-import { Header } from "@/components/landing/components/header/header";
-import Testimonals02Page from "@/components/landing/components/features/page";
-import CaseStudy from "@/components/landing/components/case-study/page";
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-transparent text-black font-sans selection:bg-[#1DE9B6] selection:text-black">
       <Header />
-      <HeroSection />
-      <Testimonals02Page />
-      <CaseStudy />
-      <CTASection />
+      <Hero />
+      <Features />
+      <HowItWorks />
       <Footer />
     </div>
   );
