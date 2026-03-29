@@ -4,10 +4,10 @@ export function Header() {
   return (
     <header className="w-full relative z-40 overflow-hidden bg-white pb-1">
       {/* Top Header Row */}
-      <div className="w-full max-w-[1100px] mx-auto border-l border-r border-gray-200 relative bg-white">
+      <div className="w-full max-w-[1200px] mx-auto border-l border-r border-gray-200 relative bg-white">
         <div className="flex items-center justify-between h-[80px] px-6 sm:px-10">
           {/* Actionable horizontal line stretching to infinity */}
-          <div className="absolute bottom-0 left-[50%] -translate-x-1/2 w-[1100px] h-[1px] bg-gray-200 z-10 pointer-events-none" />
+          <div className="absolute bottom-0 left-[50%] -translate-x-1/2 w-[1200px] h-[1px] bg-gray-200 z-10 pointer-events-none" />
 
           {/* Logo */}
           <div className="flex items-center gap-2 relative z-20 bg-white pr-4">
@@ -86,7 +86,7 @@ export function Header() {
       {/* Hatched Pattern Row */}
       <div className="w-full relative z-30">
         <div
-          className="w-full max-w-[1100px] mx-auto border-l border-r border-gray-200 h-[42px] relative bg-white"
+          className="w-full max-w-[1200px] mx-auto border-l border-r border-gray-200 h-[42px] relative bg-white"
           style={{
             backgroundImage:
               "repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(200, 200, 200, 0.4) 5px, rgba(200, 200, 200, 0.4) 6px)",

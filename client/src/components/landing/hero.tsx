@@ -1,57 +1,67 @@
 "use client";
 
-import { Upload } from "lucide-react";
+import { Upload, MoveRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "motion/react";
+import { SectionTag } from "./section-tag";
 
 export function Hero() {
   return (
-    <section className="relative overflow-visible w-full  pb-0 bg-white">
-
-
+    <section className="relative overflow-visible w-full pb-0 bg-white pt-24">
       {/* Main Central Column */}
-      <div className="relative w-full max-w-[1100px] mx-auto border-l border-r border-gray-200 flex flex-col items-center text-center z-10  pb-0">
-        {/* Background Dot Pattern */}
-        <div className="absolute inset-0 z-0 flex size-full items-center justify-center pointer-events-none">
-        </div>
-        {/* Tag */}
-        <div className="relative mb-8 mt-10 inline-flex items-center gap-2 px-3 py-1.5 border border-black/5 bg-black/5 font-mono font-thin text-xs text-black">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-60"></span>
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-black"></span>
-          </span>
-          Video Processing
-          {/* Top Left */}
-          <span className="absolute top-[-1px] left-[-1px] w-2 h-2 border-t border-l border-black/15" />
-          {/* Top Right */}
-          <span className="absolute top-[-1px] right-[-1px] w-2 h-2 border-t border-r border-black/15" />
-          {/* Bottom Left */}
-          <span className="absolute bottom-[-1px] left-[-1px] w-2 h-2 border-b border-l border-black/15" />
-          {/* Bottom Right */}
-          <span className="absolute bottom-[-1px] right-[-1px] w-2 h-2 border-b border-r border-black/15" />
-        </div>
-
+      <div className="relative w-full max-w-[1200px] mx-auto border-l border-r border-gray-200 flex flex-col items-center text-center z-10 pb-0">
+        
+        {/* Background Dot Pattern (Intentionally kept empty per user's structure) */}
+        <div className="absolute inset-0 z-0 flex size-full items-center justify-center pointer-events-none"></div>
+        
         {/* Text Content Wrapper */}
-        <div className="flex flex-col items-center px-4 sm:px-6 lg:px-8 w-full">
+        <div className="flex flex-col items-center px-4 sm:px-6 lg:px-8 w-full z-10">
+          <SectionTag label="Video Processing" showPing={true} />
 
           {/* Headlines */}
-          <h1 className="max-w-4xl text-[38px] font-bold tracking-tighter text-black lg:text-[56px] leading-[1.05] mb-6">
+          <motion.h1 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="max-w-4xl text-[42px] font-bold tracking-tight text-[#0A0A0A] lg:text-[60px] leading-[1.1] mb-6"
+          >
             Video storage & sharing <br />
-            <span className="text-[#a1a1aa] font-medium tracking-tight">Upload, process, secure</span>
-          </h1>
+            <span className="text-gray-400 font-medium tracking-tight">Upload, process, secure.</span>
+          </motion.h1>
 
-          <p className="max-w-[42rem] text-[14px] md:text-[18px] text-[#555] mb-6 leading-relaxed font-medium">
+          <motion.p 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+            className="max-w-[42rem] text-[16px] md:text-[18px] text-gray-500 mb-8 leading-relaxed font-medium"
+          >
             A powerful platform to seamlessly upload large videos, automatically generate thumbnails in the background, and create share links.
-          </p>
+          </motion.p>
 
           {/* CTA */}
-          <Link href="/dashboard" className="inline-flex items-center justify-center bg-gradient-to-b from-[#333] to-black border border-black px-[28px] py-[14px] text-[15px] font-medium text-white hover:opacity-90 rounded-[4px] transition-all shadow-[0_4px_14px_rgba(0,0,0,0.25)] mb-10">
-            <Upload size={18} className="mr-2" />   Upload Video
-          </Link>
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+            className="flex items-center gap-4 mb-20"
+          >
+            <Link 
+              href="/dashboard" 
+              className="inline-flex items-center justify-center bg-[#0A0A0A] border border-black px-[28px] py-[14px] text-[15px] font-medium text-white hover:bg-[#1a1a1a] hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] rounded-[6px] transition-all"
+            >
+              <Upload size={18} className="mr-2" /> Upload Video
+            </Link>
+          </motion.div>
         </div>
 
         {/* Mockup Container */}
-        <div className="relative w-full overflow-hidden border-t border-gray-200 bg-white h-[400px] sm:h-[500px]">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
+          className="relative w-full overflow-hidden border-t border-gray-200 bg-white h-[400px] sm:h-[500px]"
+        >
           {/* Background Image Layer */}
           <img src="/hero/hero-vid.jpg" alt="Hero background texture" className="absolute inset-0 w-full h-full object-cover z-0 opacity-70" />
 
@@ -60,17 +70,18 @@ export function Hero() {
             <Image
               src="/hero/dashboardd.png"
               alt="Requesto Dashboard"
-              width={500}
-              height={250}
-              className="w-full shadow-[0_-10px_40px_rgba(0,0,0,0.2)]"
+              width={1000}
+              height={500}
+              quality={100}
+              className="w-full h-auto object-cover object-top shadow-[0_-10px_40px_rgba(0,0,0,0.2)] rounded-t-xl border-t border-x border-gray-200/50"
             />
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Hatched Separator Row under Hero Mockup */}
       <div className="w-full relative z-30">
-        <div className="w-full max-w-[1100px] mx-auto border-l border-r border-gray-200 h-[42px] relative bg-white" style={{
+        <div className="w-full max-w-[1200px] mx-auto border-l border-r border-gray-200 h-[42px] relative bg-white" style={{
           backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(200, 200, 200, 0.4) 5px, rgba(200, 200, 200, 0.4) 6px)'
         }}>
           {/* Top horizontal line of hatched row */}

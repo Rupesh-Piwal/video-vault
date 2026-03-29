@@ -8,9 +8,7 @@ import {
   Clock,
   Loader2,
   XCircle,
-  FileVideo,
   Trash2,
-  X,
   Play,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -80,7 +78,7 @@ export const VideoCard = React.memo(function VideoCard({
             .then(() => {
               currentlyPlayingVideo = video;
             })
-            .catch(() => {});
+            .catch(() => { });
         }
       }, 200);
     } else {

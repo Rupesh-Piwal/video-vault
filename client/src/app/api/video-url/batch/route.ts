@@ -18,7 +18,7 @@ export async function POST(req: Request) {
         return [key, signedUrl];
       }),
     );
-    
+
     //TODO: No caching — Redis TTL cache would eliminate redundant URL generation
 
     const urls = Object.fromEntries(

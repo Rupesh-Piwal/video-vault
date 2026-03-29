@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { Space_Grotesk } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 
-const spaceGrotesk = Space_Grotesk({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -30,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.className}  antialiased`}>
+      <body className={`${inter.className} bg-white text-[#0A0A0A] antialiased`}>
         {children}
         <Toaster
           position="top-right"
