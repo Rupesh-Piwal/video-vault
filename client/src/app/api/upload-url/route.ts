@@ -100,6 +100,29 @@ export async function POST(req: Request) {
         );
       }
 
+      // Security: Cap the number of parts to prevent DoS (Memory exhaustion/timeout)
+      if (parts.length > 1000) {
+        return NextResponse.json(
+          { error: "Too many signatures requested. Max: 1000 per request." },
+          { status: 400 },
+        );
+      }
+
+      // Security: verify the key belongs to THIS user (Ownership check)
+      const { data: videoRecord, error: recordError } = await supabase
+        .from("videos")
+        .select("id")
+        .eq("storage_key", key)
+        .eq("owner_id", user.id)
+        .single();
+
+      if (recordError || !videoRecord) {
+        return NextResponse.json(
+          { error: "Unauthorized access or invalid storage key" },
+          { status: 403 },
+        );
+      }
+
       const urls = await Promise.all(
         parts.map(async (partNumber: number) => {
           const command = new UploadPartCommand({
@@ -154,6 +177,7 @@ export async function POST(req: Request) {
         .from("videos")
         .update({ status: "PROCESSING" })
         .eq("storage_key", key)
+        .eq("owner_id", user.id)
         .select("id")
         .single();
 
@@ -197,6 +221,21 @@ export async function POST(req: Request) {
         return NextResponse.json(
           { error: "key and uploadId are required" },
           { status: 400 },
+        );
+      }
+
+      // Security: verify context (Ownership check)
+      const { data: videoRecord, error: recordError } = await supabase
+        .from("videos")
+        .select("id")
+        .eq("storage_key", key)
+        .eq("owner_id", user.id)
+        .single();
+
+      if (recordError || !videoRecord) {
+        return NextResponse.json(
+          { error: "Unauthorized access or invalid storage key" },
+          { status: 403 },
         );
       }
 
