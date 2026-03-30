@@ -93,26 +93,32 @@ export const worker = new Worker(
       );
       console.log("thumbnails------>", thumbnails);
 
-      for (let i = 0; i < thumbnails.length; i++) {
-        const thumb = thumbnails[i];
-        const thumbKey = `thumbnails/${videoId}/thumb-${i + 1}.jpg`;
+      const thumbnailData = thumbnails.map((thumb, i) => ({
+        thumb,
+        thumbKey: `thumbnails/${videoId}/thumb-${i + 1}.jpg`
+      }));
 
-        await uploadToS3(process.env.AWS_BUCKET_NAME!, thumbKey, thumb.file);
+      // Parallelize S3 uploads for all thumbnails
+      await Promise.all(
+        thumbnailData.map(data =>
+          uploadToS3(process.env.AWS_BUCKET_NAME!, data.thumbKey, data.thumb.file)
+        )
+      );
 
-        const { error } = await supabase.from("thumbnails").insert([
-          {
-            video_id: videoId,
-            storage_key: thumbKey,
-            position_seconds: thumb.position,
-            width: 320,
-            height: 180,
-          },
-        ]);
+      // Bulk insert all thumbnails in a single Supabase call
+      const { error: insertError } = await supabase.from("thumbnails").insert(
+        thumbnailData.map(data => ({
+          video_id: videoId,
+          storage_key: data.thumbKey,
+          position_seconds: data.thumb.position,
+          width: 320,
+          height: 180,
+        }))
+      );
 
-        if (error) {
-          console.error("❌ Supabase insert error (thumbnail):", error);
-          throw new Error(`Failed to insert thumbnail: ${error.message}`);
-        }
+      if (insertError) {
+        console.error("❌ Supabase insert error (thumbnails):", insertError);
+        throw new Error(`Failed to insert thumbnails: ${insertError.message}`);
       }
 
       const duration = await getVideoDuration(videoPath);
