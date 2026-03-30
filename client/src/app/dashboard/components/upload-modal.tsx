@@ -32,43 +32,47 @@ export function UploadModal({
   const { files, setFiles, handleFiles, removeFile } = useUpload();
 
   useEffect(() => {
-    const channel = supabase
-      .channel("video-status")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "videos" },
-        (payload) => {
-          setFiles((prev) => {
-            if (payload.eventType === "INSERT") {
-              const newVid = payload.new as { id: string; status: string };
-              return [
-                ...prev,
-                {
-                  id: newVid.id,
-                  file: null,
-                  progress: 100,
-                  error: null,
-                  videoId: newVid.id,
-                  status: newVid.status as VideoStatus,
-                },
-              ];
-            }
+    let channel: any;
 
-            if (payload.eventType === "UPDATE") {
-              return prev.map((f) =>
-                f.videoId === payload.new.id
-                  ? { ...f, status: payload.new.status as VideoStatus }
-                  : f,
-              );
-            }
-            return prev;
-          });
-        },
-      )
-      .subscribe();
+    const setupSubscription = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      channel = supabase
+        .channel(`video-status-${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "videos",
+            filter: `owner_id=eq.${user.id}`,
+          },
+          (payload) => {
+            setFiles((prev) => {
+              if (payload.eventType === "UPDATE") {
+                return prev.map((f) =>
+                  f.videoId === payload.new.id
+                    ? { ...f, status: payload.new.status as VideoStatus }
+                    : f,
+                );
+              }
+              return prev;
+            });
+          },
+        )
+        .subscribe();
+    };
+
+    setupSubscription();
 
     return () => {
-      channel.unsubscribe();
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [supabase, setFiles]);
 
