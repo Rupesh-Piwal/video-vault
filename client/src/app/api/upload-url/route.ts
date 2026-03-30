@@ -9,6 +9,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createClient } from "@/supabase/server";
 import { NextResponse } from "next/server";
+import axios from "axios";
 
 const s3 = new S3Client({
   region: process.env.AWS_BUCKET_REGION!,
@@ -149,10 +150,38 @@ export async function POST(req: Request) {
 
       console.log("UPLOAD COMPLETE:", result.Location);
 
-      await supabase
+      const { data: video, error: updateError } = await supabase
         .from("videos")
-        .update({ status: "UPLOADED" })
-        .eq("storage_key", key);
+        .update({ status: "PROCESSING" })
+        .eq("storage_key", key)
+        .select("id")
+        .single();
+
+      if (updateError) {
+        console.error("Supabase update error:", updateError);
+      }
+
+      // Trigger video processing in Express server
+      if (video?.id) {
+        try {
+          await axios.post(
+            `${process.env.NEXT_PUBLIC_EXPRESS_URL}/jobs/video-process`,
+            {
+              videoId: video.id,
+              s3Key: key,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+              },
+            }
+          );
+          console.log("✅ Video process job triggered for:", video.id);
+        } catch (expressError) {
+          console.error("❌ Failed to trigger Express worker:", expressError);
+          // We don't throw here to avoid failing the whole complete request
+        }
+      }
 
       return NextResponse.json({
         success: true,

@@ -48,7 +48,16 @@ app.get("/", (req, res) => {
   res.send("🚀 Express server is running");
 });
 
-app.post("/jobs/video-process", async (req, res) => {
+const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || authHeader !== `Bearer ${process.env.INTERNAL_API_SECRET}`) {
+    console.error("❌ Unauthorized access attempt to Express server");
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+};
+
+app.post("/jobs/video-process", authMiddleware, async (req, res) => {
   try {
     const { videoId, s3Key } = req.body;
     if (!videoId || !s3Key) {
@@ -71,7 +80,7 @@ app.post("/jobs/video-process", async (req, res) => {
   }
 });
 
-app.post("/jobs/send-email", async (req, res) => {
+app.post("/jobs/send-email", authMiddleware, async (req, res) => {
   try {
     const { to, videoId, token } = req.body;
     if (!to || !videoId || !token) {

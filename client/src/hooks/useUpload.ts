@@ -5,7 +5,7 @@ import { createClient } from "@/supabase/client";
 import { UploadFile } from "@/types/upload";
 import { validateFile } from "@/lib/upload.utils";
 
-const CHUNK_SIZE = 10 * 1024 * 1024; // 8MB (better than 5MB)
+const CHUNK_SIZE = 10 * 1024 * 1024; 
 const MAX_RETRIES = 3;
 const CONCURRENCY = Math.min(6, navigator.hardwareConcurrency || 4);
 
@@ -207,20 +207,8 @@ export function useUpload() {
       delete uploadedBytesRef.current[uploadFile.id];
       delete progressRef.current[uploadFile.id];
 
-      if (videoId) {
-        await supabase
-          .from("videos")
-          .update({ status: "PROCESSING" })
-          .eq("id", videoId);
-      }
-
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_EXPRESS_URL}/jobs/video-process`,
-        {
-          videoId,
-          s3Key: key,
-        },
-      );
+      // Worker trigger and status-to-PROCESSING update are now handled server-side
+      // in the /api/upload-url route for security.
     } catch (err: unknown) {
       let errorMessage = "Unknown error";
 
